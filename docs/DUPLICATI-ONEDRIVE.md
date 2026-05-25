@@ -86,11 +86,33 @@ Não é preciso outro container OneDrive — só repetir autenticação com a co
 
 1. **Settings** → **Destinations** → **Add destination** (ou ao criar o job escolher destino novo).
 2. Tipo: **Microsoft OneDrive** (ou OneDrive v2 / Microsoft Graph, conforme a versão).
-3. Clicar **AuthID** / **Log in** → login Microsoft → autorizar Duplicati.
-4. Pasta na nuvem (ex.): `Homelab-Backup` (cria-se automaticamente).
-5. Guardar destino com nome claro: `OneDrive-Homelab`.
+3. Clicar **AuthID** / **Log in** → login Microsoft → autorizar Duplicati (conta 2).
+4. Campo **Path** / **Folder** / **Caminho no servidor** — **obrigatório**, com barra inicial:
+
+```text
+/Homelab-Backup
+```
+
+Se ao guardar o Duplicati **apagar** a primeira `/`, use o truque do Duplicati:
+
+```text
+//Homelab-Backup
+```
+
+(guarda → fica `/Homelab-Backup`).
+
+| Evitar | Porquê |
+|--------|--------|
+| Campo vazio | Erro `root:` → `Resource not found for segment 'root:'` |
+| `Homelab-Backup:` (com `:` no fim) | URL Graph inválida |
+| Só espaços | Mesmo erro |
+
+5. **Test connection** / **Teste de ligação** — deve ficar verde antes de guardar.
+6. Guardar destino com nome claro: `OneDrive-Homelab`.
 
 > A autenticação OAuth **só** funciona no browser; não dá para commitar tokens no Git.
+
+**Se OAuth OK mas Test falha com `root:`:** o Path está vazio ou mal formatado — corrigir como acima e repetir Test.
 
 ### 2. Novo backup — `homelab-onedrive`
 
@@ -181,6 +203,8 @@ Não guardar tokens OAuth em ficheiros no servidor; o Duplicati guarda em `/conf
 | Token expirado | Re-autenticar destino OneDrive na UI |
 | «Reconnecting… connection lost» | 1) Fechar separador e **Ctrl+F5**. 2) Preferir `http://192.168.3.21:8200` na LAN. 3) Se usar `https://duplicati...`, o NPM precisa de WebSocket só em `/notifications` (corrigido no servidor). 4) DNS do PC deve ser AdGuard (`192.168.3.21`) — senão o domínio vai à Cloudflare e o túnel pode falhar no WebSocket. |
 | OAuth foi para conta 1 | Apagar destino OneDrive no Duplicati; OAuth de novo em InPrivate com conta 2 |
+| `BadRequest` … `segment 'root:'` | Path vazio ou sem `/` inicial → usar `/Homelab-Backup` ou `//Homelab-Backup` |
+| Conta Microsoft 365 só empresarial | Pode não ter `me/drive` pessoal — usar destino **SharePoint / OneDrive for Business** em vez de OneDrive pessoal |
 
 ---
 
