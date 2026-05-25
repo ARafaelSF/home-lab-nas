@@ -242,15 +242,22 @@ Apontar DNS da rede para `192.168.3.21` (ou DHCP option 6).
 
 ## 7. Duplicati
 
+Estratégia **3-2-1** (detalhe e FAQ): `docs/DUPLICATI-ONEDRIVE.md`.
+
+| Job | Quando | Destino | Retenção |
+|-----|--------|---------|----------|
+| `docker-local` | Diário 02:00 | SSD `proxmox-docker01` | `1W:1D,4W:1W,12M:1M` |
+| `homelab-onedrive` | Terça 04:00 | OneDrive `/Homelab-Backup` | `4W:1W,12M:1M` |
+
+A nuvem copia **só a pasta do SSD** (não relê `/media` nem volumes outra vez).
+
 | Item | Valor |
 |------|--------|
-| Job | `docker-local` |
 | UI LAN | `http://192.168.3.21:8200` |
-| UI HTTPS | `https://duplicati.antonio.rafael.nom.br` |
+| UI HTTPS | `https://duplicati.antonio.rafael.nom.br` (WebSockets no NPM) |
 | Config volume | `25_duplicati_config` |
-| Destino | `file:///backups/docker-volumes/proxmox-docker01` em `/mnt/ssd-backup` |
-| Nuvem | Job `homelab-onedrive` → OneDrive semanal — `docs/DUPLICATI-ONEDRIVE.md` |
-| Senha UI = passphrase backup | Ver `docs/DUPLICATI-BACKUP.md` |
+| Estado | `scripts/duplicati-status.sh` |
+| Senha UI = passphrase | `docs/DUPLICATI-BACKUP.md` |
 
 Hooks param containers antes do backup — scripts em `scripts/duplicati-hooks/`.
 

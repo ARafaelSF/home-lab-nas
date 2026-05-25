@@ -1,5 +1,7 @@
 # Duplicati — backup completo do homelab
 
+Visão geral dos **dois jobs** (local + OneDrive), retenção e FAQ: **`docs/DUPLICATI-ONEDRIVE.md`** (secção «Estratégia completa»).
+
 ## Job `docker-local`
 
 | Fonte no container | Conteúdo no host |
@@ -14,7 +16,7 @@
 
 **Agendamento:** diário às 02:00.
 
-**Retenção:** `1W:1D,4W:1W,12M:1M`
+**Retenção:** `1W:1D,4W:1W,12M:1M` — ver explicação em `DUPLICATI-ONEDRIVE.md` (não são cópias completas por dia).
 
 **Volume de config (Portainer stack 25):** `25_duplicati_config` → `/config` no container.
 
@@ -75,7 +77,7 @@ Guia completo (OAuth, horário, retenção): **`docs/DUPLICATI-ONEDRIVE.md`**.
 | Job | Frequência | Destino |
 |-----|------------|---------|
 | `docker-local` | Diário 02:00 | SSD local |
-| `homelab-onedrive` | Semanal (dom. 05:00) | OneDrive |
+| `homelab-onedrive` | Terça 04:00 | OneDrive `/Homelab-Backup` |
 
 ## Verificação
 

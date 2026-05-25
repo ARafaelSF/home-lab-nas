@@ -15,12 +15,86 @@ Ver progresso: `homelab/scripts/duplicati-status.sh` ou UI → job `homelab-oned
 
 ---
 
+## Estratégia completa (porque está optimizada)
+
+### Regra 3-2-1
+
+| Princípio | Como está no homelab |
+|-----------|----------------------|
+| **3** cópias | Dados originais + repositório no SSD + repositório no OneDrive |
+| **2** tipos de suporte | SSD local + nuvem Microsoft |
+| **1** cópia off-site | OneDrive (conta separada / fora de casa) |
+
+### Os dois jobs em cadeia (não duplicam trabalho)
+
+```text
+Dados reais (Docker, /media, homelab, configs)
+        │
+        ▼  docker-local — diário 02:00
+     SSD  /mnt/ssd-backup/.../proxmox-docker01  (~147 GB deduplicado)
+        │
+        ▼  homelab-onedrive — terça 04:00
+     OneDrive  /Homelab-Backup
+```
+
+**Passo 1 — `docker-local`** lê ficheiros **vivos** no servidor:
+
+- volumes Docker, `/media` (Jellyfin), `/root/homelab`, `/etc/docker`, rede.
+
+**Passo 2 — `homelab-onedrive`** lê **só** a pasta do backup no SSD:
+
+- `/backups/docker-volumes/proxmox-docker01` (ficheiros encriptados do repositório Duplicati).
+
+O `/media` **já está** no passo 1. A nuvem **não volta** a ler `/media` no disco — só copia o que o passo 1 já guardou. Isso poupa tempo, quota OneDrive e CPU.
+
+| Se a nuvem lesse `/media` outra vez | Efeito |
+|-------------------------------------|--------|
+| Duplicava leitura de terabytes | Muito mais lento |
+| Duas cópias independentes na nuvem | Quota e confusão na restauração |
+
+### Retenção — não são «7, 14 e 30 dias» cheios
+
+| Job | Política | Significado |
+|-----|----------|-------------|
+| **docker-local** (SSD) | `1W:1D,4W:1W,12M:1M` | Última semana: máx. **1 backup/dia**; 4 semanas: **1/semana**; 12 meses: **1/mês** |
+| **homelab-onedrive** (nuvem) | `4W:1W,12M:1M` | 4 semanas: **1/semana**; 12 meses: **1/mês** (sem ponto diário na nuvem) |
+
+O Duplicati usa **deduplicação**: blocos iguais guardam-se uma vez. Várias «versões» não significam 147 GB × número de dias — o SSD mantém um pool de blocos (~147 GB hoje).
+
+### O OneDrive recebe todas as versões diárias do SSD?
+
+**Não.** São históricos **separados**:
+
+| Onde | Histórico |
+|------|-----------|
+| **SSD** | Pontos no tempo **diários** (retenção fina) |
+| **OneDrive** | Pontos **semanais** (terça 04:00) + mensais (retenção do job nuvem) |
+
+Cada terça o job nuvem envia o **estado actual** da pasta no SSD (incremental). Não replica cada snapshot diário do SSD para a Microsoft.
+
+| Fase | Tamanho típico |
+|------|----------------|
+| Primeira subida OneDrive | Grande (~tamanho do repositório no SSD) |
+| Terças seguintes | Só blocos novos/alterados |
+
+### Resumo FAQ
+
+| Pergunta | Resposta |
+|----------|----------|
+| Está optimizado? | Sim — local rápido + nuvem semanal sem reler tudo |
+| `/media` vai para a nuvem? | Sim, **via** SSD (já no `docker-local`) |
+| Local guarda 7+14+30 cópias completas? | Não — retenção inteligente + deduplicação |
+| OneDrive guarda todos os dias? | Não — versões semanais/mensais na nuvem |
+| Mesma passphrase? | Sim — login UI = passphrase AES (Vaultwarden) |
+
+---
+
 ## Recomendação (resumo)
 
 | Pergunta | Resposta |
 |----------|----------|
 | Criar **outro serviço** Docker (rclone, OneDrive, etc.)? | **Não.** Use um **segundo job** no mesmo Duplicati. |
-| Com que frequência? | **1× por semana** (ex. domingo de madrugada). |
+| Com que frequência? | **1× por semana** — terça 04:00 (Brasília). |
 | O quê enviar? | A cópia **já feita no SSD local**, não voltar a ler `/media` e todos os volumes outra vez. |
 | Job local `docker-local`? | Mantém **diário** às 02:00 — não mexer. |
 
@@ -40,7 +114,7 @@ Isto segue a regra **3-2-1**: cópia local rápida + cópia off-site encriptada 
                             │ dados já encriptados (AES)
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Job 2: homelab-onedrive (semanal, ex. domingo 05:00)      │
+│  Job 2: homelab-onedrive (terça 04:00)                     │
 │  Fonte: /backups/docker-volumes/proxmox-docker01 (só isto)  │
 │  Destino: OneDrive (OAuth na UI Duplicati)                  │
 │  Hooks: nenhum (ficheiros estáticos no SSD)                 │
