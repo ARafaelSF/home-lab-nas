@@ -84,10 +84,10 @@ ALLOW_SIGNUP=true
 **Backup local (job `docker-local`):** volumes Docker + `/media` + `/root/homelab` + configs em `/etc/docker` e rede. Hooks param Immich/Postgres, Portainer, AdGuard, etc. antes do backup. Ver `homelab/docs/DUPLICATI-BACKUP.md`.
 
 - [x] Fontes e hooks de backup completo (2026-05-25)
-- [ ] **Segundo job** Duplicati → **OneDrive** semanal (`homelab-onedrive`) — guia `homelab/docs/DUPLICATI-ONEDRIVE.md`
-  - [ ] OAuth Microsoft na UI Duplicati
-  - [ ] Fonte só `/backups/docker-volumes/proxmox-docker01` (não duplicar `/media` na nuvem)
-  - [ ] Agendar domingo 05:00; primeiro **Test** OK
+- [x] **Job `homelab-onedrive`** → OneDrive `/Homelab-Backup` (destino «OneDrive #1»)
+- [x] Agenda: **terça-feira 04:00** (America/Sao_Paulo)
+- [x] Primeiro envio iniciado 2026-05-25 (aguardar conclusão — ~147 GB)
+- [ ] **Você:** quando terminar, **Test** no job + confirmar pasta no OneDrive
 
 ### AdGuard DNS no 4G (opção B — DoH)
 

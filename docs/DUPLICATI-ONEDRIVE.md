@@ -1,5 +1,20 @@
 # Duplicati — backup semanal no OneDrive
 
+## Estratégia activa no servidor (2026-05-25)
+
+| Job | O quê | Quando | Destino |
+|-----|--------|--------|---------|
+| **`docker-local`** | Volumes Docker, `/media`, homelab, configs | **Diário 02:00** | SSD `/mnt/ssd-backup/.../proxmox-docker01` |
+| **`homelab-onedrive`** | Cópia **já backupada** no SSD (não relê tudo) | **Terça 04:00** (horário de Brasília) | OneDrive pasta `/Homelab-Backup` |
+
+Destino OneDrive guardado como **«OneDrive #1»** (OAuth da conta 2).
+
+**Primeiro envio à nuvem:** iniciado manualmente em 2026-05-25 (~147 GB no SSD — pode demorar horas/dias na primeira vez; depois só incrementais).
+
+Ver progresso: `homelab/scripts/duplicati-status.sh` ou UI → job `homelab-onedrive`.
+
+---
+
 ## Recomendação (resumo)
 
 | Pergunta | Resposta |
