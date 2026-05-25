@@ -178,14 +178,11 @@ Export JSON: `backups/npm-proxy-hosts-referencia.json`.
 | Hostname público | Serviço | URL no túnel | TLS extra |
 |----------------|---------|--------------|-----------|
 | `adguard.antonio.rafael.nom.br` | UI AdGuard | `http://192.168.3.21:8080` | — |
-| `dns.antonio.rafael.nom.br` | DoH + UI | `https://192.168.3.21:443` | **No TLS Verify** |
+| `dns.antonio.rafael.nom.br` | DoH + UI | **`http://192.168.3.21:8080`** | — |
 
-O telemóvel usa **HTTPS até à Cloudflare**. Por dentro:
+O telemóvel usa **HTTPS até à Cloudflare**. Por dentro, `adguard` e `dns` devem ir em **HTTP** para `:8080` (AdGuard DoH).
 
-- `adguard` → HTTP directo ao AdGuard `:8080`
-- `dns` → HTTPS ao NPM `:443` → NPM faz proxy para AdGuard `:8080` (`/dns-query`)
-
-**Alternativa** (mais simples, mesmo efeito para o telemóvel): `dns` → `http://192.168.3.21:8080` como o `adguard`.
+> **Não** usar `https://192.168.3.21:443` no túnel para `dns`: o cloudflared não envia SNI com o hostname; o NPM devolve `tls: unrecognized name` → Intra/DNS privado **falha no 4G** mas pode parecer OK no Wi‑Fi (liga directo a `192.168.3.21` com SNI correcto).
 
 Outros serviços (Jellyfin, Portainer, …) seguem o padrão já existente no túnel (`https://192.168.3.21:443` + noTLSVerify).
 

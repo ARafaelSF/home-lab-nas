@@ -55,9 +55,11 @@ No AdGuard:
 | Hostname | Service URL | Extra |
 |----------|-------------|--------|
 | `adguard.antonio.rafael.nom.br` | `http://192.168.3.21:8080` | — |
-| `dns.antonio.rafael.nom.br` | `https://192.168.3.21:443` | No TLS Verify |
+| `dns.antonio.rafael.nom.br` | **`http://192.168.3.21:8080`** | — |
 
-Alternativa equivalente para `dns`: `http://192.168.3.21:8080` (como `adguard`).
+> **Importante (Intra / 4G):** Não usar `https://192.168.3.21:443` para `dns`. O cloudflared liga ao IP sem SNI TLS; o NPM responde `tls: unrecognized name` e o DoH falha no 4G. No Wi‑Fi funciona porque o telemóvel resolve `dns.antonio...` → `192.168.3.21` e faz TLS com o hostname correcto.
+
+Se quiser manter `https://443`, no painel Cloudflare (Additional settings → TLS) defina **HTTP Host Header** e **Origin Server Name** = `dns.antonio.rafael.nom.br` + No TLS Verify. Mais simples: `http://8080` como o `adguard`.
 
 ---
 
@@ -75,7 +77,24 @@ dns.antonio.rafael.nom.br
 https://dns.antonio.rafael.nom.br/dns-query
 ```
 
-**Teste 4G (concluído 2026-05-25):** Jellyfin e outros `.antonio.rafael.nom.br` abrem; consultas visíveis no painel AdGuard.
+**Teste 4G:** Jellyfin e outros `.antonio.rafael.nom.br` abrem; consultas no painel AdGuard.
+
+### Intra no 4G falha, no Wi‑Fi OK?
+
+| Rede | O que acontece |
+|------|----------------|
+| **Wi‑Fi** | `dns.antonio...` resolve para `192.168.3.21` → telemóvel fala TLS directo com NPM → OK |
+| **4G** | Resolve para Cloudflare → túnel → `https://192.168.3.21:443` **sem SNI** → NPM rejeita → Intra falha |
+
+**Correcção na Cloudflare:** rota `dns` → `http://192.168.3.21:8080` (igual `adguard`). Reinicie não é preciso; o túnel actualiza em ~1 min.
+
+**Workaround no Intra (até mudar a rota):** URL DoH:
+
+```text
+https://adguard.antonio.rafael.nom.br/dns-query
+```
+
+Ver erros no servidor: `docker logs cloudflared 2>&1 | tail -20` → `tls: unrecognized name` na rota `dns`.
 
 ---
 

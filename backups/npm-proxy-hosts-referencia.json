@@ -18,6 +18,6 @@
   ],
   "cloudflare_tunnel_dns": [
     {"hostname": "adguard.antonio.rafael.nom.br", "service": "http://192.168.3.21:8080"},
-    {"hostname": "dns.antonio.rafael.nom.br", "service": "https://192.168.3.21:443", "no_tls_verify": true}
+    {"hostname": "dns.antonio.rafael.nom.br", "service": "http://192.168.3.21:8080", "note": "NAO usar https://443 — cloudflared sem SNI quebra DoH no 4G"}
   ]
 }
