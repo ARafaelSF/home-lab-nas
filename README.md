@@ -15,6 +15,8 @@ Repositório: [github.com/ARafaelSF/home-lab-nas](https://github.com/ARafaelSF/h
 
 **Tarefas pendentes:** [`PENDENCIAS.md`](PENDENCIAS.md) — na raiz do servidor: `/root/homelab-pendencias.md` (symlink).
 
+**Guia completo (replicar tudo):** [`docs/SERVIDOR-HOMELAB.md`](docs/SERVIDOR-HOMELAB.md) — VM Proxmox, stacks, NPM, Cloudflare, AdGuard split DNS, Duplicati, HA.
+
 ---
 
 ## Estrutura do repositório
@@ -37,20 +39,31 @@ homelab/
 ├── etc/
 │   ├── docker/               ← daemon.json, firewall, VLANs
 │   └── network/if-up.d/      ← rota LAN 68.x
+├── config/
+│   ├── adguard/split-dns-user-rules.example.txt
+│   └── portainer/README.md
 ├── scripts/
 │   ├── deploy-stack.sh
+│   ├── testar-dns-remoto.sh
 │   └── duplicati-verificar-backup.sh
 ├── homeassistant/            ← referência WUD / automações
 ├── backups/                  ← exports de referência (sem dados live)
 └── docs/
-    ├── RECOMENDACOES.md      ← revisão Docker + próximos passos
+    ├── SERVIDOR-HOMELAB.md   ← guia completo para replicar
+    ├── ADGUARD-DNS-REMOTO.md ← DNS 4G / split horizon
+    ├── DUPLICATI-BACKUP.md
+    ├── SECRETS.md
+    ├── RECOMENDACOES.md
     ├── roteamento-docker-lan.md
+    ├── PUSH-GITHUB.md
     └── MCP-HOME-ASSISTANT-GUIA.md
 ```
 
 ---
 
 ## Reconstruir o servidor do zero
+
+> Passo a passo detalhado (arquitectura, ordem de deploy, NPM, Cloudflare, AdGuard, checklist): **`docs/SERVIDOR-HOMELAB.md`**.
 
 ### 1. VM e SO
 
@@ -151,8 +164,9 @@ Sincronize a partir deste repositório após alterações, ou importe stacks pel
 
 ### 7. AdGuard
 
-- Configurar DNS rewrites / split DNS para domínios internos → `192.168.3.21`.
-- Upstream DNS conforme preferência.
+- DNS upstream conforme preferência.
+- **Split DNS:** rewrites só para clientes `192.168.0.0/16` — ver `config/adguard/split-dns-user-rules.example.txt` e `docs/ADGUARD-DNS-REMOTO.md`.
+- **Não** activar painel «Criptografia» se usar Cloudflare Tunnel + NPM.
 
 ### 8. Home Assistant
 
@@ -179,7 +193,9 @@ Sincronize a partir deste repositório após alterações, ou importe stacks pel
 | Uptime Kuma | https://uptimekuma.antonio.rafael.nom.br | 3002 |
 | Portainer | https://portainer.antonio.rafael.nom.br | 9443 |
 | Homepage | (LAN / domínio interno) | 3001 |
-| Duplicati | LAN `8200` (admin bloqueado WAN) | 8200 |
+| Duplicati | https://duplicati.antonio.rafael.nom.br | 8200 |
+| AdGuard UI | https://adguard.antonio.rafael.nom.br | 8080 |
+| DNS DoH (4G) | `dns.antonio.rafael.nom.br` | 8080 (via NPM/túnel) |
 | Filebrowser | LAN `8085` | 8085 |
 
 ---
@@ -213,6 +229,9 @@ git push -u origin main
 |--------|-------------------|
 | Atualizar imagens | WUD + `docker compose pull` por stack |
 | Verificar backups | `scripts/duplicati-verificar-backup.sh` |
+| Documentação Duplicati | `docs/DUPLICATI-BACKUP.md` |
+| Guia completo / replicação | `docs/SERVIDOR-HOMELAB.md` |
+| Testar DNS 4G / LAN | `scripts/testar-dns-remoto.sh` |
 | Reaplicar firewall | `/etc/docker/homelab-firewall.sh` |
 | Pendências | `PENDENCIAS.md` |
 

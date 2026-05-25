@@ -19,8 +19,10 @@ services:
       - /var/lib/docker/volumes:/source/docker_data:ro
       - /media:/source/media:ro
       - /mnt/ssd-backup:/backups
-
-      # para hooks profissionais (stop/start containers)
+      - /root/homelab:/source/homelab:ro
+      - /root/homelab/backups/manifests:/source/homelab/backups/manifests:rw
+      - /etc/docker:/source/host/docker:ro
+      - /etc/network/if-up.d:/source/host/network/if-up.d:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker:ro
       - /opt/duplicati-scripts:/scripts

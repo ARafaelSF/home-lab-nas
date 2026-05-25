@@ -1,0 +1,23 @@
+{
+  "exported": "2026-05-25",
+  "note": "Referência para recriar NPM. SSL wildcard *.antonio.rafael.nom.br em todos.",
+  "proxy_hosts": [
+    {"id": 1, "domain": "home-server-nas.antonio.rafael.nom.br", "forward": "192.168.3.21:3001"},
+    {"id": 2, "domain": "senhas.antonio.rafael.nom.br", "forward": "192.168.3.21:3003"},
+    {"id": 3, "domain": "adguard.antonio.rafael.nom.br", "forward": "192.168.3.21:8080"},
+    {"id": 4, "domain": "fotos.antonio.rafael.nom.br", "forward": "192.168.3.21:2283"},
+    {"id": 5, "domain": "jellyfin.antonio.rafael.nom.br", "forward": "192.168.3.21:8096"},
+    {"id": 6, "domain": "portainer.antonio.rafael.nom.br", "forward": "192.168.3.21:9443"},
+    {"id": 7, "domain": "receitas.antonio.rafael.nom.br", "forward": "192.168.3.21:9925"},
+    {"id": 8, "domain": "uptimekuma.antonio.rafael.nom.br", "forward": "192.168.3.21:3002"},
+    {"id": 9, "domain": "nginx.antonio.rafael.nom.br", "forward": "192.168.3.21:81"},
+    {"id": 10, "domain": "filebrowser.antonio.rafael.nom.br", "forward": "192.168.3.21:8085"},
+    {"id": 11, "domain": "homeassistant.antonio.rafael.nom.br", "forward": "192.168.3.10:8123"},
+    {"id": 12, "domain": "duplicati.antonio.rafael.nom.br", "forward": "192.168.3.21:8200"},
+    {"id": 13, "domain": "dns.antonio.rafael.nom.br", "forward": "192.168.3.21:8080", "ssl_forced": true}
+  ],
+  "cloudflare_tunnel_dns": [
+    {"hostname": "adguard.antonio.rafael.nom.br", "service": "http://192.168.3.21:8080"},
+    {"hostname": "dns.antonio.rafael.nom.br", "service": "https://192.168.3.21:443", "no_tls_verify": true}
+  ]
+}

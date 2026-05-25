@@ -1,0 +1,16 @@
+# AdGuard Home — user_rules (split DNS)
+# Colar em: Filtros → Regras de utilizador (ou editar AdGuardHome.yaml → user_rules)
+#
+# Só clientes na rede 192.168.x (casa + VPNs) recebem IP local do NPM.
+# Clientes fora (4G, sem VPN) resolvem *.antonio.rafael.nom.br via DNS público → Cloudflare.
+
+||antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
+||.antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
+
+# YAML adicional (secção http no AdGuardHome.yaml):
+#   doh:
+#     insecure_enabled: true
+# trusted_proxies:
+#   - 172.16.0.0/12
+#   - 192.168.0.0/16
+# filtering.rewrites globais para *.antonio... → desactivar (enabled: false)

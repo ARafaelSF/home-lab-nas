@@ -3,7 +3,7 @@
 Documento vivo: marque com `[x]` quando concluir.
 
 **Servidor:** VM Docker no Proxmox (`192.168.3.21`)  
-**Última atualização:** 2026-05-25
+**Última atualização:** 2026-05-25 (DNS 4G testado)
 
 ---
 
@@ -79,7 +79,22 @@ ALLOW_SIGNUP=true
 
 ---
 
-## 4 — Duplicati: teste de restore (trimestral)
+## 4 — Duplicati: backup completo + nuvem
+
+**Backup local (job `docker-local`):** volumes Docker + `/media` + `/root/homelab` + configs em `/etc/docker` e rede. Hooks param Immich/Postgres, Portainer, AdGuard, etc. antes do backup. Ver `homelab/docs/DUPLICATI-BACKUP.md`.
+
+- [x] Fontes e hooks de backup completo (2026-05-25)
+- [ ] **Segundo job** Duplicati → nuvem (S3/B2/WebDAV) após validar backup local
+
+### AdGuard DNS no 4G (opção B — DoH)
+
+- [x] Servidor: DoH + rewrites só LAN (`homelab/docs/ADGUARD-DNS-REMOTO.md`)
+- [x] NPM: `dns.antonio.rafael.nom.br` (proxy host 13)
+- [x] Cloudflare: `dns` → `https://192.168.3.21:443` + No TLS Verify; `adguard` → `http://8080`
+- [x] Painel AdGuard «Criptografia» desligado (TLS na Cloudflare + NPM)
+- [x] **Teste 4G** (DNS privado `dns.antonio.rafael.nom.br`) — 2026-05-25
+
+### Teste de restore (trimestral)
 
 **Quando:** 1x a cada 3 meses (ou após mudança grande no servidor).
 
@@ -157,21 +172,26 @@ Só se SSH estiver acessível fora da LAN.
 - [x] Fase 2: WUD `getwud/wud`, healthchecks, Uptime Kuma
 - [x] Fase 3: Vaultwarden sem signup público, firewall VLANs, script backup
 - [x] Firewall: `192.168.3.0/24` + `192.168.68.0/24` (computadores Vlan_Hangar)
+- [x] Documentação completa de replicação: `docs/SERVIDOR-HOMELAB.md`
 
 ---
 
 ## Repositório Git (`/root/homelab`)
 
-- [ ] `git init` + push para GitHub/GitLab
-- [x] Segredos em `.env` fora do compose (cloudflared, duplicati, wud) — ver `docs/SECRETS.md`
+- [ ] Adicionar Deploy Key no GitHub e `git push` — ver `docs/PUSH-GITHUB.md`
+- [x] Segredos em `.env` (cloudflared, duplicati, wud, immich) — ver `docs/SECRETS.md`
 
 ## Arquivos úteis
 
 | Arquivo | Uso |
 |---------|-----|
 | `/root/homelab-pendencias.md` | Symlink → esta lista |
-| `/root/homelab/README.md` | Reconstruir o servidor do zero |
+| `/root/homelab/README.md` | Resumo e índice |
+| `homelab/docs/SERVIDOR-HOMELAB.md` | **Guia completo** — VM, serviços, NPM, CF, AdGuard, Duplicati |
+| `homelab/docs/ADGUARD-DNS-REMOTO.md` | DNS 4G / split horizon |
+| `homelab/docs/DUPLICATI-BACKUP.md` | Backup Duplicati |
 | `homelab/docs/RECOMENDACOES.md` | Revisão Docker e próximos passos |
+| `homelab/scripts/testar-dns-remoto.sh` | Teste split DNS + túnel |
 | `homelab/scripts/duplicati-verificar-backup.sh` | Checar tamanho dos backups |
 | `homelab/etc/docker/homelab-trusted-networks.conf` | VLANs liberadas no firewall |
 | `homelab/backups/uptime-kuma-monitores-referencia.json` | Referência monitores Kuma |
