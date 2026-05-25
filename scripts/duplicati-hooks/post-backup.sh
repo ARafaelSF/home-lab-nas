@@ -18,4 +18,13 @@ if [ -f "$STATE_FILE" ]; then
   rm -f "$STATE_FILE"
 fi
 
+# Immich: garantir stack completo (PRE pode ter parado sem POST anterior)
+for c in immich_postgres immich_redis immich_machine_learning immich_server; do
+  if ! docker ps --format '{{.Names}}' | grep -qx "$c"; then
+    if docker start "$c" >/dev/null 2>&1; then
+      echo "[$(date '+%F %T')] POST: garantido $c" >> "$LOG_FILE"
+    fi
+  fi
+done
+
 echo "[$(date '+%F %T')] POST: concluído" >> "$LOG_FILE"
