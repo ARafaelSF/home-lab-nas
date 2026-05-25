@@ -9,7 +9,9 @@
 
 Destino OneDrive guardado como **«OneDrive #1»** (OAuth da conta 2).
 
-**Primeiro envio à nuvem:** iniciado manualmente em 2026-05-25 (~147 GB no SSD — pode demorar horas/dias na primeira vez; depois só incrementais).
+**Primeiro envio à nuvem:** concluído 2026-05-25 (~**157 GB** enviados, backup size 157,76 GB no OneDrive).
+
+**Opção no job (Docker):** `--disable-module=console-password-input` — evita erro ao clicar «Run now» na UI (`Console.Read`).
 
 Ver progresso: `homelab/scripts/duplicati-status.sh` ou UI → job `homelab-onedrive`.
 
@@ -290,6 +292,8 @@ Não guardar tokens OAuth em ficheiros no servidor; o Duplicati guarda em `/conf
 | “Source is empty” | Job local ainda não criou `proxmox-docker01` — correr `docker-local` primeiro |
 | Erro quota OneDrive | Reduzir retenção nuvem ou limpar versões antigas no Duplicati |
 | Token expirado | Re-autenticar destino OneDrive na UI |
+| `Cannot read keys` / `Console.Read` (backup 0s) | Job sem TTY no Docker — opção avançada `--disable-module=console-password-input` (já aplicado em `homelab-onedrive`) |
+| Log com **1 erro** + outro **157 GB OK** | O envio grande **já terminou**; o erro 0s é tentativa à parte (UI sem consola). Ver **Test** e pasta OneDrive |
 | «Reconnecting… connection lost» | 1) Fechar separador e **Ctrl+F5**. 2) Preferir `http://192.168.3.21:8200` na LAN. 3) Se usar `https://duplicati...`, o NPM precisa de WebSocket só em `/notifications` (corrigido no servidor). 4) DNS do PC deve ser AdGuard (`192.168.3.21`) — senão o domínio vai à Cloudflare e o túnel pode falhar no WebSocket. |
 | OAuth foi para conta 1 | Apagar destino OneDrive no Duplicati; OAuth de novo em InPrivate com conta 2 |
 | `BadRequest` … `segment 'root:'` | Path vazio ou sem `/` inicial → usar `/Homelab-Backup` ou `//Homelab-Backup` |

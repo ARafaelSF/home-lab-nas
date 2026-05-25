@@ -86,8 +86,9 @@ ALLOW_SIGNUP=true
 - [x] Fontes e hooks de backup completo (2026-05-25)
 - [x] **Job `homelab-onedrive`** → OneDrive `/Homelab-Backup` (destino «OneDrive #1»)
 - [x] Agenda: **terça-feira 04:00** (America/Sao_Paulo)
-- [x] Primeiro envio iniciado 2026-05-25 (aguardar conclusão — ~147 GB)
-- [ ] **Você:** quando terminar, **Test** no job + confirmar pasta no OneDrive
+- [x] Primeiro envio OneDrive concluído 2026-05-25 (~157 GB)
+- [x] Correcção UI «Run now»: `--disable-module=console-password-input`
+- [ ] **Você:** **Test** no job `homelab-onedrive` + confirmar pasta `Homelab-Backup` no OneDrive
 
 ### AdGuard DNS no 4G (opção B — DoH)
 
