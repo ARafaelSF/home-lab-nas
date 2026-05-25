@@ -179,7 +179,7 @@ Não guardar tokens OAuth em ficheiros no servidor; o Duplicati guarda em `/conf
 | “Source is empty” | Job local ainda não criou `proxmox-docker01` — correr `docker-local` primeiro |
 | Erro quota OneDrive | Reduzir retenção nuvem ou limpar versões antigas no Duplicati |
 | Token expirado | Re-autenticar destino OneDrive na UI |
-| «Reconnecting… connection lost» | Abrir `http://192.168.3.21:8200` na LAN; NPM: WebSockets ligados no proxy Duplicati |
+| «Reconnecting… connection lost» | 1) Fechar separador e **Ctrl+F5**. 2) Preferir `http://192.168.3.21:8200` na LAN. 3) Se usar `https://duplicati...`, o NPM precisa de WebSocket só em `/notifications` (corrigido no servidor). 4) DNS do PC deve ser AdGuard (`192.168.3.21`) — senão o domínio vai à Cloudflare e o túnel pode falhar no WebSocket. |
 | OAuth foi para conta 1 | Apagar destino OneDrive no Duplicati; OAuth de novo em InPrivate com conta 2 |
 
 ---
