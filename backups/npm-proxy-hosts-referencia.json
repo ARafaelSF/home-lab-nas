@@ -13,7 +13,7 @@
     {"id": 9, "domain": "nginx.antonio.rafael.nom.br", "forward": "192.168.3.21:81"},
     {"id": 10, "domain": "filebrowser.antonio.rafael.nom.br", "forward": "192.168.3.21:8085"},
     {"id": 11, "domain": "homeassistant.antonio.rafael.nom.br", "forward": "192.168.3.10:8123"},
-    {"id": 12, "domain": "duplicati.antonio.rafael.nom.br", "forward": "192.168.3.21:8200"},
+    {"id": 12, "domain": "duplicati.antonio.rafael.nom.br", "forward": "192.168.3.21:8200", "websockets": true},
     {"id": 13, "domain": "dns.antonio.rafael.nom.br", "forward": "192.168.3.21:8080", "ssl_forced": true}
   ],
   "cloudflare_tunnel_dns": [

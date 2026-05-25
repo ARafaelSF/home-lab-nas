@@ -63,7 +63,24 @@ du -sh /mnt/ssd-backup/docker-volumes/proxmox-docker01
 
 ## Passo a passo na UI Duplicati
 
-Abrir: `https://duplicati.antonio.rafael.nom.br/` (ou `http://192.168.3.21:8200` na LAN).
+Abrir Duplicati para configurar OneDrive — **use a URL na LAN** (evita OAuth e WebSockets pela internet):
+
+```text
+http://192.168.3.21:8200
+```
+
+> Se usar `https://duplicati.antonio.rafael.nom.br` e aparecer **«Reconnecting… connection to the server is lost»**, o proxy precisa de **WebSockets** (já corrigido no NPM, host 12). Mesmo assim, para **login Microsoft**, prefira a URL LAN.
+
+### Conta Microsoft 2 (não a do Edge)
+
+O Duplicati usa a sessão do **browser no momento do OAuth**, não a conta “predefinida” do Edge.
+
+1. **Edge:** janela InPrivate → login só na **conta 2** → `http://192.168.3.21:8200` → OAuth OneDrive.
+2. **Firefox:** perfil limpo ou “Iniciar sessão” Microsoft e escolher **conta 2** quando o Duplicati abrir a página Microsoft.
+3. Se já ligou à conta 1: **Settings → Destinations** → remover destino OneDrive errado → criar de novo e repetir OAuth com conta 2.
+4. Em [account.microsoft.com](https://account.microsoft.com) → **Sign out** da conta 1 no mesmo browser antes do OAuth, se necessário.
+
+Não é preciso outro container OneDrive — só repetir autenticação com a conta certa.
 
 ### 1. Adicionar destino OneDrive
 
@@ -162,6 +179,8 @@ Não guardar tokens OAuth em ficheiros no servidor; o Duplicati guarda em `/conf
 | “Source is empty” | Job local ainda não criou `proxmox-docker01` — correr `docker-local` primeiro |
 | Erro quota OneDrive | Reduzir retenção nuvem ou limpar versões antigas no Duplicati |
 | Token expirado | Re-autenticar destino OneDrive na UI |
+| «Reconnecting… connection lost» | Abrir `http://192.168.3.21:8200` na LAN; NPM: WebSockets ligados no proxy Duplicati |
+| OAuth foi para conta 1 | Apagar destino OneDrive no Duplicati; OAuth de novo em InPrivate com conta 2 |
 
 ---
 
