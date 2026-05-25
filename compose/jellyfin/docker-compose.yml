@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  jellyfin:
+    image: ghcr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    labels:
+      - wud.display.name=Jellyfin
+      - wud.display.icon=si:jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Sao_Paulo
+    volumes:
+      - jellyfin_config:/config
+      - /media:/media
+    ports:
+      - 8096:8096
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8096/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+volumes:
+  jellyfin_config:

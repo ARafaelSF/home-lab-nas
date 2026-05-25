@@ -1,0 +1,22 @@
+version: '3'
+services:
+  wud:
+    image: getwud/wud:8.2.2
+    container_name: wud
+    labels:
+      - wud.display.name=WUD
+      - wud.display.icon=si:getwud
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - .env
+      - /etc/docker/wud-lscr.env
+    environment:
+      - TZ=America/Sao_Paulo
+      - WUD_TRIGGER_MQTT_HA_URL=mqtt://192.168.3.10:1883
+      - WUD_TRIGGER_MQTT_HA_USER=homeassistant
+      - WUD_TRIGGER_MQTT_HA_PASSWORD=${WUD_MQTT_PASSWORD}
+      - WUD_TRIGGER_MQTT_HA_HASS_ENABLED=true
+      - WUD_TRIGGER_MQTT_HA_HASS_DISCOVERY=true
+      # LSCR (LinuxServer): crie /etc/docker/wud-lscr.env com token GitHub (read:packages)
+    restart: unless-stopped

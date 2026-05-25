@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    container_name: mealie
+    labels:
+      - wud.display.name=Mealie
+      - wud.display.icon=si:mealie
+    restart: always
+    ports:
+      - "9925:9000"
+    environment:
+      - ALLOW_SIGNUP=false
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Sao_Paulo
+    volumes:
+      - mealie_data:/app/data/
+
+volumes:
+  mealie_data:

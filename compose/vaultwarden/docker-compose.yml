@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    labels:
+      - wud.display.name=Vaultwarden
+      - wud.display.icon=si:vaultwarden
+    environment:
+      - TZ=America/Sao_Paulo
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=false
+      - INVITATIONS_ALLOWED=true
+    volumes:
+      - vaultwarden_data:/data
+    ports:
+      - 3003:80
+    restart: unless-stopped
+
+volumes:
+  vaultwarden_data:

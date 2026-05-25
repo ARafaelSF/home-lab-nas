@@ -1,0 +1,91 @@
+# Implementado via MCP no Home Assistant (2026-05-25)
+# Categoria: Homelab: monitorização (Uptime Kuma)
+# Automações na UI (editáveis):
+#   - automation.homelab_servico_offline_uptime_kuma
+#   - automation.homelab_servico_online_uptime_kuma
+# Webhook: uptime_kuma_homelab (registado pelas automações)
+
+# Referência YAML equivalente (não é necessário packages/ se já criado na UI):
+
+automation:
+  - id: "1779719512347"
+    alias: "🖥️ Homelab: Serviço offline (Uptime Kuma)"
+    description: "Quando o Uptime Kuma deteta um serviço do homelab fora do ar, envia alerta no Telegram e na app (webhook local)."
+    mode: queued
+    variables:
+      destinatarios_homelab:
+        - antonio
+        - renata
+    triggers:
+      - trigger: webhook
+        webhook_id: uptime_kuma_homelab
+        allowed_methods:
+          - POST
+        local_only: true
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.json.msg is defined and
+             ('Down' in trigger.json.msg or '🔴' in trigger.json.msg) }}
+    actions:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "🖥️ Homelab — offline"
+          mensagem: "{{ trigger.json.msg }}"
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "🖥️ Homelab — offline"
+          mensagem: "{{ trigger.json.msg }}"
+          dados:
+            tag: homelab_offline
+            channel: Homelab
+            importance: high
+            notification_icon: mdi:cloud-alert
+            color: "#D32F2F"
+      - action: persistent_notification.create
+        data:
+          title: "Homelab — offline"
+          message: "{{ trigger.json.msg }}"
+
+  - id: "1779719520842"
+    alias: "🖥️ Homelab: Serviço online (Uptime Kuma)"
+    description: "Quando o Uptime Kuma confirma que um serviço voltou, envia aviso no Telegram e na app (webhook local)."
+    mode: queued
+    variables:
+      destinatarios_homelab:
+        - antonio
+        - renata
+    triggers:
+      - trigger: webhook
+        webhook_id: uptime_kuma_homelab
+        allowed_methods:
+          - POST
+        local_only: true
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.json.msg is defined and
+             ('Up' in trigger.json.msg or '🟢' in trigger.json.msg) }}
+    actions:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "🖥️ Homelab — online"
+          mensagem: "{{ trigger.json.msg }}"
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "🖥️ Homelab — online"
+          mensagem: "{{ trigger.json.msg }}"
+          dados:
+            tag: homelab_online
+            channel: Homelab
+            importance: high
+            notification_icon: mdi:cloud-check
+            color: "#4CAF50"
+      - action: persistent_notification.create
+        data:
+          title: "Homelab — online"
+          message: "{{ trigger.json.msg }}"

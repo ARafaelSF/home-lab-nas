@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  duplicati:
+    image: ghcr.io/linuxserver/duplicati:latest
+    container_name: duplicati
+    labels:
+      - wud.display.name=Duplicati
+      - wud.display.icon=si:duplicati
+    env_file:
+      - .env
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Sao_Paulo
+      - SETTINGS_ENCRYPTION_KEY=${SETTINGS_ENCRYPTION_KEY}
+      - DUPLICATI__WEBSERVICE_PASSWORD=${DUPLICATI_WEBSERVICE_PASSWORD}
+    volumes:
+      - duplicati_config:/config
+      - /var/lib/docker/volumes:/source/docker_data:ro
+      - /media:/source/media:ro
+      - /mnt/ssd-backup:/backups
+
+      # para hooks profissionais (stop/start containers)
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
+      - /opt/duplicati-scripts:/scripts
+    ports:
+      - 8200:8200
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  duplicati_config:

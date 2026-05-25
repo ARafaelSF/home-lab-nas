@@ -1,0 +1,26 @@
+{
+  "device_name": "Sistema - Monitor Docker - Wud",
+  "area_id": "sistema",
+  "entities": [
+    {"old": "update.wud_container_local_adguardhome", "name": "AdGuard Home", "new": "update.sistema_docker_adguard"},
+    {"old": "update.wud_container_local_duplicati", "name": "Duplicati", "new": "update.sistema_docker_duplicati"},
+    {"old": "update.wud_container_local_filebrowser", "name": "Filebrowser", "new": "update.sistema_docker_filebrowser"},
+    {"old": "update.wud_container_local_homepage", "name": "Homepage", "new": "update.sistema_docker_homepage"},
+    {"old": "update.wud_container_local_immich_server", "name": "Immich", "new": "update.sistema_docker_immich"},
+    {"old": "update.wud_container_local_immich_machine_learning", "name": "Immich ML", "new": "update.sistema_docker_immich_ml"},
+    {"old": "update.wud_container_local_jellyfin", "name": "Jellyfin", "new": "update.sistema_docker_jellyfin"},
+    {"old": "update.wud_container_local_mealie", "name": "Mealie", "new": "update.sistema_docker_mealie"},
+    {"old": "update.wud_container_local_nginx_proxy_manager", "name": "Nginx Proxy Manager", "new": "update.sistema_docker_npm"},
+    {"old": "update.wud_container_local_uptime_kuma", "name": "Uptime Kuma", "new": "update.sistema_docker_uptime_kuma"},
+    {"old": "update.wud_container_local_vaultwarden", "name": "Vaultwarden", "new": "update.sistema_docker_vaultwarden"}
+  ],
+  "aggregates": [
+    {"old": "binary_sensor.what_s_up_docker_total_container_update_status", "name": "Atualizações pendentes", "new": "binary_sensor.sistema_docker_atualizacoes_pendentes"},
+    {"old": "binary_sensor.what_s_up_docker_watcher_local_container_update_status", "name": "Watcher: atualizações pendentes", "new": "binary_sensor.sistema_docker_watcher_atualizacoes_pendentes"},
+    {"old": "binary_sensor.what_s_up_docker_watcher_local_running_status", "name": "Watcher: ativo", "new": "binary_sensor.sistema_docker_watcher_ativo"},
+    {"old": "sensor.what_s_up_docker_total_container_count", "name": "Containers monitorados", "new": "sensor.sistema_docker_total_containers"},
+    {"old": "sensor.what_s_up_docker_total_container_update_count", "name": "Atualizações disponíveis", "new": "sensor.sistema_docker_total_atualizacoes"},
+    {"old": "sensor.what_s_up_docker_watcher_local_container_count", "name": "Watcher: containers", "new": "sensor.sistema_docker_watcher_containers"},
+    {"old": "sensor.what_s_up_docker_watcher_local_container_update_count", "name": "Watcher: atualizações", "new": "sensor.sistema_docker_watcher_atualizacoes"}
+  ]
+}

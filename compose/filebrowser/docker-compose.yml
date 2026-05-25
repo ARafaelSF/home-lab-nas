@@ -1,0 +1,21 @@
+version: "3"
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    labels:
+      - wud.display.name=Filebrowser
+      - wud.display.icon=si:filebrowser
+    restart: always
+    ports:
+      - "8085:80"
+    volumes:
+      - /:/srv
+      - fb_data:/database
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - FB_DATABASE=/database/filebrowser.db
+
+volumes:
+  fb_data:

@@ -1,0 +1,21 @@
+# Segredos — nunca commitar
+.env
+*.env
+!*.env.example
+stack.env
+stack.env.bak
+**/stack.env
+wud-lscr.env
+**/secrets/
+
+# Backups locais (podem conter dados sensíveis)
+backups/*.tar.gz
+backups/*.db
+
+# Cursor / IDE
+.cursor/
+.cursor-server/
+
+# OS
+.DS_Store
+*~

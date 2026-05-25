@@ -1,0 +1,18 @@
+# Portainer CE — gestão Docker (instalado fora dos stacks numerados do Portainer)
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    labels:
+      - wud.display.name=Portainer
+      - wud.display.icon=si:portainer
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+volumes:
+  portainer_data:

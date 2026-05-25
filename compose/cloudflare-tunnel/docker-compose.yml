@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    labels:
+      - wud.display.name=Cloudflare Tunnel
+      - wud.display.icon=si:cloudflare
+    restart: unless-stopped
+    command: tunnel run
+    env_file:
+      - .env
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
