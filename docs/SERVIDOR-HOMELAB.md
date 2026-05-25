@@ -249,6 +249,7 @@ Apontar DNS da rede para `192.168.3.21` (ou DHCP option 6).
 | UI HTTPS | `https://duplicati.antonio.rafael.nom.br` |
 | Config volume | `25_duplicati_config` |
 | Destino | `file:///backups/docker-volumes/proxmox-docker01` em `/mnt/ssd-backup` |
+| Nuvem | Job `homelab-onedrive` → OneDrive semanal — `docs/DUPLICATI-ONEDRIVE.md` |
 | Senha UI = passphrase backup | Ver `docs/DUPLICATI-BACKUP.md` |
 
 Hooks param containers antes do backup — scripts em `scripts/duplicati-hooks/`.

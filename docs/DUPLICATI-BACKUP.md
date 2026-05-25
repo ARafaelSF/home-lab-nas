@@ -62,9 +62,20 @@ Lembrete no servidor: `/root/DUPLICATI-GUARDAR-NO-VAULTWARDEN.txt` (não commita
 
 Os `.env` do Portainer entram no volume `portainer_data` e são copiados pelo backup.
 
-## Próximo passo: nuvem
+## Backup na nuvem (OneDrive)
 
-Crie um **segundo job** no Duplicati apontando para o mesmo conjunto de fontes (ou só `/mnt/ssd-backup/docker-volumes/`) com destino S3/B2/WebDAV — regra 3-2-1.
+**Recomendação:** segundo job **`homelab-onedrive`** no **mesmo** Duplicati (sem container OneDrive/rclone à parte), **semanal**, fonte = cópia já no SSD:
+
+```text
+/backups/docker-volumes/proxmox-docker01
+```
+
+Guia completo (OAuth, horário, retenção): **`docs/DUPLICATI-ONEDRIVE.md`**.
+
+| Job | Frequência | Destino |
+|-----|------------|---------|
+| `docker-local` | Diário 02:00 | SSD local |
+| `homelab-onedrive` | Semanal (dom. 05:00) | OneDrive |
 
 ## Verificação
 

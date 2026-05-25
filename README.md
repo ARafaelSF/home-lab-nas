@@ -230,6 +230,7 @@ git push -u origin main
 | Atualizar imagens | WUD + `docker compose pull` por stack |
 | Verificar backups | `scripts/duplicati-verificar-backup.sh` |
 | Documentação Duplicati | `docs/DUPLICATI-BACKUP.md` |
+| Duplicati → OneDrive (semanal) | `docs/DUPLICATI-ONEDRIVE.md` |
 | Guia completo / replicação | `docs/SERVIDOR-HOMELAB.md` |
 | Testar DNS 4G / LAN | `scripts/testar-dns-remoto.sh` |
 | Reaplicar firewall | `/etc/docker/homelab-firewall.sh` |
