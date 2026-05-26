@@ -1,0 +1,14 @@
+---
+# https://gethomepage.dev/configs/info-widgets/
+
+- glances:
+    url: http://192.168.3.21:61208
+    version: 4
+    label: Homelab NAS
+    cpu: true
+    mem: true
+    disk: /rootfs
+
+- search:
+    provider: duckduckgo
+    target: _blank

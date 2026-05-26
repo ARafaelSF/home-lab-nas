@@ -1,0 +1,56 @@
+---
+# https://gethomepage.dev/configs/services/
+
+- Mídia e fotos:
+    - Immich:
+        href: https://fotos.antonio.rafael.nom.br/
+        icon: immich.png
+        description: Galeria de fotos da família
+    - Jellyfin:
+        href: https://jellyfin.antonio.rafael.nom.br/
+        icon: jellyfin.png
+        description: Filmes e séries
+
+- Casa e utilidades:
+    - Home Assistant:
+        href: https://homeassistant.antonio.rafael.nom.br/
+        icon: home-assistant.png
+        description: Automação da casa
+    - Mealie:
+        href: https://receitas.antonio.rafael.nom.br/
+        icon: mealie.png
+        description: Receitas e cardápio
+    - Cofre de Senhas:
+        href: https://senhas.antonio.rafael.nom.br/
+        icon: bitwarden.png
+        description: Vaultwarden
+    - Filebrowser:
+        href: http://192.168.3.21:8085
+        icon: filebrowser.png
+        description: Arquivos do servidor (só LAN)
+
+- Infraestrutura:
+    - Portainer:
+        href: https://192.168.3.21:9443
+        icon: portainer.png
+        description: Gerenciador Docker (só LAN)
+    - Nginx Proxy Manager:
+        href: http://192.168.3.21:81
+        icon: nginx-proxy-manager.png
+        description: Proxy e certificados SSL (só LAN)
+    - AdGuard Home:
+        href: http://192.168.3.21:8080
+        icon: adguard-home.png
+        description: DNS e bloqueio de anúncios (só LAN)
+    - Uptime Kuma:
+        href: http://192.168.3.21:3002
+        icon: uptime-kuma.png
+        description: Monitoramento dos serviços (só LAN)
+    - Glances:
+        href: http://192.168.3.21:61208
+        icon: glances.png
+        description: Métricas CPU, RAM e disco da VM (só LAN)
+    - Duplicati:
+        href: http://192.168.3.21:8200
+        icon: duplicati.png
+        description: Backups agendados (só LAN)

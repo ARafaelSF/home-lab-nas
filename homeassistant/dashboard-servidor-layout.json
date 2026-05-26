@@ -1,0 +1,1040 @@
+{
+  "max_columns": 1,
+  "sections": [
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "custom:decluttering-card",
+          "template": "chip_menu"
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Servidor Home Assistant",
+          "heading_style": "title",
+          "icon": "mdi:home-assistant",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "square": false,
+          "type": "grid",
+          "columns": 2,
+          "cards": [
+            {
+              "type": "tile",
+              "entity": "switch.sistema_home_assistant_sonoff",
+              "name": "Energia do mini PC",
+              "icon": "mdi:power-plug",
+              "color": "green",
+              "features_position": "bottom"
+            },
+            {
+              "type": "tile",
+              "entity": "sensor.sistema_home_assistant_potencia_sonoff",
+              "name": "Consumo agora",
+              "icon": "mdi:flash",
+              "color": "amber"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "show_name": true,
+          "show_icon": true,
+          "type": "button",
+          "entity": "switch.escritorio_servidor_minipc_tasmota",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
+        },
+        {
+          "show_name": true,
+          "show_icon": true,
+          "type": "button",
+          "entity": "switch.escritorio_estacao_trabalho_sonoff",
+          "name": "Estação de Trabalho",
+          "icon": "mdi:desk",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
+        },
+        {
+          "type": "entities",
+          "title": "Resumo rápido",
+          "show_header_toggle": false,
+          "entities": [
+            {
+              "entity": "sensor.system_monitor_uso_do_processador",
+              "name": "Processador",
+              "icon": "mdi:cpu-64-bit"
+            },
+            {
+              "entity": "sensor.system_monitor_uso_de_memoria",
+              "name": "Memória em uso",
+              "icon": "mdi:memory"
+            },
+            {
+              "entity": "sensor.system_monitor_utilizacao_do_disco",
+              "name": "Disco em uso",
+              "icon": "mdi:harddisk"
+            },
+            {
+              "entity": "sensor.sistema_temperatura_cpu",
+              "name": "Temperatura CPU",
+              "icon": "mdi:cpu-64-bit"
+            },
+            {
+              "entity": "sensor.system_monitor_ultima_inicializacao",
+              "name": "Ultima reinicializacao",
+              "icon": "mdi:restart"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Home Assistant — uso agora",
+          "heading_style": "subtitle",
+          "icon": "mdi:gauge",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.system_monitor_uso_do_processador",
+              "name": "CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 60,
+                "red": 85
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.system_monitor_uso_de_memoria",
+              "name": "RAM",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 65,
+                "red": 85
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.system_monitor_utilizacao_do_disco",
+              "name": "Disco",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 70,
+                "red": 90
+              }
+            }
+          ]
+        },
+        {
+          "type": "entities",
+          "title": "Capacidade",
+          "show_header_toggle": false,
+          "entities": [
+            {
+              "entity": "sensor.system_monitor_uso_do_disco",
+              "name": "Disco usado",
+              "icon": "mdi:harddisk"
+            },
+            {
+              "entity": "sensor.system_monitor_disco_livre",
+              "name": "Disco livre",
+              "icon": "mdi:harddisk-plus"
+            },
+            {
+              "entity": "sensor.sistema_memoria_usada_gib",
+              "name": "Memória usada",
+              "icon": "mdi:memory"
+            },
+            {
+              "entity": "sensor.sistema_memoria_livre_gib",
+              "name": "Memória livre",
+              "icon": "mdi:memory"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Home Assistant — histórico 7 dias",
+          "heading_style": "subtitle",
+          "icon": "mdi:chart-line",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "CPU — 7 dias",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.system_monitor_uso_do_processador",
+              "name": "CPU"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Memória — 7 dias",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.system_monitor_uso_de_memoria",
+              "name": "Memória"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Home Assistant — temperatura",
+          "heading_style": "subtitle",
+          "icon": "mdi:thermometer",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.sistema_temperatura_cpu",
+              "name": "Temperatura CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 60,
+                "red": 80
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_termo_higrometro_ha_z2m_temperature",
+              "name": "Temperatura gabinete",
+              "min": 0,
+              "max": 60,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 35,
+                "red": 45
+              }
+            }
+          ]
+        },
+        {
+          "type": "history-graph",
+          "title": "Temperatura — 7 dias",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.sistema_temperatura_cpu",
+              "name": "CPU"
+            },
+            {
+              "entity": "sensor.escritorio_termo_higrometro_ha_z2m_temperature",
+              "name": "Gabinete"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Homelab NAS (Docker)",
+          "heading_style": "title",
+          "icon": "mdi:server",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "entities",
+          "title": "Resumo rápido",
+          "show_header_toggle": false,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_homelab_nas_cpu",
+              "name": "Processador",
+              "icon": "mdi:cpu-64-bit"
+            },
+            {
+              "entity": "sensor.escritorio_homelab_nas_memoria",
+              "name": "Memória em uso",
+              "icon": "mdi:memory"
+            },
+            {
+              "entity": "sensor.escritorio_homelab_nas_disco",
+              "name": "Disco em uso",
+              "icon": "mdi:harddisk"
+            },
+            {
+              "entity": "sensor.escritorio_homelab_nas_uptime",
+              "name": "Uptime",
+              "icon": "mdi:clock-outline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Homelab NAS — uso agora",
+          "heading_style": "subtitle",
+          "icon": "mdi:gauge",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_homelab_nas_cpu",
+              "name": "CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 60,
+                "red": 85
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_homelab_nas_memoria",
+              "name": "RAM",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 65,
+                "red": 85
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_homelab_nas_disco",
+              "name": "Disco",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 70,
+                "red": 90
+              }
+            }
+          ]
+        },
+        {
+          "type": "entities",
+          "title": "Capacidade",
+          "show_header_toggle": false,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_homelab_nas_disco_usado_gib",
+              "name": "Disco usado",
+              "icon": "mdi:harddisk"
+            },
+            {
+              "entity": "sensor.escritorio_homelab_nas_disco_livre_gib",
+              "name": "Disco livre",
+              "icon": "mdi:harddisk-plus"
+            },
+            {
+              "entity": "sensor.escritorio_homelab_nas_memoria_usada_gib",
+              "name": "Memória usada",
+              "icon": "mdi:memory"
+            },
+            {
+              "entity": "sensor.escritorio_homelab_nas_memoria_livre_gib",
+              "name": "Memória livre",
+              "icon": "mdi:memory"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Homelab NAS — histórico 7 dias",
+          "heading_style": "subtitle",
+          "icon": "mdi:chart-line",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "CPU — 7 dias",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_homelab_nas_cpu",
+              "name": "CPU"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Memória — 7 dias",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_homelab_nas_memoria",
+              "name": "Memória"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Rede Ubiquiti",
+          "heading_style": "title",
+          "icon": "mdi:router-wireless",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "entities",
+          "title": "Clientes na rede",
+          "show_header_toggle": false,
+          "entities": [
+            {
+              "type": "section",
+              "label": "Access points"
+            },
+            {
+              "entity": "sensor.escritorio_ap_unifi_clientes",
+              "name": "U7 Pro Escritório",
+              "icon": "mdi:wifi"
+            },
+            {
+              "entity": "sensor.suite_ap_unifi_clientes",
+              "name": "U7 Pro Suíte",
+              "icon": "mdi:wifi"
+            },
+            {
+              "type": "section",
+              "label": "Redes WiFi"
+            },
+            {
+              "entity": "sensor.casa_wifi_hangar_unifi_clientes",
+              "name": "Hangar",
+              "icon": "mdi:wifi"
+            },
+            {
+              "entity": "sensor.casa_wifi_multimedia_unifi_clientes",
+              "name": "Hangar Multimídia",
+              "icon": "mdi:wifi"
+            },
+            {
+              "entity": "sensor.casa_wifi_visitantes_unifi_clientes",
+              "name": "Visitantes",
+              "icon": "mdi:wifi"
+            },
+            {
+              "entity": "sensor.casa_wifi_iot_unifi_clientes",
+              "name": "IoT",
+              "icon": "mdi:wifi"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "columns": 2,
+          "square": false,
+          "cards": [
+            {
+              "type": "tile",
+              "entity": "sensor.escritorio_gateway_unifi_uptime",
+              "name": "Uptime gateway",
+              "icon": "mdi:clock-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "sensor.escritorio_switch_unifi_uptime",
+              "name": "Uptime Flex Mini",
+              "icon": "mdi:clock-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "sensor.escritorio_ap_unifi_uptime",
+              "name": "Uptime AP Escritório",
+              "icon": "mdi:clock-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "sensor.suite_ap_unifi_uptime",
+              "name": "Uptime AP Suíte",
+              "icon": "mdi:clock-outline"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "LED dos access points",
+          "heading_style": "subtitle",
+          "icon": "mdi:led-on",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 2,
+          "square": false,
+          "cards": [
+            {
+              "type": "tile",
+              "entity": "light.escritorio_ap_unifi_led",
+              "name": "U7 Pro Escritório",
+              "icon": "mdi:led-on"
+            },
+            {
+              "type": "tile",
+              "entity": "light.suite_ap_unifi_led",
+              "name": "U7 Pro Suíte",
+              "icon": "mdi:led-on"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Ubiquiti — CPU e memória",
+          "heading_style": "title",
+          "icon": "mdi:chart-donut",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "UCG Ultra (gateway)",
+          "heading_style": "subtitle",
+          "icon": "mdi:router",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_gateway_unifi_cpu",
+              "name": "CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 50,
+                "red": 80
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_gateway_unifi_memoria",
+              "name": "RAM",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 65,
+                "red": 85
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_gateway_unifi_temperatura",
+              "name": "Temperatura",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 60,
+                "red": 80
+              }
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "USW Flex Mini",
+          "heading_style": "subtitle",
+          "icon": "mdi:lan",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_switch_unifi_cpu",
+              "name": "CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 50,
+                "red": 80
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_switch_unifi_memoria",
+              "name": "RAM",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 65,
+                "red": 85
+              }
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "U7 Pro Escritório",
+          "heading_style": "subtitle",
+          "icon": "mdi:wifi",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_ap_unifi_cpu",
+              "name": "CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 50,
+                "red": 80
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.escritorio_ap_unifi_memoria",
+              "name": "RAM",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 65,
+                "red": 85
+              }
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "U7 Pro Suíte",
+          "heading_style": "subtitle",
+          "icon": "mdi:wifi",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "gauge",
+              "entity": "sensor.suite_ap_unifi_cpu",
+              "name": "CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 50,
+                "red": 80
+              }
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.suite_ap_unifi_memoria",
+              "name": "RAM",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 65,
+                "red": 85
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Ubiquiti — histórico 7 dias",
+          "heading_style": "title",
+          "icon": "mdi:chart-line",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "UCG Ultra (gateway)",
+          "heading_style": "subtitle",
+          "icon": "mdi:router",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "CPU — UCG Ultra (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_gateway_unifi_cpu",
+              "name": "CPU"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Memória — UCG Ultra (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_gateway_unifi_memoria",
+              "name": "Memória"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Temperatura — UCG Ultra (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_gateway_unifi_temperatura",
+              "name": "Temperatura"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "USW Flex Mini",
+          "heading_style": "subtitle",
+          "icon": "mdi:lan",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "CPU — Flex Mini (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_switch_unifi_cpu",
+              "name": "CPU"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Memória — Flex Mini (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_switch_unifi_memoria",
+              "name": "Memória"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "U7 Pro Escritório",
+          "heading_style": "subtitle",
+          "icon": "mdi:wifi",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "CPU — AP Escritório (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_ap_unifi_cpu",
+              "name": "CPU"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Memória — AP Escritório (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.escritorio_ap_unifi_memoria",
+              "name": "Memória"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "U7 Pro Suíte",
+          "heading_style": "subtitle",
+          "icon": "mdi:wifi",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "CPU — AP Suíte (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.suite_ap_unifi_cpu",
+              "name": "CPU"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        },
+        {
+          "type": "history-graph",
+          "title": "Memória — AP Suíte (7 dias)",
+          "hours_to_show": 168,
+          "entities": [
+            {
+              "entity": "sensor.suite_ap_unifi_memoria",
+              "name": "Memória"
+            }
+          ],
+          "grid_options": {
+            "columns": 12,
+            "rows": 5
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Atualizações",
+          "heading_style": "title",
+          "icon": "mdi:update",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "grid",
+          "columns": 2,
+          "square": false,
+          "cards": [
+            {
+              "type": "tile",
+              "entity": "update.home_assistant_core_update",
+              "name": "Core",
+              "icon": "mdi:home-assistant"
+            },
+            {
+              "type": "tile",
+              "entity": "update.home_assistant_supervisor_update",
+              "name": "Supervisor",
+              "icon": "mdi:home-assistant"
+            },
+            {
+              "type": "tile",
+              "entity": "update.home_assistant_operating_system_update",
+              "name": "Sistema operacional",
+              "icon": "mdi:linux"
+            },
+            {
+              "type": "tile",
+              "entity": "update.home_assistant_mcp_server_update",
+              "name": "MCP Server",
+              "icon": "mdi:server"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

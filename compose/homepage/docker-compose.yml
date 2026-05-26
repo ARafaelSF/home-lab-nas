@@ -9,7 +9,7 @@ services:
     ports:
       - 3001:3000
     environment:
-      - HOMEPAGE_ALLOWED_HOSTS=10.0.0.173:3001,home-server-nas.antonio.rafael.nom.br 
+      - HOMEPAGE_ALLOWED_HOSTS=192.168.3.21:3001,home-server-nas.antonio.rafael.nom.br,localhost:3001 
     volumes:
       - homepage_config:/app/config
     restart: unless-stopped
