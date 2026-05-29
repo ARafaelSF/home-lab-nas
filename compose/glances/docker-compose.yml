@@ -1,0 +1,45 @@
+version: '3.3'
+services:
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    labels:
+      - wud.display.name=Glances
+      - wud.display.icon=si:glances
+    restart: unless-stopped
+    pid: host
+    ports:
+      - '61208:61208'
+    environment:
+      - TZ=America/Sao_Paulo
+      - GLANCES_OPT=-w
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://127.0.0.1:61208/api/4/status']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  glances-ha-bridge:
+    build: ./bridge
+    container_name: glances-ha-bridge
+    labels:
+      - wud.display.name=Glances HA Bridge
+      - wud.display.icon=si:homeassistant
+    restart: unless-stopped
+    depends_on:
+      glances:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Sao_Paulo
+      - GLANCES_URL=http://glances:61208
+      - MQTT_HOST=192.168.3.10
+      - MQTT_PORT=1883
+      - MQTT_USER=homeassistant
+      - MQTT_PASSWORD=${WUD_MQTT_PASSWORD}
+      - POLL_INTERVAL=60

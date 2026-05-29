@@ -10,7 +10,7 @@ STACK="${1:-}"
 
 if [[ -z "$STACK" ]]; then
   echo "Uso: $0 <nome-do-serviço>"
-  echo "Ex.: adguard-home cloudflare-tunnel duplicati immich jellyfin npm uptime-kuma wud"
+  echo "Ex.: adguard-home cloudflare-tunnel duplicati glances immich jellyfin npm uptime-kuma wud"
   ls -1 "$REPO_ROOT/compose"
   exit 1
 fi
