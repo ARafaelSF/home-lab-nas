@@ -29,6 +29,8 @@ services:
     labels:
       - wud.display.name=Glances HA Bridge
       - wud.display.icon=si:homeassistant
+      - wud.watch=false
+      - wud.trigger.exclude=ha
     restart: unless-stopped
     depends_on:
       glances:

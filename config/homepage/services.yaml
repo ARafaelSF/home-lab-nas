@@ -28,8 +28,24 @@
         href: http://192.168.3.21:8085
         icon: filebrowser.png
         description: Arquivos do servidor (só LAN)
+    - Alarme Hikvision:
+        href: http://192.168.2.238/
+        icon: hikvision.png
+        description: Painel do alarme (só LAN)
+    - Solarman:
+        href: https://home.solarmanpv.com/
+        icon: /icons/solarman.png
+        description: Monitor dos painéis solares
 
 - Infraestrutura:
+    - UniFi:
+        href: https://unifi.ui.com/
+        icon: unifi.png
+        description: Rede e gateway Ubiquiti
+    - Proxmox:
+        href: https://192.168.3.20:8006/
+        icon: proxmox.png
+        description: Hypervisor e VMs (só LAN)
     - Portainer:
         href: https://192.168.3.21:9443
         icon: portainer.png

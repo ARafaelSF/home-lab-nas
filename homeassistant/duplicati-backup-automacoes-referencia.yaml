@@ -1,0 +1,126 @@
+# Implementado via MCP no Home Assistant (2026-05-29)
+# Categoria: Homelab (mesma dos Uptime Kuma)
+# Webhook: duplicati_backup_result (registado pelas 3 automações)
+#
+# Automações na UI:
+#   - automation.duplicati_backup_ok_homelab
+#   - automation.duplicati_backup_warning_homelab
+#   - automation.duplicati_backup_error_homelab
+#
+# Script na VM Docker: /opt/duplicati-scripts/duplicati_to_ha.sh
+# POST: http://192.168.3.10:8123/api/webhook/duplicati_backup_result
+
+# Referência YAML (3 automações separadas, padrão Uptime Kuma):
+
+automation:
+  - id: duplicati_backup_ok_homelab
+    alias: "💾 Homelab: Backup OK (Duplicati)"
+    description: "Webhook Duplicati — status success (VM Docker 192.168.3.21)."
+    mode: single
+    category: "01KSFRRC7ZP99TKEV2C913XQME"
+    variables:
+      destinatarios_homelab:
+        - antonio
+    triggers:
+      - trigger: webhook
+        webhook_id: duplicati_backup_result
+        allowed_methods:
+          - POST
+        local_only: true
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.json.status is defined and trigger.json.status == 'success' }}"
+    actions:
+      - action: persistent_notification.create
+        data:
+          title: "Backup OK — {{ trigger.json.job_name | default('Duplicati backup') }}"
+          message: "Backup concluído com sucesso em {{ trigger.json.time | default('') }}. {{ trigger.json.message | default('') }}"
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "💾 Homelab — backup OK"
+          mensagem: "{{ trigger.json.job_name | default('Duplicati backup') }}: sucesso em {{ trigger.json.time | default('') }}."
+          dados:
+            tag: duplicati_backup_ok
+            channel: Homelab
+            importance: default
+            notification_icon: mdi:backup-restore
+            color: "#4CAF50"
+
+  - id: duplicati_backup_warning_homelab
+    alias: "💾 Homelab: Backup com avisos (Duplicati)"
+    description: "Webhook Duplicati — status warning (VM Docker 192.168.3.21)."
+    mode: single
+    category: "01KSFRRC7ZP99TKEV2C913XQME"
+    variables:
+      destinatarios_homelab:
+        - antonio
+    triggers:
+      - trigger: webhook
+        webhook_id: duplicati_backup_result
+        allowed_methods:
+          - POST
+        local_only: true
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.json.status is defined and trigger.json.status == 'warning' }}"
+    actions:
+      - action: persistent_notification.create
+        data:
+          title: "Backup com avisos — {{ trigger.json.job_name | default('Duplicati backup') }}"
+          message: "Backup concluído com WARNINGS em {{ trigger.json.time | default('') }}. {{ trigger.json.message | default('') }}"
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "💾 Homelab — backup com avisos"
+          mensagem: "{{ trigger.json.job_name | default('Duplicati backup') }}: warnings em {{ trigger.json.time | default('') }}. {{ trigger.json.message | default('') }}"
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "💾 Homelab — backup com avisos"
+          mensagem: "{{ trigger.json.job_name | default('Duplicati backup') }}: verifique o Duplicati."
+          dados:
+            tag: duplicati_backup_warning
+            channel: Homelab
+            importance: high
+            notification_icon: mdi:alert
+            color: "#FF9800"
+
+  - id: duplicati_backup_error_homelab
+    alias: "💾 Homelab: Backup falhou (Duplicati)"
+    description: "Webhook Duplicati — status error (VM Docker 192.168.3.21)."
+    mode: queued
+    category: "01KSFRRC7ZP99TKEV2C913XQME"
+    variables:
+      destinatarios_homelab:
+        - antonio
+    triggers:
+      - trigger: webhook
+        webhook_id: duplicati_backup_result
+        allowed_methods:
+          - POST
+        local_only: true
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.json.status is defined and trigger.json.status == 'error' }}"
+    actions:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "💾 Homelab — backup FALHOU"
+          mensagem: "{{ trigger.json.job_name | default('Duplicati backup') }} falhou em {{ trigger.json.time | default('') }}. {{ trigger.json.message | default('') }}"
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: "{{ destinatarios_homelab }}"
+          titulo: "💾 Homelab — backup FALHOU"
+          mensagem: "{{ trigger.json.job_name | default('Duplicati backup') }}: erro em {{ trigger.json.time | default('') }}. {{ trigger.json.message | default('') }}"
+          dados:
+            tag: duplicati_backup_error
+            channel: Homelab
+            importance: high
+            notification_icon: mdi:backup-restore-alert
+            color: "#D32F2F"
+      - action: persistent_notification.create
+        data:
+          title: "Backup FALHOU — {{ trigger.json.job_name | default('Duplicati backup') }}"
+          message: "Backup falhou em {{ trigger.json.time | default('') }}. {{ trigger.json.message | default('') }}"

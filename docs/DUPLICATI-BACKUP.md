@@ -37,6 +37,36 @@ Filtros de exclusão no job: `metadata.db`, `*/sessions.db`, `*/stats.db`, `*/di
 
 Scripts em `/opt/duplicati-scripts/` (cópia versionada em `homelab/scripts/duplicati-hooks/`).
 
+Cada job deve ter nas **opções avançadas** (texto livre):
+
+```text
+--run-script-before=/scripts/pre-backup.sh
+--run-script-after=/scripts/post-backup.sh
+```
+
+O `post-backup.sh` chama automaticamente `duplicati_to_ha.sh`, que envia o resultado ao Home Assistant (`192.168.3.10`).
+
+### Home Assistant — notificação de backup
+
+| Item | Caminho / valor |
+|------|-----------------|
+| Script | `/opt/duplicati-scripts/duplicati_to_ha.sh` → `/scripts/` no container |
+| Webhook HA | `http://192.168.3.10:8123/api/webhook/duplicati_backup_result` |
+| Automações HA | `duplicati_backup_*_homelab` + `duplicati_registar_backup_homelab` — ver `homeassistant/duplicati-backup-automacoes-referencia.yaml` |
+| Dashboard / sensores | `sensor.sistema_docker_backup_*_linha`, badge Home, subview `docker-backups` — ver `homeassistant/duplicati-backup-monitor-referencia.md` |
+| Config opcional | `duplicati-ha.env` (copiar de `duplicati-ha.env.example`) |
+| Log | `/scripts/duplicati_to_ha.log` no container |
+
+**Modo padrão:** webhook local (sem Long-Lived Token), igual ao Uptime Kuma. Para usar também a API de eventos (`Ferramentas de desenvolvedor → Eventos`), defina `HA_NOTIFY_MODE=event` e `HA_TOKEN` no `duplicati-ha.env`.
+
+**Teste rápido** (na VM Docker):
+
+```bash
+docker exec -e DUPLICATI__PARSED_RESULT=Success -e DUPLICATI__BACKUP_NAME=teste \
+  duplicati /scripts/duplicati_to_ha.sh
+docker exec duplicati tail -1 /scripts/duplicati_to_ha.log
+```
+
 Antes do backup, **param** (ordem):
 
 1. Immich (server, ML, Postgres)

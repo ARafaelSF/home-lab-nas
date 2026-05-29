@@ -8,7 +8,3 @@
     cpu: true
     mem: true
     disk: /rootfs
-
-- search:
-    provider: duckduckgo
-    target: _blank

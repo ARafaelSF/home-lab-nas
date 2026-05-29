@@ -5,15 +5,22 @@ STATE_FILE="/tmp/duplicati-stopped-containers.txt"
 LOG_FILE="/scripts/hooks.log"
 MANIFEST_DIR="/source/homelab/backups/manifests"
 
+# Se um backup anterior travou depois do PRE, repõe os containers antes de parar de novo
+if [ -f "$STATE_FILE" ]; then
+  echo "[$(date '+%F %T')] PRE: estado anterior detectado — a executar POST de recuperação" >> "$LOG_FILE"
+  /scripts/post-backup.sh
+fi
+
+# Uptime Kuma para primeiro para não emitir falsos alertas durante a janela de backup.
+# AdGuard fica no ar para manter DNS/rede.
 STOP_ORDER="
+uptime-kuma
 immich_server
 immich_machine_learning
 immich_postgres
 mealie
 vaultwarden
-uptime-kuma
 portainer
-adguardhome
 filebrowser
 "
 
@@ -31,7 +38,6 @@ for c in $STOP_ORDER; do
   fi
 done
 
-# Dar tempo ao SO libertar locks em SQLite (portainer.db, filebrowser.db, etc.)
 sleep 3
 
 mkdir -p "$MANIFEST_DIR"

@@ -1,7 +1,7 @@
 version: '3'
 services:
   wud:
-    image: getwud/wud:8.2.2
+    image: getwud/wud:${WUD_TAG:-8.2.2}
     container_name: wud
     labels:
       - wud.display.name=WUD

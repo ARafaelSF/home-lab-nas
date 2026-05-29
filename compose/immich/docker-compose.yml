@@ -2,7 +2,7 @@ version: "3.8"
 services:
   immich-server:
     container_name: immich_server
-    image: ghcr.io/immich-app/immich-server:release
+    image: ghcr.io/immich-app/immich-server:${IMMICH_TAG:-release}
     labels:
       - wud.display.name=Immich
       - wud.display.icon=si:immich
@@ -21,7 +21,7 @@ services:
 
   immich-machine-learning:
     container_name: immich_machine_learning
-    image: ghcr.io/immich-app/immich-machine-learning:release
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_TAG:-release}
     labels:
       - wud.display.name=Immich ML
       - wud.display.icon=si:immich

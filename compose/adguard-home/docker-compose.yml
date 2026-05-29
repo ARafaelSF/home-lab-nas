@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   adguardhome:
-    image: adguard/adguardhome:latest
+    image: adguard/adguardhome:${ADGUARD_TAG:-latest}
     container_name: adguardhome
     labels:
       - wud.display.name=AdGuard Home

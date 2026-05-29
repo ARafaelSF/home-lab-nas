@@ -4,6 +4,7 @@
 
 | Item | Valor |
 |------|--------|
+| IP do HA | **192.168.3.10** (não confundir com a VM Docker **192.168.3.21**) |
 | Porta | **9583** |
 | URL | `http://192.168.3.10:9583/private_XXXXX` (copiar do log do add-on) |
 | Autenticação | O path `/private_...` **é** a chave — não compartilhe |
@@ -79,27 +80,27 @@ No Cursor: **Ctrl+Shift+P** → digite **"MCP"** → **Cursor Settings: MCP** (o
 
 ### 2.3 Conteúdo do `mcp.json`
 
-Cole (troque só a chave):
+Cole a URL completa do log do add-on (inclui `/private_...`):
 
 ```json
 {
   "mcpServers": {
     "home-assistant": {
       "command": "npx",
-      "args": ["-y", "@coolver/home-assistant-mcp@latest"],
-      "env": {
-        "HA_AGENT_URL": "http://192.168.3.10:8099",
-        "HA_AGENT_KEY": "SUA_AGENT_KEY_AQUI"
-      }
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://192.168.3.10:9583/private_SUA_CHAVE_DO_LOG"
+      ]
     }
   }
 }
 ```
 
-- **HA_AGENT_URL:** use o IP `192.168.3.10` (funciona na sua LAN; `homeassistant.local` só se o mDNS resolver).
-- **HA_AGENT_KEY:** a chave copiada da Web UI do add-on.
+- Requer **Node.js 20+** e `npx` no PC onde o Cursor corre.
+- Modelos: `config/cursor/mcp.json.example` (sem chave) — **não** commitar `mcp.json` com a chave real.
 
-Modelo salvo no servidor: `/root/.cursor/mcp.json.example`
+Alternativa (Claude Desktop): `mcp-proxy` com `--transport streamablehttp` e a mesma URL.
 
 ### 2.4 Reiniciar o Cursor
 

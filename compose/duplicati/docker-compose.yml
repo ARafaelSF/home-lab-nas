@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   duplicati:
-    image: ghcr.io/linuxserver/duplicati:latest
+    image: ghcr.io/linuxserver/duplicati:${DUPLICATI_TAG:-latest}
     container_name: duplicati
     labels:
       - wud.display.name=Duplicati

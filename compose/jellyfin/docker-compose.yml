@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   jellyfin:
-    image: ghcr.io/linuxserver/jellyfin:latest
+    image: ghcr.io/linuxserver/jellyfin:${JELLYFIN_TAG:-latest}
     container_name: jellyfin
     labels:
       - wud.display.name=Jellyfin

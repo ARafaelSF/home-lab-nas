@@ -40,14 +40,17 @@ homelab/
 │   ├── docker/               ← daemon.json, firewall, VLANs
 │   └── network/if-up.d/      ← rota LAN 68.x
 ├── config/
-│   ├── adguard/split-dns-user-rules.example.txt
-│   ├── adguard/AdGuardHome.http-doh.example.yaml
-│   └── portainer/README.md
+│   ├── adguard/              ← DoH example (insecure_enabled)
+│   ├── cursor/mcp.json.example
+│   ├── homepage/
+│   └── portainer/
 ├── scripts/
 │   ├── deploy-stack.sh
-│   ├── testar-dns-remoto.sh
-│   └── duplicati-verificar-backup.sh
-├── homeassistant/            ← referência WUD / automações
+│   ├── sync-portainer-compose.sh
+│   ├── container-ops/        ← backup/update/rollback de stacks
+│   ├── duplicati-hooks/      ← pre/post backup + webhook HA
+│   └── testar-dns-remoto.sh
+├── homeassistant/            ← referência WUD, Duplicati, automações
 ├── backups/                  ← exports de referência (sem dados live)
 └── docs/
     ├── SERVIDOR-HOMELAB.md   ← guia completo para replicar

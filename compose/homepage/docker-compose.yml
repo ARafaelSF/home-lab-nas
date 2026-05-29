@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   homepage:
-    image: ghcr.io/gethomepage/homepage:latest
+    image: ghcr.io/gethomepage/homepage:${HOMEPAGE_TAG:-latest}
     container_name: homepage
     labels:
       - wud.display.name=Homepage
@@ -12,6 +12,7 @@ services:
       - HOMEPAGE_ALLOWED_HOSTS=192.168.3.21:3001,home-server-nas.antonio.rafael.nom.br,localhost:3001 
     volumes:
       - homepage_config:/app/config
+      - /root/homelab/config/homepage/icons:/app/public/icons
     restart: unless-stopped
 
 volumes:

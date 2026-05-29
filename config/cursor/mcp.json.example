@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "home-assistant": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://192.168.3.10:9583/private_COLE_A_CHAVE_DO_LOG_DO_ADDON"
+      ]
+    }
+  }
+}
