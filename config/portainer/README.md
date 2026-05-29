@@ -27,6 +27,8 @@ Recupera também `.env` em falta (stacks 4, 8, 25, 26) a partir dos containers e
 2. `sync-portainer-compose.sh` **ou** colar na UI do Portainer
 3. **Update the stack** no Portainer (ou `deploy-stack.sh` para stacks só CLI)
 
-Stacks só CLI (ex.: `glances`, `homepage`, `portainer`): ver README em `compose/<serviço>/`.
+Stacks só CLI (ex.: `homepage`, `portainer`): ver README em `compose/<serviço>/`.
+
+**Duplicati (Portainer id 25):** o projeto Docker deve chamar-se `duplicati`, não `25`. Se aparecer uma linha **Limited** com id `25` na lista, é duplicata — redeploy pelo Portainer (não `docker compose -p 25`).
 
 O volume `portainer_data` não está versionado — faça backup da UI se necessário.

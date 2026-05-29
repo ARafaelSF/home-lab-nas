@@ -30,6 +30,7 @@ case "$STACK" in
   nginx-proxy-manager) PROJECT="npm" ;;
   adguard-home) PROJECT="adguard-home" ;;
   cloudflare-tunnel) PROJECT="cloudflare-tunnel" ;;
+  duplicati) PROJECT="duplicati" ;;
 esac
 
 cd "$DIR"
