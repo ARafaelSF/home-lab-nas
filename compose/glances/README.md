@@ -12,15 +12,20 @@ cp .env.example .env   # WUD_MQTT_PASSWORD = mesma do stack WUD (26)
 ./homelab/scripts/deploy-stack.sh glances
 ```
 
-## Gerir no Portainer
+## Portainer
 
-Containers criados com `deploy-stack.sh` aparecem como **fora do Portainer**. Para editar na UI:
+Stack **glances** (ID **31**) — gerir em Portainer → Stacks → **glances** → Editor.
 
-1. `docker compose -p glances -f /root/homelab/compose/glances/docker-compose.yml down`
-2. Portainer → **Stacks** → **Add stack** → nome `glances`
-3. **Web editor** → colar `docker-compose.yml` desta pasta
-4. **Environment variables** → colar o `.env` (só `WUD_MQTT_PASSWORD`)
-5. **Deploy the stack**
-6. Anotar o ID numérico (URL ou pasta em `portainer_data/compose/<id>/`) e, se quiser, adicionar ao `config/portainer/stacks-map.json`
+Ficheiros live: `portainer_data/compose/31/` (inclui `bridge/` para o build).
 
-Depois de stacks restaurados: `homelab/scripts/sync-portainer-compose.sh`
+Sincronizar do Git para o Portainer após editar aqui:
+
+```bash
+cp /root/homelab/compose/glances/docker-compose.yml \
+   /var/lib/docker/volumes/portainer_data/_data/compose/31/
+cp -r /root/homelab/compose/glances/bridge \
+   /var/lib/docker/volumes/portainer_data/_data/compose/31/
+# Depois: Portainer → glances → Update the stack
+```
+
+Não usar `deploy-stack.sh glances` (conflita com o stack 31).
