@@ -1,10 +1,12 @@
 #!/bin/bash
-# Testa split DNS AdGuard: LAN (192.168.x) vs remoto simulado.
+# Testa split DNS AdGuard: LAN (192.168.x) vs remoto simulado + DoH.
 set -euo pipefail
 
 ADGUARD="192.168.3.21"
 DOMAIN="jellyfin.antonio.rafael.nom.br"
 DNS_HOST="dns.antonio.rafael.nom.br"
+# Consulta DNS wire (www.example.com A) em base64url para DoH GET
+DOH_QUERY_B64="AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB"
 
 echo "=== Teste DNS remoto / local ==="
 echo
@@ -37,17 +39,45 @@ else
 fi
 
 echo
-echo "4) DoH local (AdGuard /dns-query):"
+echo "4) DoH local sem payload (http://${ADGUARD}:8080/dns-query):"
 CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://${ADGUARD}:8080/dns-query" || echo "000")
-echo "   HTTP $CODE (400 = serviço activo, espera pedido DNS válido)"
+if [ "$CODE" = "400" ]; then
+  echo "   HTTP $CODE — OK (endpoint activo; 404 = insecure_enabled false)"
+elif [ "$CODE" = "404" ]; then
+  echo "   HTTP $CODE — FALHOU (activar http.doh.insecure_enabled no YAML e reiniciar adguardhome)"
+else
+  echo "   HTTP $CODE — verificar AdGuard / túnel"
+fi
 
 echo
-echo "5) Túnel HTTPS — $DNS_HOST (precisa rota CF activa):"
+echo "5) DoH público sem payload (https://${DNS_HOST}/dns-query):"
+CODE=$(curl -sk -o /dev/null -w "%{http_code}" "https://${DNS_HOST}/dns-query" 2>/dev/null || echo "000")
+if [ "$CODE" = "400" ]; then
+  echo "   HTTP $CODE — OK"
+elif [ "$CODE" = "404" ]; then
+  echo "   HTTP $CODE — FALHOU (YAML insecure_enabled ou rota CF para http://8080)"
+else
+  echo "   HTTP $CODE — verificar Cloudflare Tunnel"
+fi
+
+echo
+echo "6) DoH público com payload (esperado 200):"
+CODE=$(curl -sk -o /dev/null -w "%{http_code}" \
+  -H "accept: application/dns-message" \
+  "https://${DNS_HOST}/dns-query?dns=${DOH_QUERY_B64}" 2>/dev/null || echo "000")
+if [ "$CODE" = "200" ]; then
+  echo "   HTTP $CODE — OK"
+else
+  echo "   HTTP $CODE — FALHOU (DoH não resolve consultas)"
+fi
+
+echo
+echo "7) Túnel HTTPS — raiz $DNS_HOST:"
 CODE=$(curl -sk -o /dev/null -w "%{http_code}" "https://${DNS_HOST}/" 2>/dev/null || echo "000")
 echo "   HTTPS $CODE (302/400/502 — ver nota abaixo)"
 
 echo
-echo "6) UI AdGuard no túnel:"
+echo "8) UI AdGuard no túnel:"
 CODE=$(curl -sk -o /dev/null -w "%{http_code}" "https://adguard.${DOMAIN#*.}" 2>/dev/null || echo "000")
 echo "   https://adguard... → HTTP $CODE"
 
@@ -55,10 +85,10 @@ echo
 echo "=============================================="
 echo "No CELULAR (4G, Wi-Fi desligado):"
 echo "  • DNS privado / Intra: $DNS_HOST"
+echo "  • DoH URL: https://${DNS_HOST}/dns-query"
 echo "  • Abrir https://$DOMAIN → deve carregar"
-echo "  • https://$DNS_HOST → painel AdGuard (opcional)"
 echo ""
-echo "Se passo 5 der 502: na Cloudflare use"
+echo "Se passo 5/6 falharem: na Cloudflare use"
 echo "  http://192.168.3.21:8080  (não https://443)"
-echo "  O telemóvel continua com HTTPS até à Cloudflare."
+echo "  E no YAML: http.doh.insecure_enabled: true"
 echo "=============================================="

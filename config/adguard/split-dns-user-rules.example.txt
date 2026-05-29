@@ -7,9 +7,8 @@
 ||antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
 ||.antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
 
-# YAML adicional (secção http no AdGuardHome.yaml):
-#   doh:
-#     insecure_enabled: true
+# DoH + TLS (obrigatório com túnel Cloudflare → HTTP :8080):
+#   config/adguard/AdGuardHome.http-doh.example.yaml
 # trusted_proxies:
 #   - 172.16.0.0/12
 #   - 192.168.0.0/16

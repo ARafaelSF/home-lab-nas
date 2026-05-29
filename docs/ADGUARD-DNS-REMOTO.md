@@ -1,7 +1,22 @@
 # AdGuard — DNS no celular (4G / fora de casa)
 
 **Implementação activa:** opção B (DoH via Cloudflare), concluída em 2026-05-25.  
+**Correcção DoH (insecure):** 2026-05-29 — `http.doh.insecure_enabled: true` (ver abaixo).  
 **Guia completo do servidor:** `SERVIDOR-HOMELAB.md`.
+
+---
+
+## Arquitectura de hostnames
+
+| Hostname | Função | Cloudflare Access |
+|----------|--------|-------------------|
+| `adguard.antonio.rafael.nom.br` | Painel admin AdGuard | Opcional (recomendado) |
+| `dns.antonio.rafael.nom.br` | DoH `/dns-query` apenas | **Não** (sem login interactivo) |
+
+- **LAN / Intra:** URL DoH `https://dns.antonio.rafael.nom.br/dns-query`
+- **Túnel (ambos):** origem `http://192.168.3.21:8080` (não `https://443` no hostname `dns`)
+
+Snippet versionado: `config/adguard/AdGuardHome.http-doh.example.yaml`
 
 ---
 
@@ -39,8 +54,27 @@ No AdGuard:
 
 - `filtering.rewrites` globais para `*.antonio.rafael.nom.br` → **disabled**
 - `user_rules` com `$client=192.168.0.0/16` — ver `config/adguard/split-dns-user-rules.example.txt`
-- `http.doh.insecure_enabled: true`
-- `trusted_proxies`: `172.16.0.0/12`, `192.168.0.0/16`
+- `tls.enabled: false` (painel «Criptografia» desligado)
+- `http.doh.insecure_enabled: true` — copiar de `config/adguard/AdGuardHome.http-doh.example.yaml`
+- `trusted_proxies`: `172.16.0.0/12`, `192.168.0.0/16` (e redes Docker se necessário)
+
+### Incidente: DoH externo em 404 (2026-05-29)
+
+**Sintoma:** `https://dns.antonio.rafael.nom.br/dns-query` não funcionava; localmente `http://127.0.0.1:8080/dns-query` devolvia **404**.
+
+**Causa:** No YAML live, `tls.enabled` estava `false` e `http.doh.insecure_enabled` estava `false`. Com túnel Cloudflare (HTTPS público → HTTP interno `:8080`), o AdGuard só expõe `/dns-query` em modo «inseguro» interno quando `insecure_enabled: true`.
+
+**Correcção aplicada:**
+
+```yaml
+http:
+  doh:
+    insecure_enabled: true   # era false
+```
+
+Reinício: `docker restart adguardhome`
+
+**Rollback:** repor `insecure_enabled: false`, reiniciar o container — DoH deixa de responder em HTTP (comportamento anterior).
 
 ### 2. NPM — proxy host id 13
 
@@ -101,17 +135,37 @@ Ver erros no servidor: `docker logs cloudflared 2>&1 | tail -20` → `tls: unrec
 ## Testes
 
 ```bash
-# No servidor
+# No servidor (suite completa)
 /root/homelab/scripts/testar-dns-remoto.sh
 /root/homelab/scripts/testar-dns-local.sh
+```
+
+### Validação DoH (manual)
+
+Pedido **sem** payload DNS — endpoint activo, corpo inválido:
+
+```bash
+curl -i "http://127.0.0.1:8080/dns-query"
+curl -i "https://dns.antonio.rafael.nom.br/dns-query"
+# Esperado: HTTP 400 Bad Request (não 404)
+```
+
+Pedido **com** payload DoH (`www.example.com` A):
+
+```bash
+curl -sS -o /dev/null -w "%{http_code}\n" \
+  -H "accept: application/dns-message" \
+  "https://dns.antonio.rafael.nom.br/dns-query?dns=AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB"
+# Esperado: 200
 ```
 
 | Resultado esperado | Significado |
 |--------------------|-------------|
 | LAN → `192.168.3.21` | Split DNS local OK |
 | Container Docker → IP Cloudflare | Simula 4G OK |
-| `curl -sk https://dns.antonio...` → 302 | Túnel + NPM OK |
-| DoH `:8080/dns-query` → 400 | Serviço activo (pedido vazio) |
+| DoH local/remoto **sem** payload → **400** | `/dns-query` activo (404 = `insecure_enabled` ainda false) |
+| DoH **com** `?dns=...` + header `accept: application/dns-message` → **200** | DoH funcional de ponta a ponta |
+| `curl -sk https://dns.antonio.../` → 302/400 | Túnel + origem HTTP OK |
 
 ---
 

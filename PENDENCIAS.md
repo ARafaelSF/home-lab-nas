@@ -94,8 +94,9 @@ ALLOW_SIGNUP=true
 
 - [x] Servidor: DoH + rewrites só LAN (`homelab/docs/ADGUARD-DNS-REMOTO.md`)
 - [x] NPM: `dns.antonio.rafael.nom.br` (proxy host 13)
-- [x] Cloudflare: `dns` → `https://192.168.3.21:443` + No TLS Verify; `adguard` → `http://8080`
+- [x] Cloudflare: `dns` e `adguard` → `http://192.168.3.21:8080` (não `https://443` no `dns`)
 - [x] Painel AdGuard «Criptografia» desligado (TLS na Cloudflare + NPM)
+- [x] YAML: `http.doh.insecure_enabled: true` (fix 404 em `/dns-query`) — 2026-05-29
 - [x] **Teste 4G** (DNS privado `dns.antonio.rafael.nom.br`) — 2026-05-25
 
 ### Teste de restore (trimestral)

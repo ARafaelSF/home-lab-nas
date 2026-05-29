@@ -177,8 +177,8 @@ Export JSON: `backups/npm-proxy-hosts-referencia.json`.
 
 | Hostname público | Serviço | URL no túnel | TLS extra |
 |----------------|---------|--------------|-----------|
-| `adguard.antonio.rafael.nom.br` | UI AdGuard | `http://192.168.3.21:8080` | — |
-| `dns.antonio.rafael.nom.br` | DoH + UI | **`http://192.168.3.21:8080`** | — |
+| `adguard.antonio.rafael.nom.br` | UI admin (Access opcional) | `http://192.168.3.21:8080` | — |
+| `dns.antonio.rafael.nom.br` | DoH `/dns-query` (sem Access) | **`http://192.168.3.21:8080`** | — |
 
 O telemóvel usa **HTTPS até à Cloudflare**. Por dentro, `adguard` e `dns` devem ir em **HTTP** para `:8080` (AdGuard DoH).
 
@@ -203,7 +203,7 @@ Outros serviços (Jellyfin, Portainer, …) seguem o padrão já existente no t�
 Com túnel Cloudflare + NPM **não** activar «Ativar criptografia» no AdGuard:
 
 - Certificado HTTPS fica na **Cloudflare** (público) e no **NPM** (interno).
-- AdGuard serve DoH em `:8080` com `http.doh.insecure_enabled: true` (YAML).
+- AdGuard serve DoH em `:8080` com `http.doh.insecure_enabled: true` (YAML). Sem isto, `/dns-query` responde **404** atrás do túnel HTTP.
 
 ### Split DNS (LAN vs 4G)
 
@@ -219,8 +219,8 @@ Com túnel Cloudflare + NPM **não** activar «Ativar criptografia» no AdGuard:
 ||.antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
 ```
 
-3. YAML (exemplo versionado): `config/adguard/split-dns-user-rules.example.txt`
-4. `http.doh.insecure_enabled: true`
+3. Regras: `config/adguard/split-dns-user-rules.example.txt`
+4. DoH/TLS: `config/adguard/AdGuardHome.http-doh.example.yaml` (`http.doh.insecure_enabled: true`, `tls.enabled: false`)
 5. `trusted_proxies`: `172.16.0.0/12`, `192.168.0.0/16`
 
 **Config live:** volume `adguard-home_adguard_conf` → `AdGuardHome.yaml` (não commitar se tiver dados sensíveis).

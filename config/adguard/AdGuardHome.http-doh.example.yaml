@@ -1,0 +1,20 @@
+# Fragmento versionado — fundir na secção `http` / `tls` do AdGuardHome.yaml
+# (volume Docker: adguard-home_adguard_conf → /opt/adguardhome/conf/AdGuardHome.yaml)
+#
+# NÃO commitar o ficheiro live completo (contém password hash em `users`).
+# Ver: docs/ADGUARD-DNS-REMOTO.md
+
+http:
+  address: 0.0.0.0:80
+  doh:
+    routes:
+      - GET /dns-query
+      - POST /dns-query
+      - GET /dns-query/{ClientID}
+      - POST /dns-query/{ClientID}
+    # Obrigatório com Cloudflare Tunnel + origem HTTP :8080 (sem TLS no AdGuard).
+    # Sem isto, GET /dns-query devolve 404 e DoH externo falha.
+    insecure_enabled: true
+
+tls:
+  enabled: false

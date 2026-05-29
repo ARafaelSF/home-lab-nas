@@ -41,6 +41,7 @@ homelab/
 │   └── network/if-up.d/      ← rota LAN 68.x
 ├── config/
 │   ├── adguard/split-dns-user-rules.example.txt
+│   ├── adguard/AdGuardHome.http-doh.example.yaml
 │   └── portainer/README.md
 ├── scripts/
 │   ├── deploy-stack.sh
