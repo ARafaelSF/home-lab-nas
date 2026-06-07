@@ -24,6 +24,7 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes, mu
 | Só backup de um app | `/opt/container-ops/ops.sh backup mealie` |
 | Backup de **todos** | `/opt/container-ops/ops.sh backup-all` |
 | **Atualizar** versão | `/opt/container-ops/ops.sh update mealie latest` |
+| **Actualizar sensores HA** (só WUD) | `/opt/container-ops/ops.sh refresh-ha` ou `refresh-ha mealie` |
 | Voltar versão antiga | `/opt/container-ops/ops.sh rollback mealie v2.7.0` |
 | Apagar backups velhos (ficar com 3) | `/opt/container-ops/ops.sh prune mealie 3` |
 
@@ -65,8 +66,13 @@ Substitui `mealie` pelo nome da app (coluna da esquerda no `list`).
 # 1) Ver se está na lista
 /opt/container-ops/ops.sh list
 
-# 2) Atualizar (já inclui backup automático)
+# 2) Atualizar (já inclui backup automático + refresh dos sensores HA)
 /opt/container-ops/ops.sh update mealie latest
+
+# 2b) Se já actualizou manualmente e o HA ainda mostra update pendente:
+/opt/container-ops/ops.sh refresh-ha mealie
+# ou todos de uma vez:
+/opt/container-ops/ops.sh refresh-ha
 
 # 3) Se algo correr mal, voltar atrás
 /opt/container-ops/ops.sh rollback mealie v2.7.0

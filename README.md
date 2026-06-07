@@ -60,9 +60,12 @@ sudo ln -sfn /root/homelab/scripts/container-ops /opt/container-ops
 /opt/container-ops/ops.sh backup-all
 ```
 
-6. **Forçar verificação WUD** (opcional, sem esperar o cron):
+6. **Forçar verificação WUD** (opcional — o `update` já faz isto automaticamente):
 
 ```bash
+/opt/container-ops/ops.sh refresh-ha              # todos os containers (~30 s)
+/opt/container-ops/ops.sh refresh-ha jellyfin     # só um (~3 s)
+# equivalente manual:
 docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/watch
 ```
 

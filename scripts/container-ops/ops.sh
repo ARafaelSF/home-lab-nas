@@ -39,8 +39,9 @@ load_app() {
   local line
   line="$(grep -E "^[^#].*\|" "$APPS_CONF" | grep -E "^${app}\|" || true)"
   [[ -n "$line" ]] || die "App '${app}' não cadastrada em ${APPS_CONF}"
-  IFS='|' read -r APP_NAME APP_STACK_DIR APP_SERVICE APP_TAG_KEY APP_VOLUMES_CSV APP_PROJECT <<<"$line"
+  IFS='|' read -r APP_NAME APP_STACK_DIR APP_SERVICE APP_TAG_KEY APP_VOLUMES_CSV APP_PROJECT APP_WUD_NAME <<<"$line"
   APP_PROJECT="${APP_PROJECT:-}"
+  APP_WUD_NAME="${APP_WUD_NAME:-}"
   APP_BACKUP_DIR="${BACKUP_ROOT}/${APP_NAME}"
   APP_COMPOSE_FILE="${APP_STACK_DIR}/docker-compose.yml"
   APP_ENV_FILE="${APP_STACK_DIR}/.env"
@@ -165,6 +166,88 @@ validate_service() {
   log "Imagem em uso: ${image}"
 }
 
+resolve_wud_name() {
+  if [[ -n "${APP_WUD_NAME:-}" ]]; then
+    echo "$APP_WUD_NAME"
+    return
+  fi
+  case "$APP_NAME" in
+    npm) echo "nginx-proxy-manager" ;;
+    cloudflare) echo "cloudflared" ;;
+    immich) echo "immich_server" ;;
+    immich-ml) echo "immich_machine_learning" ;;
+    adguard) echo "adguardhome" ;;
+    uptime-kuma) echo "uptime-kuma" ;;
+    *) echo "${APP_SERVICE//-/_}" ;;
+  esac
+}
+
+wud_get_container_id() {
+  local wud_name="$1"
+  docker exec wud curl -sf http://127.0.0.1:3000/api/containers 2>/dev/null \
+    | WUD_NAME="$wud_name" python3 -c "
+import json, os, sys
+name = os.environ['WUD_NAME']
+for c in json.load(sys.stdin):
+    if c['name'] == name:
+        print(c['id'])
+        break
+" || true
+}
+
+wud_refresh_ha() {
+  local scope="${1:-app}"
+
+  if [[ "${CONTAINER_OPS_SKIP_WUD:-0}" -eq 1 ]]; then
+    log "WUD refresh ignorado (CONTAINER_OPS_SKIP_WUD=1)"
+    return 0
+  fi
+
+  if ! docker inspect wud >/dev/null 2>&1; then
+    log "AVISO: container 'wud' não encontrado — sensores HA não actualizados"
+    return 0
+  fi
+
+  if [[ "$scope" == "all" ]]; then
+    log "WUD: scan completo (actualizar todos os sensores HA)..."
+    if docker exec wud curl -sf -X POST http://127.0.0.1:3000/api/containers/watch >/dev/null; then
+      log "WUD: sensores HA actualizados."
+    else
+      log "AVISO: scan WUD falhou"
+      return 1
+    fi
+    return 0
+  fi
+
+  local wud_name cid
+  wud_name="$(resolve_wud_name)"
+  cid="$(wud_get_container_id "$wud_name")"
+
+  if [[ -z "$cid" ]]; then
+    log "AVISO: '${wud_name}' não encontrado no WUD — scan completo..."
+    wud_refresh_ha all
+    return 0
+  fi
+
+  log "WUD: actualizar sensor HA (${wud_name})..."
+  if docker exec wud curl -sf -X POST "http://127.0.0.1:3000/api/containers/${cid}/watch" >/dev/null; then
+    log "WUD: sensor HA actualizado."
+  else
+    log "AVISO: refresh individual falhou — tentando scan completo..."
+    wud_refresh_ha all
+  fi
+}
+
+cmd_refresh_ha() {
+  if [[ $# -eq 0 ]]; then
+    require_cmds
+    wud_refresh_ha all
+    return
+  fi
+  load_app "$1"
+  wud_refresh_ha app
+}
+
 cmd_update() {
   local app="${1:?app}"
   local new_tag="${2:?nova_tag}"
@@ -188,6 +271,7 @@ cmd_update() {
   fi
   log "Update concluído com sucesso."
   prune_backups 1
+  wud_refresh_ha app
 }
 
 cmd_rollback() {
@@ -202,6 +286,7 @@ cmd_rollback() {
   sleep 3
   validate_service
   log "Rollback concluído."
+  wud_refresh_ha app
 }
 
 cmd_prune() {
@@ -242,6 +327,7 @@ cmd_list() {
   log "=== Comandos úteis ==="
   echo "  /opt/container-ops/ops.sh backup <app>        # ex.: mealie, jellyfin, immich"
   echo "  /opt/container-ops/ops.sh update <app> <tag>  # ex.: update jellyfin latest"
+  echo "  /opt/container-ops/ops.sh refresh-ha [app]    # actualizar sensores HA via WUD"
   echo "  /opt/container-ops/ops.sh backup-all          # backup de todas as apps"
   echo "  cat /opt/container-ops/GUIA.md                # guia em português"
 }
@@ -275,8 +361,9 @@ Comandos:
   list                      Lista apps e backups
   backup <app>              Backup dos volumes do app
   backup-all                Backup de todas as apps cadastradas
-  update <app> <nova_tag>   Backup + update tag + validação + prune (keep=1)
-  rollback <app> <tag>      Reverte tag e recria container
+  update <app> <nova_tag>   Backup + update tag + validação + prune (keep=1) + refresh HA
+  rollback <app> <tag>      Reverte tag e recria container + refresh HA
+  refresh-ha [app]          Força WUD a republicar sensores no Home Assistant
   prune <app> [keep]        Remove backups antigos (padrão keep=1)
 
 Config: ${APPS_CONF}
@@ -294,9 +381,10 @@ main() {
     backup-all) cmd_backup_all ;;
     update)     cmd_update "$@" ;;
     rollback)   cmd_rollback "$@" ;;
+    refresh-ha) cmd_refresh_ha "$@" ;;
     prune)      cmd_prune "$@" ;;
     -h|--help|help|"") usage ;;
-    *) die "Comando desconhecido: ${cmd}. Use: list|backup|update|rollback|prune" ;;
+    *) die "Comando desconhecido: ${cmd}. Use: list|backup|update|rollback|refresh-ha|prune" ;;
   esac
 }
 
