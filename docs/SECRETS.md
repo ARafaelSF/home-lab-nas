@@ -21,7 +21,7 @@ Permissões: `chmod 600` em cada `.env`.
 
 | Ficheiro | Uso |
 |----------|-----|
-| `/etc/docker/wud-lscr.env` | Token GitHub LSCR (opcional) |
+| `/etc/docker/wud-registries.env` | Token GitHub GHCR/LSCR para o WUD (`read:packages`) |
 | NPM / Vaultwarden | credenciais na UI, não no compose |
 
 ## Novo clone do Git

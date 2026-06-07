@@ -16,7 +16,12 @@ HA_NOTIFY_MODE="${HA_NOTIFY_MODE:-webhook}"
 LOG_FILE="${LOG_FILE:-/scripts/duplicati_to_ha.log}"
 
 RESULT="${DUPLICATI__PARSED_RESULT:-}"
-JOB_NAME="${DUPLICATI__BACKUP_NAME:-Duplicati backup}"
+# Duplicati expõe backup-name como DUPLICATI__backup_name (underscore, minúsculas).
+REMOTE_URL="${DUPLICATI__REMOTEURL:-}"
+JOB_NAME="${DUPLICATI__backup_name:-${DUPLICATI__BACKUP_NAME:-}}"
+if [[ -z "$JOB_NAME" || "$JOB_NAME" == "Duplicati" ]]; then
+  JOB_NAME="Duplicati backup"
+fi
 TIME_NOW="$(date -Iseconds 2>/dev/null || date --iso-8601=seconds)"
 
 STATUS="unknown"
@@ -33,6 +38,20 @@ case "${JOB_NAME,,}" in
   *docker-local*|*ssd*) JOB_KEY="ssd" ;;
   *onedrive*|*homelab-onedrive*) JOB_KEY="onedrive" ;;
 esac
+
+if [[ "$JOB_KEY" == "unknown" && -n "$REMOTE_URL" ]]; then
+  case "${REMOTE_URL,,}" in
+    *onedrive*) JOB_KEY="onedrive" ;;
+    *docker-volumes*|file://*) JOB_KEY="ssd" ;;
+  esac
+fi
+
+if [[ "$JOB_NAME" == "Duplicati backup" ]]; then
+  case "$JOB_KEY" in
+    ssd) JOB_NAME="docker-local" ;;
+    onedrive) JOB_NAME="homelab-onedrive" ;;
+  esac
+fi
 
 JSON_DATA="$(
   python3 -c '
@@ -81,6 +100,6 @@ case "$HA_NOTIFY_MODE" in
     ;;
 esac
 
-log_line "job=${JOB_NAME} status=${STATUS} result=${RESULT:-<vazio>} mode=${HA_NOTIFY_MODE}"
+log_line "job=${JOB_NAME} key=${JOB_KEY} status=${STATUS} result=${RESULT:-<vazio>} remote=${REMOTE_URL:-<vazio>} mode=${HA_NOTIFY_MODE}"
 
 exit 0

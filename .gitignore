@@ -5,7 +5,7 @@
 stack.env
 stack.env.bak
 **/stack.env
-wud-lscr.env
+wud-registries.env
 **/secrets/
 
 # Backups locais (podem conter dados sensíveis)

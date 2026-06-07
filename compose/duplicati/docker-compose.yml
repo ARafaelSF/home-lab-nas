@@ -38,3 +38,5 @@ services:
 
 volumes:
   duplicati_config:
+    external: true
+    name: 25_duplicati_config

@@ -4,6 +4,72 @@ Homelab Docker — documentação e infraestrutura para reconstruir a VM NAS/hom
 
 Repositório: [github.com/ARafaelSF/home-lab-nas](https://github.com/ARafaelSF/home-lab-nas)
 
+---
+
+## Atualizar containers (uso diário)
+
+No servidor Docker (`192.168.3.21`), use o script **`container-ops`**:
+
+```text
+/opt/container-ops/ops.sh          ← no servidor (copia activa)
+homelab/scripts/container-ops/     ← código-fonte neste repositório
+```
+
+Se `/opt/container-ops` ainda não existir, ligue ao repo:
+
+```bash
+sudo ln -sfn /root/homelab/scripts/container-ops /opt/container-ops
+```
+
+### Passo a passo
+
+1. **Ver o que está pendente** — Home Assistant (badge Docker) ou WUD (`http://192.168.3.21:3000` se expuser a porta). O WUD verifica automaticamente às **03:00** e **15:00** (horário de Brasília).
+
+2. **Listar apps que o script conhece:**
+
+```bash
+/opt/container-ops/ops.sh list
+```
+
+3. **Atualizar um serviço** (faz backup dos volumes → pull → restart → validação):
+
+```bash
+/opt/container-ops/ops.sh update <app> <tag>
+```
+
+| App no comando | Serviço | Tag usual | Exemplo agora |
+|----------------|---------|-----------|---------------|
+| `jellyfin` | Jellyfin | `latest` | `/opt/container-ops/ops.sh update jellyfin latest` |
+| `duplicati` | Duplicati | `latest` | `/opt/container-ops/ops.sh update duplicati latest` |
+| `mealie` | Receitas | `latest` | `/opt/container-ops/ops.sh update mealie latest` |
+| `immich` | Fotos (servidor) | `release` | `/opt/container-ops/ops.sh update immich release` |
+| `immich-ml` | Fotos (ML) | `release` | `/opt/container-ops/ops.sh update immich-ml release` |
+
+**Immich:** depois de actualizar o servidor, actualize também o ML com a **mesma tag**.
+
+4. **Se algo correr mal**, volte à tag anterior (backups ficam em `/opt/container-ops/backups/<app>/`):
+
+```bash
+/opt/container-ops/ops.sh rollback jellyfin latest
+```
+
+5. **Só backup** (sem update):
+
+```bash
+/opt/container-ops/ops.sh backup jellyfin
+/opt/container-ops/ops.sh backup-all
+```
+
+6. **Forçar verificação WUD** (opcional, sem esperar o cron):
+
+```bash
+docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/watch
+```
+
+Guia completo em português: [`scripts/container-ops/GUIA.md`](scripts/container-ops/GUIA.md)
+
+---
+
 | Item | Valor |
 |------|--------|
 | **Hypervisor** | Proxmox `192.168.3.20` |
@@ -90,7 +156,7 @@ apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-compos
 cp etc/docker/daemon.json /etc/docker/
 cp etc/docker/homelab-firewall.sh /etc/docker/
 cp etc/docker/homelab-trusted-networks.conf /etc/docker/
-cp etc/docker/wud-lscr.env.example /etc/docker/
+cp etc/docker/wud-registries.env.example /etc/docker/wud-registries.env
 chmod +x /etc/docker/homelab-firewall.sh
 cp etc/network/if-up.d/route-lan68 /etc/network/if-up.d/
 chmod +x /etc/network/if-up.d/route-lan68
@@ -231,7 +297,9 @@ git push -u origin main
 
 | Tarefa | Comando / ficheiro |
 |--------|-------------------|
-| Atualizar imagens | WUD + `docker compose pull` por stack |
+| **Atualizar containers** | `/opt/container-ops/ops.sh update <app> <tag>` — ver secção no topo deste README |
+| Verificar updates (WUD) | Cron 03:00 e 15:00; manual: `docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/watch` |
+| Token GHCR (WUD) | `/etc/docker/wud-registries.env` — ver `etc/docker/wud-registries.env.example` |
 | Verificar backups | `scripts/duplicati-verificar-backup.sh` |
 | Documentação Duplicati | `docs/DUPLICATI-BACKUP.md` |
 | Duplicati → OneDrive + estratégia 3-2-1 | `docs/DUPLICATI-ONEDRIVE.md` |

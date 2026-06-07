@@ -10,7 +10,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - .env
-      - /etc/docker/wud-lscr.env
+      - /etc/docker/wud-registries.env
     environment:
       - TZ=America/Sao_Paulo
       - WUD_TRIGGER_MQTT_HA_URL=mqtt://192.168.3.10:1883
@@ -18,5 +18,9 @@ services:
       - WUD_TRIGGER_MQTT_HA_PASSWORD=${WUD_MQTT_PASSWORD}
       - WUD_TRIGGER_MQTT_HA_HASS_ENABLED=true
       - WUD_TRIGGER_MQTT_HA_HASS_DISCOVERY=true
-      # LSCR (LinuxServer): crie /etc/docker/wud-lscr.env com token GitHub (read:packages)
+      - WUD_WATCHER_LOCAL_CRON=0 3,15 * * *
+      - WUD_WATCHER_LOCAL_WATCHEVENTS=false
+      - WUD_WATCHER_LOCAL_WATCHATSTART=false
+      - WUD_WATCHER_LOCAL_JITTER=600000
+      # GHCR: copie homelab/etc/docker/wud-registries.env.example → /etc/docker/wud-registries.env
     restart: unless-stopped

@@ -62,7 +62,7 @@ O `post-backup.sh` chama automaticamente `duplicati_to_ha.sh`, que envia o resul
 **Teste rápido** (na VM Docker):
 
 ```bash
-docker exec -e DUPLICATI__PARSED_RESULT=Success -e DUPLICATI__BACKUP_NAME=teste \
+docker exec -e DUPLICATI__PARSED_RESULT=Success -e DUPLICATI__backup_name=docker-local \
   duplicati /scripts/duplicati_to_ha.sh
 docker exec duplicati tail -1 /scripts/duplicati_to_ha.log
 ```

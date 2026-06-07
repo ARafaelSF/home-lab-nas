@@ -70,7 +70,7 @@ git commit -m "Homelab Docker: composes, firewall, docs"
 
 - Limites `mem_limit` em Immich ML e Jellyfin se RAM apertar (VM 8 GB)
 - `fail2ban` no SSH se a porta 22 for exposta fora da LAN
-- Token GitHub em `/etc/docker/wud-lscr.env` só se voltar a usar `lscr.io`
+- Token GitHub em `/etc/docker/wud-registries.env` (`read:packages`) — necessário para WUD + GHCR (Immich, Jellyfin, etc.)
 - Teste restore Duplicati trimestral (`scripts/duplicati-verificar-backup.sh`)
 - Vaultwarden 2FA na conta
 
