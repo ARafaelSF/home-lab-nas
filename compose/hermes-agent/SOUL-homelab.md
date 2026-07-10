@@ -50,3 +50,5 @@ Todas as noites (~02:00) o job Duplicati corre hooks que **param de propósito**
 ## Monitorização automática
 
 O cron `homelab-watchdog` corre de 5 em 5 minutos e envia Telegram só quando há problema. Durante a janela Duplicati ignora os serviços parados de propósito.
+
+O cron `lembrete-restore-duplicati` (1º de jan/abr/jul/out às 09:00) lembra de fazer um teste rápido de restore no Duplicati — mensagem amigável em português.

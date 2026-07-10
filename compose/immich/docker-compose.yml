@@ -19,6 +19,8 @@ services:
       - redis
       - database
     restart: always
+    # VM tem ~8 GB RAM — evita Immich comer a máquina em pico
+    mem_limit: 2g
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -32,6 +34,8 @@ services:
     env_file:
       - .env
     restart: always
+    # ML pode disparar em reconhecimento facial; teto evita OOM no host
+    mem_limit: 2g
 
   redis:
     container_name: immich_redis

@@ -75,12 +75,12 @@
     - Hermes Agent:
         - HTTPS:
             href: https://hermes.antonio.rafael.nom.br/
-            icon: mdi-robot
+            icon: /icons/hermes.png
             description: Domínio seguro
             siteMonitor: https://hermes.antonio.rafael.nom.br/
         - LAN:
             href: http://192.168.3.21:9119
-            icon: mdi-robot
+            icon: /icons/hermes.png
             description: Rede local
             siteMonitor: http://192.168.3.21:9119/
     - Filebrowser:
