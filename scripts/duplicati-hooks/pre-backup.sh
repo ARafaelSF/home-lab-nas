@@ -11,10 +11,12 @@ if [ -f "$STATE_FILE" ]; then
   /scripts/post-backup.sh
 fi
 
-# Uptime Kuma para primeiro para não emitir falsos alertas durante a janela de backup.
+# Uptime Kuma / Hermes param cedo para não emitir falsos alertas na janela de backup.
+# Prometheus/Grafana: evita FileLocked (lock / grafana.db) e backup mais consistente.
 # AdGuard fica no ar para manter DNS/rede.
 STOP_ORDER="
 uptime-kuma
+hermes-agent
 immich_server
 immich_machine_learning
 immich_postgres
@@ -22,6 +24,8 @@ mealie
 vaultwarden
 portainer
 filebrowser
+prometheus
+grafana
 "
 
 : > "$STATE_FILE"

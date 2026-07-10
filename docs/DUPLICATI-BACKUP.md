@@ -30,6 +30,7 @@ Com Docker a correr, alguns ficheiros ficam bloqueados. O Duplicati **ignora** o
 | `sessions.db` / `stats.db` (AdGuard) | Estatísticas/sessões | Só perde histórico de queries |
 | `diun.db` | Estado do DIUN | Notificações antigas |
 | `portainer.db` / `filebrowser.db` | UI com SQLite aberto | Hooks param o container + `sleep 3`; se ainda falhar, reconfiguras pela UI (composes estão no `homelab/`) |
+| `prometheus/.../lock`, `hermes.../*.lock` | Locks de runtime | Hooks param Prometheus/Grafana/Hermes — se ainda aparecer warning, é outro serviço a correr |
 
 Filtros de exclusão no job: `metadata.db`, `*/sessions.db`, `*/stats.db`, `*/diun.db`.
 
@@ -69,11 +70,12 @@ docker exec duplicati tail -1 /scripts/duplicati_to_ha.log
 
 Antes do backup, **param** (ordem):
 
-1. Immich (server, ML, Postgres)
-2. Mealie, Vaultwarden, Uptime Kuma
-3. Portainer, AdGuard, FileBrowser
+1. Uptime Kuma, Hermes Agent
+2. Immich (server, ML, Postgres)
+3. Mealie, Vaultwarden, Portainer, FileBrowser
+4. Prometheus, Grafana
 
-Depois do backup, **sobem na ordem inversa**.
+**AdGuard fica no ar** (DNS). Depois do backup, **sobem na ordem inversa** (Uptime Kuma ~90s depois).
 
 Também gera manifesto em `homelab/backups/manifests/runtime-*.txt` (`docker ps`, volumes, redes).
 

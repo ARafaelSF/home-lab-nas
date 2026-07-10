@@ -140,6 +140,10 @@ docker exec hermes-agent hermes cron create "every 5m" \
   --deliver telegram
 ```
 
+O `homelab-watchdog.sh` **não alerta** containers parados de propósito pelo Duplicati (PRE/POST em `/opt/duplicati-scripts/`) enquanto existir `/tmp/duplicati-stopped-containers.txt` no container `duplicati`. O SOUL também documenta esta janela (~02:00) para o LLM não tratar como incidente.
+
+Mensagens do watchdog em **português claro**. Em `config.yaml`: `cron.wrap_response: false` (remove o cabeçalho/rodapé em inglês “Cronjob Response…”).
+
 ### 6. Cron — resumo diário (com LLM)
 
 ```bash
