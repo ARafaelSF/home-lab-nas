@@ -1,7 +1,7 @@
 # Portainer CE — gestão Docker (instalado fora dos stacks numerados do Portainer)
 services:
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:2.43.0
     container_name: portainer
     labels:
       - wud.display.name=Portainer
@@ -16,3 +16,5 @@ services:
 
 volumes:
   portainer_data:
+    external: true
+    name: portainer_data

@@ -1,0 +1,6 @@
+# WUD: um container por hora (fila), em vez de scan em batch.
+# Instalar: cp /root/homelab/etc/cron/wud-stagger /etc/cron.d/wud-stagger && chmod 644 /etc/cron.d/wud-stagger
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+0 * * * * root /root/homelab/scripts/wud-stagger-watch.sh >> /var/log/wud-stagger.log 2>&1

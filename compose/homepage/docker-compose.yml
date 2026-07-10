@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Homepage
       - wud.display.icon=si:gethomepage
+      - wud.watch.digest=true
     ports:
       - 3001:3000
     environment:

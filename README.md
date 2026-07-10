@@ -301,7 +301,7 @@ git push -u origin main
 | Tarefa | Comando / ficheiro |
 |--------|-------------------|
 | **Atualizar containers** | `/opt/container-ops/ops.sh update <app> <tag>` — ver secção no topo deste README |
-| Verificar updates (WUD) | Cron 03:00 e 15:00; manual: `docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/watch` |
+| Verificar updates (WUD) | Fila horária (`/etc/cron.d/wud-stagger`); manual um: `docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/<id>/watch` |
 | Token GHCR (WUD) | `/etc/docker/wud-registries.env` — ver `etc/docker/wud-registries.env.example` |
 | Verificar backups | `scripts/duplicati-verificar-backup.sh` |
 | Documentação Duplicati | `docs/DUPLICATI-BACKUP.md` |

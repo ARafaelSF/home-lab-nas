@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Glances
       - wud.display.icon=si:glances
+      - wud.watch.digest=true
     restart: unless-stopped
     pid: host
     ports:

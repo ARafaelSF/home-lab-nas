@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Vaultwarden
       - wud.display.icon=si:vaultwarden
+      - wud.watch.digest=true
     environment:
       - TZ=America/Sao_Paulo
       - WEBSOCKET_ENABLED=true

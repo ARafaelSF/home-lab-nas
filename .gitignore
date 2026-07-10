@@ -6,6 +6,10 @@ stack.env
 stack.env.bak
 **/stack.env
 wud-registries.env
+compose/dozzle/users.yml
+*.password
+**/.dashboard-password
+compose/hermes-agent/.dashboard-password
 **/secrets/
 
 # Backups locais (podem conter dados sensíveis)

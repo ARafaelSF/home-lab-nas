@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Nginx Proxy Manager
       - wud.display.icon=si:nginxproxymanager
+      - wud.watch.digest=true
     restart: unless-stopped
     ports:
       - '80:80'

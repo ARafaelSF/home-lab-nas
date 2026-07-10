@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  dozzle:
+    image: amir20/dozzle:${DOZZLE_TAG:-latest}
+    container_name: dozzle
+    labels:
+      - wud.display.name=Dozzle
+      - wud.display.icon=si:dozzle
+      - wud.watch.digest=true
+    restart: unless-stopped
+    ports:
+      - '8888:8080'
+    environment:
+      - TZ=America/Sao_Paulo
+      - DOZZLE_LEVEL=info
+      - DOZZLE_HOSTNAME=homelab
+      - DOZZLE_AUTH_PROVIDER=simple
+      - DOZZLE_AUTH_TTL=48h
+      - DOZZLE_NO_ANALYTICS=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./users.yml:/data/users.yml:ro
+    healthcheck:
+      test: ['CMD', '/dozzle', 'healthcheck']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

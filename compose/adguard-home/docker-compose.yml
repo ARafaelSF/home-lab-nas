@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=AdGuard Home
       - wud.display.icon=si:adguard
+      - wud.watch.digest=true
     restart: unless-stopped
     ports:
       - "53:53/tcp"

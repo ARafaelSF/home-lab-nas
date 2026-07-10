@@ -54,6 +54,19 @@ volumes_array() {
   done
 }
 
+verify_required_env() {
+  case "$APP_NAME" in
+    duplicati)
+      if ! grep -qE '^SETTINGS_ENCRYPTION_KEY=.+' "$APP_ENV_FILE" 2>/dev/null; then
+        die "SETTINGS_ENCRYPTION_KEY em falta em ${APP_ENV_FILE}. Copie de /var/lib/docker/volumes/portainer_data/_data/compose/25/.env antes de update."
+      fi
+      if ! grep -qE '^DUPLICATI_WEBSERVICE_PASSWORD=.+' "$APP_ENV_FILE" 2>/dev/null; then
+        die "DUPLICATI_WEBSERVICE_PASSWORD em falta em ${APP_ENV_FILE}. Copie de .../compose/25/.env antes de update."
+      fi
+      ;;
+  esac
+}
+
 verify_stack() {
   [[ -d "$APP_STACK_DIR" ]] || die "stack_dir inexistente: $APP_STACK_DIR"
   [[ -f "$APP_COMPOSE_FILE" ]] || die "compose inexistente: $APP_COMPOSE_FILE"
@@ -62,6 +75,7 @@ verify_stack() {
     touch "$APP_ENV_FILE"
     chmod 600 "$APP_ENV_FILE"
   fi
+  verify_required_env
 }
 
 compose() {

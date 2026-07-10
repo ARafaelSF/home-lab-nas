@@ -1,72 +1,211 @@
 ---
 # https://gethomepage.dev/configs/services/
+# Padrão: HTTPS (domínio / acesso externo) → LAN (rede local)
+# Badge verde = tempo de resposta (ms). Vermelho = erro HTTP do siteMonitor.
 
 - Mídia e fotos:
     - Immich:
-        href: https://fotos.antonio.rafael.nom.br/
-        icon: immich.png
-        description: Galeria de fotos da família
+        - HTTPS:
+            href: https://fotos.antonio.rafael.nom.br/
+            icon: immich.png
+            description: Domínio seguro
+            siteMonitor: https://fotos.antonio.rafael.nom.br/api/server/ping
+        - LAN:
+            href: http://192.168.3.21:2283
+            icon: immich.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:2283/api/server/ping
     - Jellyfin:
-        href: https://jellyfin.antonio.rafael.nom.br/
-        icon: jellyfin.png
-        description: Filmes e séries
+        - HTTPS:
+            href: https://jellyfin.antonio.rafael.nom.br/
+            icon: jellyfin.png
+            description: Domínio seguro
+            siteMonitor: https://jellyfin.antonio.rafael.nom.br/health
+        - LAN:
+            href: http://192.168.3.21:8096
+            icon: jellyfin.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:8096/health
 
 - Casa e utilidades:
     - Home Assistant:
-        href: https://homeassistant.antonio.rafael.nom.br/
-        icon: home-assistant.png
-        description: Automação da casa
+        - HTTPS:
+            href: https://homeassistant.antonio.rafael.nom.br/
+            icon: home-assistant.png
+            description: Domínio seguro
+            siteMonitor: https://homeassistant.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.10:8123
+            icon: home-assistant.png
+            description: Rede local
+            siteMonitor: http://192.168.3.10:8123/
     - Mealie:
-        href: https://receitas.antonio.rafael.nom.br/
-        icon: mealie.png
-        description: Receitas e cardápio
+        - HTTPS:
+            href: https://receitas.antonio.rafael.nom.br/
+            icon: mealie.png
+            description: Domínio seguro
+            siteMonitor: https://receitas.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:9925
+            icon: mealie.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:9925/
     - Cofre de Senhas:
-        href: https://senhas.antonio.rafael.nom.br/
-        icon: bitwarden.png
-        description: Vaultwarden
+        - HTTPS:
+            href: https://senhas.antonio.rafael.nom.br/
+            icon: bitwarden.png
+            description: Domínio seguro
+            siteMonitor: https://senhas.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:3003
+            icon: bitwarden.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:3003/
+    - Firefly III:
+        - HTTPS:
+            href: https://firefly.antonio.rafael.nom.br/
+            icon: firefly-iii.png
+            description: Domínio seguro
+            siteMonitor: https://firefly.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:3004
+            icon: firefly-iii.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:3004/
+    - Hermes Agent:
+        - HTTPS:
+            href: https://hermes.antonio.rafael.nom.br/
+            icon: mdi-robot
+            description: Domínio seguro
+            siteMonitor: https://hermes.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:9119
+            icon: mdi-robot
+            description: Rede local
+            siteMonitor: http://192.168.3.21:9119/
     - Filebrowser:
-        href: http://192.168.3.21:8085
-        icon: filebrowser.png
-        description: Arquivos do servidor (só LAN)
+        - HTTPS:
+            href: https://filebrowser.antonio.rafael.nom.br/
+            icon: filebrowser.png
+            description: Domínio seguro
+            siteMonitor: https://filebrowser.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:8085
+            icon: filebrowser.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:8085/
     - Alarme Hikvision:
-        href: http://192.168.2.238/
-        icon: hikvision.png
-        description: Painel do alarme (só LAN)
+        - LAN:
+            href: http://192.168.2.238/
+            icon: hikvision.png
+            description: Rede local
+            siteMonitor: http://192.168.2.238/
     - Solarman:
-        href: https://home.solarmanpv.com/
-        icon: /icons/solarman.png
-        description: Monitor dos painéis solares
+        - HTTPS:
+            href: https://home.solarmanpv.com/
+            icon: /icons/solarman.png
+            description: Domínio seguro
+            siteMonitor: https://home.solarmanpv.com/
 
 - Infraestrutura:
     - UniFi:
-        href: https://unifi.ui.com/
-        icon: unifi.png
-        description: Rede e gateway Ubiquiti
+        - HTTPS:
+            href: https://unifi.ui.com/
+            icon: unifi.png
+            description: Domínio seguro
+            siteMonitor: https://unifi.ui.com/
+        - LAN:
+            href: https://192.168.68.1/
+            icon: unifi.png
+            description: Rede local
+            siteMonitor: https://192.168.68.1/
     - Proxmox:
-        href: https://192.168.3.20:8006/
-        icon: proxmox.png
-        description: Hypervisor e VMs (só LAN)
+        - LAN:
+            href: https://192.168.3.20:8006/
+            icon: proxmox.png
+            description: Rede local
+            siteMonitor: https://192.168.3.20:8006/
     - Portainer:
-        href: https://192.168.3.21:9443
-        icon: portainer.png
-        description: Gerenciador Docker (só LAN)
+        - HTTPS:
+            href: https://portainer.antonio.rafael.nom.br/
+            icon: portainer.png
+            description: Domínio seguro
+            siteMonitor: https://portainer.antonio.rafael.nom.br/api/status
+        - LAN:
+            href: https://192.168.3.21:9443
+            icon: portainer.png
+            description: Rede local
+            siteMonitor: https://192.168.3.21:9443/api/status
     - Nginx Proxy Manager:
-        href: http://192.168.3.21:81
-        icon: nginx-proxy-manager.png
-        description: Proxy e certificados SSL (só LAN)
+        - LAN:
+            href: http://192.168.3.21:81
+            icon: nginx-proxy-manager.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:81/
     - AdGuard Home:
-        href: http://192.168.3.21:8080
-        icon: adguard-home.png
-        description: DNS e bloqueio de anúncios (só LAN)
+        - HTTPS:
+            href: https://adguard.antonio.rafael.nom.br/
+            icon: adguard-home.png
+            description: Domínio seguro
+            siteMonitor: https://adguard.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:8080
+            icon: adguard-home.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:8080/
     - Uptime Kuma:
-        href: http://192.168.3.21:3002
-        icon: uptime-kuma.png
-        description: Monitoramento dos serviços (só LAN)
+        - HTTPS:
+            href: https://uptimekuma.antonio.rafael.nom.br/
+            icon: uptime-kuma.png
+            description: Domínio seguro
+            siteMonitor: https://uptimekuma.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:3002
+            icon: uptime-kuma.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:3002/
     - Glances:
-        href: http://192.168.3.21:61208
-        icon: glances.png
-        description: Métricas CPU, RAM e disco da VM (só LAN)
+        - LAN:
+            href: http://192.168.3.21:61208
+            icon: glances.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:61208/
+    - Dozzle:
+        - HTTPS:
+            href: https://dozzle.antonio.rafael.nom.br/
+            icon: mdi-docker
+            description: Domínio seguro
+            siteMonitor: https://dozzle.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:8888
+            icon: mdi-docker
+            description: Logs Docker (auth)
+            siteMonitor: http://192.168.3.21:8888/
+    - Grafana:
+        - HTTPS:
+            href: https://grafana.antonio.rafael.nom.br/
+            icon: grafana.png
+            description: Domínio seguro
+            siteMonitor: https://grafana.antonio.rafael.nom.br/api/health
+        - LAN:
+            href: http://192.168.3.21:3005
+            icon: grafana.png
+            description: Dashboards históricos
+            siteMonitor: http://192.168.3.21:3005/api/health
+    - Prometheus:
+        - LAN:
+            href: http://192.168.3.21:9090
+            icon: prometheus.png
+            description: Métricas (30 dias)
+            siteMonitor: http://192.168.3.21:9090/-/healthy
     - Duplicati:
-        href: http://192.168.3.21:8200
-        icon: duplicati.png
-        description: Backups agendados (só LAN)
+        - HTTPS:
+            href: https://duplicati.antonio.rafael.nom.br/
+            icon: duplicati.png
+            description: Domínio seguro
+            siteMonitor: https://duplicati.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:8200
+            icon: duplicati.png
+            description: Rede local
+            siteMonitor: http://192.168.3.21:8200/

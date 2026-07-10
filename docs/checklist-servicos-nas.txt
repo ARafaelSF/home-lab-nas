@@ -1,0 +1,155 @@
+Checklist serviços — Servidor NAS (192.168.3.21)
+================================================
+Data: _______________
+Marca: [ ] pendente  [x] OK  [!] problema
+
+Como usar
+---------
+1. Abre LAN e HTTPS de cada serviço
+2. Confirma login / senha (cofre Vaultwarden)
+3. Marca [x] quando estiver OK
+4. Em [!] anota o problema na linha
+
+------------------------------------------------
+HOMEPAGE (portal)
+------------------------------------------------
+[ ] LAN   http://192.168.3.21:3001/
+[ ] HTTPS https://home-server-nas.antonio.rafael.nom.br/
+    Senha: (sem login)
+
+------------------------------------------------
+MÍDIA E FOTOS
+------------------------------------------------
+Immich
+[ ] LAN   http://192.168.3.21:2283/
+[ ] HTTPS https://fotos.antonio.rafael.nom.br/
+    Senha: conta Immich (cofre)
+
+Jellyfin
+[ ] LAN   http://192.168.3.21:8096/
+[ ] HTTPS https://jellyfin.antonio.rafael.nom.br/
+    Senha: conta Jellyfin (cofre)
+
+------------------------------------------------
+CASA E UTILIDADES
+------------------------------------------------
+Home Assistant
+[ ] LAN   http://192.168.3.10:8123/
+[ ] HTTPS https://homeassistant.antonio.rafael.nom.br/
+    Senha: conta HA (cofre)
+
+Mealie
+[ ] LAN   http://192.168.3.21:9925/
+[ ] HTTPS https://receitas.antonio.rafael.nom.br/
+    Senha: conta Mealie (cofre)
+
+Vaultwarden (cofre)
+[ ] LAN   http://192.168.3.21:3003/
+[ ] HTTPS https://senhas.antonio.rafael.nom.br/
+    Senha: conta master Vaultwarden (cofre)
+
+Firefly III
+[ ] LAN   http://192.168.3.21:3004/
+[ ] HTTPS https://firefly.antonio.rafael.nom.br/
+    Senha: conta criada no 1.º acesso (NÃO está no .env)
+    Ref: /root/homelab/compose/firefly-iii/.env → SITE_OWNER
+
+Hermes Agent (dashboard)
+[ ] LAN   http://192.168.3.21:9119/
+[ ] HTTPS https://hermes.antonio.rafael.nom.br/
+    User: admin
+    Senha: /root/homelab/compose/hermes-agent/.env
+           → HERMES_DASHBOARD_BASIC_AUTH_PASSWORD
+
+Filebrowser
+[ ] LAN   http://192.168.3.21:8085/
+[ ] HTTPS https://filebrowser.antonio.rafael.nom.br/
+    Senha: conta Filebrowser (cofre)
+
+Alarme Hikvision
+[ ] LAN   http://192.168.2.238/
+[ ] HTTPS (não — só LAN)
+    Senha: conta Hikvision (cofre)
+
+Solarman
+[ ] LAN   (não)
+[ ] HTTPS https://home.solarmanpv.com/
+    Senha: conta Solarman (cofre)
+
+------------------------------------------------
+INFRAESTRUTURA
+------------------------------------------------
+UniFi
+[ ] LAN   https://192.168.68.1/
+[ ] HTTPS https://unifi.ui.com/
+    Senha: conta UniFi (cofre)
+
+Proxmox
+[ ] LAN   https://192.168.3.20:8006/
+[ ] HTTPS (não — só LAN)
+    Senha: root@pam / conta Proxmox (cofre)
+
+Portainer
+[ ] LAN   https://192.168.3.21:9443/
+[ ] HTTPS https://portainer.antonio.rafael.nom.br/
+    Senha: conta Portainer (cofre)
+
+Nginx Proxy Manager
+[ ] LAN   http://192.168.3.21:81/
+[ ] HTTPS (não)
+    Senha: conta NPM (cofre)
+
+AdGuard Home
+[ ] LAN   http://192.168.3.21:8080/
+[ ] HTTPS https://adguard.antonio.rafael.nom.br/
+    Senha: conta AdGuard (cofre)
+
+Uptime Kuma
+[ ] LAN   http://192.168.3.21:3002/
+[ ] HTTPS https://uptimekuma.antonio.rafael.nom.br/
+    Senha: conta Uptime Kuma (cofre)
+
+Glances
+[ ] LAN   http://192.168.3.21:61208/
+[ ] HTTPS (não)
+    Senha: (sem login)
+
+Dozzle (logs Docker)
+[ ] LAN   http://192.168.3.21:8888/
+[ ] HTTPS https://dozzle.antonio.rafael.nom.br/
+    User: admin
+    Senha: /root/homelab/compose/dozzle/.env → DOZZLE_ADMIN_PASSWORD
+
+Grafana
+[ ] LAN   http://192.168.3.21:3005/
+[ ] HTTPS https://grafana.antonio.rafael.nom.br/
+    User: admin
+    Senha: /root/homelab/compose/monitoring/.env → GRAFANA_ADMIN_PASSWORD
+
+Prometheus
+[ ] LAN   http://192.168.3.21:9090/
+[ ] HTTPS (não expor — sem auth)
+    Senha: (sem login)
+
+Duplicati
+[ ] LAN   http://192.168.3.21:8200/
+[ ] HTTPS https://duplicati.antonio.rafael.nom.br/
+    Senha: conta Duplicati (cofre / compose)
+
+------------------------------------------------
+RESUMO RÁPIDO — senhas no servidor
+------------------------------------------------
+Hermes:    cat /root/homelab/compose/hermes-agent/.env | grep HERMES_DASHBOARD_BASIC_AUTH
+Dozzle:    cat /root/homelab/compose/dozzle/.env | grep DOZZLE_ADMIN
+Grafana:   cat /root/homelab/compose/monitoring/.env | grep GRAFANA_ADMIN
+Firefly:   conta web (não está no .env)
+
+------------------------------------------------
+NOTAS / PROBLEMAS
+------------------------------------------------
+(escreve aqui o que falhar)
+
+________________________________________________
+________________________________________________
+________________________________________________
+________________________________________________

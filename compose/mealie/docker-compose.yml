@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Mealie
       - wud.display.icon=si:mealie
+      - wud.watch.digest=true
     restart: always
     ports:
       - "9925:9000"

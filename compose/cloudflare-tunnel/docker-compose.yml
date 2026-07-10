@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Cloudflare Tunnel
       - wud.display.icon=si:cloudflare
+      - wud.watch.digest=true
     restart: unless-stopped
     command: tunnel run
     env_file:

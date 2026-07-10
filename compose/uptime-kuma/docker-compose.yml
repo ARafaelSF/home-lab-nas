@@ -6,6 +6,7 @@ services:
     labels:
       - wud.display.name=Uptime Kuma
       - wud.display.icon=si:uptimekuma
+      - wud.watch.digest=true
       - wud.tag.include=^2$$
       - wud.tag.exclude=slim|rootless|beta
     volumes:

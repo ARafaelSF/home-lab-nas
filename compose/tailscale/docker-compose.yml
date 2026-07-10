@@ -1,0 +1,42 @@
+# Tailscale na VM Docker (192.168.3.21) — acesso remoto via tailnet (SSH, LAN opcional).
+# network_mode: host → o nó Tailscale fica no próprio host; ssh user@<ip-tailscale> liga à VM.
+#
+# Autenticação: TS_AUTHKEY no .env (recomendado) ou, na primeira vez:
+#   docker exec tailscale tailscale up
+#
+# Sub-rede LAN (opcional, p.ex. Home Assistant 192.168.3.10):
+#   TS_EXTRA_ARGS=--advertise-routes=192.168.3.0/24
+#   Aprovar rotas no admin Tailscale + ACL se necessário.
+
+services:
+  tailscale:
+    image: tailscale/tailscale:${TAILSCALE_TAG:-stable}
+    container_name: tailscale
+    hostname: homelab-docker
+    labels:
+      - wud.display.name=Tailscale
+      - wud.display.icon=si:tailscale
+      - wud.watch=false
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    env_file:
+      - .env
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_HOSTNAME=${TS_HOSTNAME:-homelab-docker}
+      - TS_AUTHKEY=${TS_AUTHKEY:-}
+      - TS_AUTH_ONCE=true
+      - TS_USERSPACE=false
+      - TS_ACCEPT_DNS=false
+      - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:-}
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+    restart: unless-stopped
+
+volumes:
+  tailscale_state:

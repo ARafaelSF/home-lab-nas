@@ -18,9 +18,9 @@ services:
       - WUD_TRIGGER_MQTT_HA_PASSWORD=${WUD_MQTT_PASSWORD}
       - WUD_TRIGGER_MQTT_HA_HASS_ENABLED=true
       - WUD_TRIGGER_MQTT_HA_HASS_DISCOVERY=true
-      - WUD_WATCHER_LOCAL_CRON=0 3,15 * * *
+      # Scan em batch desactivado — fila horária via scripts/wud-stagger-watch.sh + /etc/cron.d/wud-stagger
+      - WUD_WATCHER_LOCAL_CRON=0 0 1 1 *
       - WUD_WATCHER_LOCAL_WATCHEVENTS=false
       - WUD_WATCHER_LOCAL_WATCHATSTART=false
-      - WUD_WATCHER_LOCAL_JITTER=600000
       # GHCR: copie homelab/etc/docker/wud-registries.env.example → /etc/docker/wud-registries.env
     restart: unless-stopped

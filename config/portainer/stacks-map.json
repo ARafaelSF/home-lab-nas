@@ -11,5 +11,10 @@
   "22": "mealie",
   "25": "duplicati",
   "26": "wud",
-  "31": "glances"
+  "31": "glances",
+  "32": "firefly-iii",
+  "33": "hermes-agent",
+  "34": "tailscale",
+  "35": "dozzle",
+  "36": "monitoring"
 }
