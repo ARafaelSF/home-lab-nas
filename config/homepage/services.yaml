@@ -54,13 +54,8 @@
         - HTTPS:
             href: https://senhas.antonio.rafael.nom.br/
             icon: bitwarden.png
-            description: Domínio seguro
+            description: Domínio seguro (HTTPS obrigatório)
             siteMonitor: https://senhas.antonio.rafael.nom.br/
-        - LAN:
-            href: http://192.168.3.21:3003
-            icon: bitwarden.png
-            description: Rede local
-            siteMonitor: http://192.168.3.21:3003/
     - Firefly III:
         - HTTPS:
             href: https://firefly.antonio.rafael.nom.br/

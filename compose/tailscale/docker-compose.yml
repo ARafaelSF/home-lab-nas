@@ -4,9 +4,14 @@
 # Autenticação: TS_AUTHKEY no .env (recomendado) ou, na primeira vez:
 #   docker exec tailscale tailscale up
 #
-# Sub-rede LAN (opcional, p.ex. Home Assistant 192.168.3.10):
-#   TS_EXTRA_ARGS=--advertise-routes=192.168.3.0/24
-#   Aprovar rotas no admin Tailscale + ACL se necessário.
+# Sub-redes LAN via subnet router (aprovar no admin Tailscale):
+#   TS_EXTRA_ARGS=--advertise-routes=192.168.3.0/24,192.168.68.0/24,192.168.2.0/24
+#   192.168.3.0/24  → HA, Proxmox, Docker (Portainer, Duplicati, …)
+#   192.168.68.0/24 → Hangar / UniFi gateway
+#   192.168.2.0/24  → IoT / alarme Hikvision
+#   192.168.2.0/24  → IoT / alarme Hikvision
+# No cliente Windows: Preferências → “Use Tailscale subnets” (ou “Usar sub-redes do Tailscale”).
+# Firewall Docker: 100.64.0.0/10 em homelab-trusted-networks.conf (clientes Tailscale).
 
 services:
   tailscale:

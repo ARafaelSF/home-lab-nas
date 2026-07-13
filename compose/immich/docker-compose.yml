@@ -38,12 +38,16 @@ services:
     mem_limit: 2g
 
   redis:
+    # Nome do serviço mantém-se "redis" (REDIS_HOSTNAME no .env).
+    # Imagem alinhada ao compose oficial Immich (Valkey = fork Redis-compatible).
     container_name: immich_redis
-    image: docker.io/redis:6.2-alpine
+    image: docker.io/valkey/valkey:9@sha256:4963247afc4cd33c7d3b2d2816b9f7f8eeebab148d29056c2ca4d7cbc966f2d9
     labels:
-      - wud.display.name=Immich Redis
+      - wud.display.name=Immich Valkey
       - wud.display.icon=si:redis
       - wud.watch=false
+    healthcheck:
+      test: redis-cli ping || exit 1
     restart: always
 
   database:
