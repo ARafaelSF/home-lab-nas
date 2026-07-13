@@ -1,18 +1,70 @@
-# Implementado via MCP no Home Assistant (2026-05-29)
+# Implementado via MCP no Home Assistant (2026-05-29; restauro 2026-07-13)
 # Categoria: Homelab (mesma dos Uptime Kuma)
-# Webhook: duplicati_backup_result (registado pelas 3 automações)
+# Webhook: duplicati_backup_result (registo + OK / warning / error)
 #
-# Automações na UI:
+# Automações na UI (entity_id pode ser slug do alias, ex. automation.homelab_backup_ok_duplicati):
+#   - automation.duplicati_registar_backup_homelab  (grava helpers SSD/OneDrive)
 #   - automation.duplicati_backup_ok_homelab
 #   - automation.duplicati_backup_warning_homelab
 #   - automation.duplicati_backup_error_homelab
 #
-# Script na VM Docker: /opt/duplicati-scripts/duplicati_to_ha.sh
+# Scripts na VM Docker: /opt/duplicati-scripts/{pre,post}-backup.sh + duplicati_to_ha.sh
+# (cópia versionada: homelab/scripts/duplicati-hooks/)
 # POST: http://192.168.3.10:8123/api/webhook/duplicati_backup_result
 
-# Referência YAML (3 automações separadas, padrão Uptime Kuma):
+# Referência YAML:
 
 automation:
+  - id: duplicati_registar_backup_homelab
+    alias: "💾 Homelab: Registar backup (Duplicati)"
+    description: "Atualiza helpers SSD/OneDrive quando o webhook duplicati_backup_result chega."
+    mode: queued
+    max: 10
+    triggers:
+      - trigger: webhook
+        webhook_id: duplicati_backup_result
+        allowed_methods:
+          - POST
+        local_only: true
+        id: duplicati_registar
+    conditions: []
+    actions:
+      - variables:
+          job: "{{ trigger.json.job_name | default('') | lower }}"
+          job_key: "{{ trigger.json.job_key | default('unknown') }}"
+          status_raw: "{{ trigger.json.status | default('unknown') }}"
+          backup_time: "{{ trigger.json.time | default(now().isoformat()) }}"
+          status_opt: "{{ status_raw if status_raw in ['success','warning','error','unknown'] else 'unknown' }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ job_key == 'ssd' or 'docker-local' in job }}"
+            sequence:
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: input_datetime.sistema_docker_backup_ssd_ultimo
+                data:
+                  datetime: "{{ backup_time }}"
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.sistema_docker_backup_ssd_estado
+                data:
+                  option: "{{ status_opt }}"
+          - conditions:
+              - condition: template
+                value_template: "{{ job_key == 'onedrive' or 'onedrive' in job }}"
+            sequence:
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: input_datetime.sistema_docker_backup_onedrive_ultimo
+                data:
+                  datetime: "{{ backup_time }}"
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.sistema_docker_backup_onedrive_estado
+                data:
+                  option: "{{ status_opt }}"
+
   - id: duplicati_backup_ok_homelab
     alias: "💾 Homelab: Backup OK (Duplicati)"
     description: "Webhook Duplicati — status success (VM Docker 192.168.3.21)."

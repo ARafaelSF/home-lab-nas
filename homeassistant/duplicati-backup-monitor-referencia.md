@@ -47,4 +47,8 @@ Pontuação em `sensor.sistema_docker_backup_problemas`:
 
 ## Script na VM Docker
 
-`/opt/duplicati-scripts/duplicati_to_ha.sh` envia JSON com `job_name`, `job_key` (`ssd` / `onedrive`), `status`, `message`, `time`.
+`/opt/duplicati-scripts/` deve ter `pre-backup.sh`, `post-backup.sh` e `duplicati_to_ha.sh` (cópia em `homelab/scripts/duplicati-hooks/`).
+
+`duplicati_to_ha.sh` envia JSON com `job_name`, `job_key` (`ssd` / `onedrive`), `status`, `message`, `time`.
+
+Se o painel de backup no HA ficar parado mas o Duplicati continuar a fazer backup, confira se os hooks existem em `/opt/duplicati-scripts/` (já aconteceu de sumirem após incidente no host).

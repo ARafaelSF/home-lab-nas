@@ -55,6 +55,7 @@ Troque `mealie` pelo nome da app (coluna da esquerda no `list`).
 | `dozzle` | Logs Docker | `latest` |
 | `prometheus` | Métricas | `latest` |
 | `grafana` | Dashboards | `latest` |
+| `node-exporter` | Métricas do host | `latest` |
 
 **Immich:** depois de `update immich release`, rode também:
 
