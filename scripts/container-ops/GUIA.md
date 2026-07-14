@@ -25,7 +25,8 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes (qu
 | Ver tudo cadastrado | `/opt/container-ops/ops.sh list` |
 | Só backup de um app | `/opt/container-ops/ops.sh backup mealie` |
 | Backup de **todos** | `/opt/container-ops/ops.sh backup-all` |
-| **Atualizar** versão | `/opt/container-ops/ops.sh update mealie latest` |
+| **Atualizar um** container | `/opt/container-ops/ops.sh update hermes latest` |
+| **Atualizar todos** | `/opt/container-ops/ops.sh update all` |
 | **Atualizar sensores HA** (só WUD) | `/opt/container-ops/ops.sh refresh-ha` ou `refresh-ha mealie` |
 | Voltar versão antiga | `/opt/container-ops/ops.sh rollback mealie v2.7.0` |
 | Apagar backups velhos (ficar com 3) | `/opt/container-ops/ops.sh prune mealie 3` |
@@ -50,7 +51,7 @@ Troque `mealie` pelo nome da app (coluna da esquerda no `list`).
 | `immich` | Fotos (servidor) | `release` |
 | `immich-ml` | Fotos (ML) | `release` (usar a **mesma** tag que `immich`) |
 | `cloudflare` | Túnel | `latest` |
-| `wud` | Updates Docker | `8.2.2` |
+| `wud` | Updates Docker | `latest` ou `8.3.0` |
 | `hermes` | Agente Telegram | `latest` |
 | `dozzle` | Logs Docker | `latest` |
 | `prometheus` | Métricas | `latest` |
@@ -85,6 +86,20 @@ Troque `mealie` pelo nome da app (coluna da esquerda no `list`).
 
 # 3) Se algo der errado, voltar atrás
 /opt/container-ops/ops.sh rollback mealie v2.7.0
+```
+
+### Atualizar tudo de uma vez
+
+```bash
+/opt/container-ops/ops.sh update all
+```
+
+Cada app usa a tag habitual (`latest`; Immich/`immich-ml` → `release`; Uptime Kuma → `2`). Se um falhar, o script **continua** com os restantes e no fim faz um único `refresh-ha`.
+
+Para um só serviço (o dia a dia mais comum):
+
+```bash
+/opt/container-ops/ops.sh update hermes latest
 ```
 
 ---

@@ -1,7 +1,7 @@
-version: '3'
+name: wud
 services:
   wud:
-    image: getwud/wud:${WUD_TAG:-8.2.2}
+    image: getwud/wud:${WUD_TAG:-8.3.0}
     container_name: wud
     labels:
       - wud.display.name=WUD
@@ -20,8 +20,8 @@ services:
       - WUD_TRIGGER_MQTT_HA_HASS_DISCOVERY=true
       # Cron interno desactivado — fila horária via scripts/wud-stagger-watch.sh + /etc/cron.d/wud-stagger
       - WUD_WATCHER_LOCAL_CRON=0 0 1 1 *
-      # Eventos Docker: regista containers novos no HA sem esperar restart do WUD
-      - WUD_WATCHER_LOCAL_WATCHEVENTS=true
+      # Eventos Docker OFF: restart/update em massa gera avalanche de pulls e 429/unknown no HA
+      - WUD_WATCHER_LOCAL_WATCHEVENTS=false
       # Evita scan em massa (e 429) sempre que o WUD reinicia
       - WUD_WATCHER_LOCAL_WATCHATSTART=false
       # GHCR: copie homelab/etc/docker/wud-registries.env.example → /etc/docker/wud-registries.env

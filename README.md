@@ -11,19 +11,39 @@ Repositório: [github.com/ARafaelSF/home-lab-nas](https://github.com/ARafaelSF/h
 No servidor Docker (`192.168.3.21`), use o script **`container-ops`**:
 
 ```text
-/opt/container-ops/ops.sh          ← no servidor (copia activa)
+/opt/container-ops/ops.sh          ← no servidor (cópia activa)
 homelab/scripts/container-ops/     ← código-fonte neste repositório
 ```
 
-Se `/opt/container-ops` ainda não existir, ligue ao repo:
+Depois de um `git pull`, sincronize a cópia activa:
 
 ```bash
-sudo ln -sfn /root/homelab/scripts/container-ops /opt/container-ops
+cp /root/homelab/scripts/container-ops/ops.sh /opt/container-ops/ops.sh
+cp /root/homelab/scripts/container-ops/apps.conf /opt/container-ops/apps.conf
+cp /root/homelab/scripts/container-ops/GUIA.md /opt/container-ops/GUIA.md
 ```
+
+### Exemplos (o essencial)
+
+Atualizar **um** container (backup → pull → restart → validação → refresh no HA):
+
+```bash
+/opt/container-ops/ops.sh update hermes latest
+/opt/container-ops/ops.sh update jellyfin latest
+/opt/container-ops/ops.sh update adguard latest
+```
+
+Atualizar **todos** os apps cadastrados de uma vez (tag habitual: `latest`; Immich/`immich-ml` → `release`; Uptime Kuma → `2`):
+
+```bash
+/opt/container-ops/ops.sh update all
+```
+
+Se um app falhar, o `update all` continua com os restantes e no fim faz um único refresh WUD→HA.
 
 ### Passo a passo
 
-1. **Ver o que está pendente** — Home Assistant (badge Docker) ou WUD (`http://192.168.3.21:3000` se expuser a porta). O WUD verifica automaticamente às **03:00** e **15:00** (horário de Brasília).
+1. **Ver o que está pendente** — Home Assistant (badge Docker) ou Homepage («Containers com atualização disponível»). O WUD verifica **um container por hora** (`/etc/cron.d/wud-stagger`), não em batch (para evitar 429 no GHCR).
 
 2. **Listar apps que o script conhece:**
 
@@ -31,23 +51,29 @@ sudo ln -sfn /root/homelab/scripts/container-ops /opt/container-ops
 /opt/container-ops/ops.sh list
 ```
 
-3. **Atualizar um serviço** (faz backup dos volumes → pull → restart → validação):
+3. **Atualizar** — um app ou todos:
 
 ```bash
 /opt/container-ops/ops.sh update <app> <tag>
+/opt/container-ops/ops.sh update all
 ```
 
-| App no comando | Serviço | Tag usual | Exemplo agora |
-|----------------|---------|-----------|---------------|
+| App no comando | Serviço | Tag habitual | Exemplo |
+|----------------|---------|--------------|---------|
+| `hermes` | Hermes Agent | `latest` | `/opt/container-ops/ops.sh update hermes latest` |
 | `jellyfin` | Jellyfin | `latest` | `/opt/container-ops/ops.sh update jellyfin latest` |
 | `duplicati` | Duplicati | `latest` | `/opt/container-ops/ops.sh update duplicati latest` |
 | `mealie` | Receitas | `latest` | `/opt/container-ops/ops.sh update mealie latest` |
+| `adguard` | DNS AdGuard | `latest` | `/opt/container-ops/ops.sh update adguard latest` |
+| `wud` | What's Up Docker | `latest` ou `8.3.0` | `/opt/container-ops/ops.sh update wud latest` |
+| `node-exporter` | Métricas do host | `latest` | `/opt/container-ops/ops.sh update node-exporter latest` |
 | `immich` | Fotos (servidor) | `release` | `/opt/container-ops/ops.sh update immich release` |
 | `immich-ml` | Fotos (ML) | `release` | `/opt/container-ops/ops.sh update immich-ml release` |
+| `…` | ver `list` | | `/opt/container-ops/ops.sh update all` |
 
-**Immich:** depois de actualizar o servidor, actualize também o ML com a **mesma tag**.
+**Immich:** depois de actualizar o servidor, actualize também o ML com a **mesma tag** (o `update all` já faz os dois).
 
-4. **Se algo correr mal**, volte à tag anterior (backups ficam em `/opt/container-ops/backups/<app>/`):
+4. **Se algo correr mal**, volte à tag anterior (backups em `/opt/container-ops/backups/<app>/`):
 
 ```bash
 /opt/container-ops/ops.sh rollback jellyfin latest
@@ -65,8 +91,6 @@ sudo ln -sfn /root/homelab/scripts/container-ops /opt/container-ops
 ```bash
 /opt/container-ops/ops.sh refresh-ha              # todos os containers (~30 s)
 /opt/container-ops/ops.sh refresh-ha jellyfin     # só um (~3 s)
-# equivalente manual:
-docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/watch
 ```
 
 Guia completo em português: [`scripts/container-ops/GUIA.md`](scripts/container-ops/GUIA.md)
@@ -81,6 +105,7 @@ Guia completo em português: [`scripts/container-ops/GUIA.md`](scripts/container
 | **Home Assistant** | `192.168.3.10` (VM separada) |
 | **DNS / split DNS** | AdGuard nesta VM |
 | **Acesso público** | Cloudflare Tunnel + NPM (HTTPS) |
+| **Tailscale** | Subnet router `192.168.3.0/24`, `192.168.68.0/24`, `192.168.2.0/24` |
 
 **Tarefas pendentes:** [`PENDENCIAS.md`](PENDENCIAS.md) — na raiz do servidor: `/root/homelab-pendencias.md` (symlink).
 
@@ -98,15 +123,24 @@ homelab/
 ├── compose/                  ← um pasta por serviço (sem segredos)
 │   ├── adguard-home/
 │   ├── cloudflare-tunnel/    ← .env.example
+│   ├── dozzle/
 │   ├── duplicati/
-│   ├── immich/               ← .env.example
+│   ├── firefly-iii/
+│   ├── hermes-agent/
+│   ├── homepage/
+│   ├── immich/               ← .env.example (Valkey em vez de Redis)
 │   ├── jellyfin/
+│   ├── mealie/
+│   ├── monitoring/           ← Prometheus, Grafana, node-exporter
 │   ├── nginx-proxy-manager/
+│   ├── portainer/
+│   ├── tailscale/
 │   ├── uptime-kuma/          ← imagem :2
-│   ├── wud/
-│   └── portainer/
+│   ├── vaultwarden/
+│   └── wud/
 ├── etc/
-│   ├── docker/               ← daemon.json, firewall, VLANs
+│   ├── cron/                 ← wud-stagger
+│   ├── docker/               ← daemon.json, firewall, Tailscale forward, VLANs
 │   └── network/if-up.d/      ← rota LAN 68.x
 ├── config/
 │   ├── adguard/              ← DoH example (insecure_enabled)
@@ -118,6 +152,7 @@ homelab/
 │   ├── sync-portainer-compose.sh
 │   ├── container-ops/        ← backup/update/rollback de stacks
 │   ├── duplicati-hooks/      ← pre/post backup + webhook HA
+│   ├── wud-stagger-watch.sh  ← fila horária WUD (evita 429 GHCR)
 │   └── testar-dns-remoto.sh
 ├── homeassistant/            ← referência WUD, Duplicati, automações
 ├── backups/                  ← exports de referência (sem dados live)
@@ -257,19 +292,28 @@ Sincronize a partir deste repositório após alterações, ou importe stacks pel
 
 ## Serviços e URLs (exemplo)
 
-| Serviço | URL pública (ex.) | Porta host |
-|---------|-------------------|------------|
+| Serviço | URL pública (ex.) | Porta host / LAN |
+|---------|-------------------|------------------|
+| Homepage | https://home.antonio.rafael.nom.br (se configurado) | `192.168.3.21:3001` |
 | Immich | https://fotos.antonio.rafael.nom.br | 2283 |
 | Jellyfin | https://jellyfin.antonio.rafael.nom.br | 8096 |
-| Vaultwarden | https://senhas.antonio.rafael.nom.br | 3003 |
+| Home Assistant | https://homeassistant.antonio.rafael.nom.br | `192.168.3.10:8123` |
 | Mealie | https://receitas.antonio.rafael.nom.br | 9925 |
+| Vaultwarden | https://senhas.antonio.rafael.nom.br | 3003 (só HTTPS público) |
+| Firefly III | https://firefly.antonio.rafael.nom.br | 3004 |
+| Hermes Agent | https://hermes.antonio.rafael.nom.br | 9119 |
+| Filebrowser | https://filebrowser.antonio.rafael.nom.br | 8085 |
 | Uptime Kuma | https://uptimekuma.antonio.rafael.nom.br | 3002 |
 | Portainer | https://portainer.antonio.rafael.nom.br | 9443 |
-| Homepage | (LAN / domínio interno) | 3001 |
-| Duplicati | https://duplicati.antonio.rafael.nom.br | 8200 |
+| NPM admin | (só LAN) | `192.168.3.21:81` |
 | AdGuard UI | https://adguard.antonio.rafael.nom.br | 8080 |
 | DNS DoH (4G) | `dns.antonio.rafael.nom.br` | 8080 (via NPM/túnel) |
-| Filebrowser | LAN `8085` | 8085 |
+| Duplicati | https://duplicati.antonio.rafael.nom.br | 8200 |
+| Dozzle | https://dozzle.antonio.rafael.nom.br | 8888 |
+| Grafana | https://grafana.antonio.rafael.nom.br | 3005 |
+| Prometheus | (só LAN) | `192.168.3.21:9090` |
+| Glances | (só LAN) | `192.168.3.21:61208` |
+| Proxmox | (só LAN / Tailscale) | `https://192.168.3.20:8006` |
 
 ---
 
@@ -300,7 +344,7 @@ git push -u origin main
 
 | Tarefa | Comando / ficheiro |
 |--------|-------------------|
-| **Atualizar containers** | `/opt/container-ops/ops.sh update <app> <tag>` — ver secção no topo deste README |
+| **Atualizar containers** | `/opt/container-ops/ops.sh update hermes latest` — ou tudo: `update all` |
 | Verificar updates (WUD) | Fila horária (`/etc/cron.d/wud-stagger`); manual um: `docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/<id>/watch` |
 | Token GHCR (WUD) | `/etc/docker/wud-registries.env` — ver `etc/docker/wud-registries.env.example` |
 | Verificar backups | `scripts/duplicati-verificar-backup.sh` |

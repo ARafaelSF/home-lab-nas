@@ -46,20 +46,37 @@ image: ghcr.io/mealie-recipes/mealie:${MEALIE_TAG:-latest}
 ```bash
 /opt/container-ops/ops.sh list
 /opt/container-ops/ops.sh backup mealie
-/opt/container-ops/ops.sh update mealie v2.8.0
+/opt/container-ops/ops.sh update hermes latest
+/opt/container-ops/ops.sh update all
 /opt/container-ops/ops.sh rollback mealie latest
 /opt/container-ops/ops.sh prune mealie 3
 ```
 
-### `update`
+### `update <app> <tag>`
+
+Exemplo do dia a dia:
+
+```bash
+/opt/container-ops/ops.sh update hermes latest
+```
 
 1. Backup automático de todos os volumes listados  
 2. Atualiza `tag_env_key` no `.env` (cria a chave se não existir)  
 3. `docker compose pull` + `up -d` só no serviço indicado  
 4. Valida container em `running` e regista a imagem  
 5. Se falhar em qualquer passo, **não apaga** backups  
-6. Se OK, `prune` com **keep=1** (um backup recente por volume)
+6. Se OK, `prune` com **keep=1** (um backup recente por volume)  
+7. Refresh do sensor WUD → Home Assistant  
 
+### `update all`
+
+Actualiza **todas** as apps em `apps.conf` com a tag habitual:
+
+- maioria → `latest`
+- `immich` / `immich-ml` → `release`
+- `uptime-kuma` → `2`
+
+Continua se uma falhar; no fim um único refresh WUD→HA.
 ### `prune`
 
 Remove backups antigos **por volume** (não mistura volumes).  

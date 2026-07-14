@@ -262,9 +262,24 @@ cmd_refresh_ha() {
   wud_refresh_ha app
 }
 
+# Tag de tracking habitual por app (usada em `update all`).
+default_update_tag() {
+  case "$1" in
+    immich|immich-ml) echo "release" ;;
+    uptime-kuma) echo "2" ;;
+    *) echo "latest" ;;
+  esac
+}
+
 cmd_update() {
   local app="${1:?app}"
-  local new_tag="${2:?nova_tag}"
+
+  if [[ "$app" == "all" ]]; then
+    cmd_update_all
+    return
+  fi
+
+  local new_tag="${2:?nova_tag — ex.: latest (ou: update all)}"
   load_app "$app"
   verify_stack
   log "=== update: ${APP_NAME} → tag ${new_tag} ==="
@@ -273,19 +288,50 @@ cmd_update() {
   set_env_tag "$new_tag"
   log "Pull ${APP_SERVICE}..."
   if ! compose pull "$APP_SERVICE"; then
-    die "pull falhou — backups preservados em ${APP_BACKUP_DIR}"
+    die "pull falhou — backups preservados em ${APP_BACKUP_DIR}" || return 1
   fi
   log "Up -d ${APP_SERVICE}..."
   if ! compose up -d "$APP_SERVICE"; then
-    die "up falhou — backups preservados em ${APP_BACKUP_DIR}"
+    die "up falhou — backups preservados em ${APP_BACKUP_DIR}" || return 1
   fi
   sleep 3
   if ! validate_service; then
-    die "validação falhou — backups preservados em ${APP_BACKUP_DIR}"
+    die "validação falhou — backups preservados em ${APP_BACKUP_DIR}" || return 1
   fi
   log "Update concluído com sucesso."
   prune_backups 1
   wud_refresh_ha app
+}
+
+# Actualiza todas as apps cadastradas para a tag habitual (latest / release / 2).
+# Continua se uma falhar; no fim faz um único refresh WUD→HA.
+cmd_update_all() {
+  local line name tag failed=0 ok=0
+  log "=== update all (tag habitual por app) ==="
+  log "Immich/ML → release | Uptime Kuma → 2 | restantes → latest"
+  export CONTAINER_OPS_LENIENT=1
+  export CONTAINER_OPS_SKIP_WUD=1
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    line="$(echo "$line" | xargs)"
+    [[ -z "$line" ]] && continue
+    IFS='|' read -r name _ <<<"$line"
+    tag="$(default_update_tag "$name")"
+    log "---------- ${name} → ${tag} ----------"
+    if cmd_update "$name" "$tag"; then
+      log "OK: ${name}"
+      ok=$((ok + 1))
+    else
+      log "FALHOU: ${name} (seguindo para a seguinte)"
+      failed=1
+    fi
+  done <"$APPS_CONF"
+  unset CONTAINER_OPS_LENIENT
+  unset CONTAINER_OPS_SKIP_WUD
+  log "=== update all: ${ok} OK ==="
+  wud_refresh_ha all || true
+  [[ "$failed" -eq 0 ]] || die "Um ou mais updates falharam (ver logs acima)"
+  log "update all concluído."
 }
 
 cmd_rollback() {
@@ -339,11 +385,12 @@ cmd_list() {
   echo
   echo
   log "=== Comandos úteis ==="
-  echo "  /opt/container-ops/ops.sh backup <app>        # ex.: mealie, jellyfin, immich"
-  echo "  /opt/container-ops/ops.sh update <app> <tag>  # ex.: update jellyfin latest"
-  echo "  /opt/container-ops/ops.sh refresh-ha [app]    # actualizar sensores HA via WUD"
-  echo "  /opt/container-ops/ops.sh backup-all          # backup de todas as apps"
-  echo "  cat /opt/container-ops/GUIA.md                # guia em português"
+  echo "  /opt/container-ops/ops.sh backup <app>          # ex.: mealie, jellyfin, immich"
+  echo "  /opt/container-ops/ops.sh update <app> <tag>    # ex.: update hermes latest"
+  echo "  /opt/container-ops/ops.sh update all            # todas as apps (latest/release/2)"
+  echo "  /opt/container-ops/ops.sh refresh-ha [app]      # actualizar sensores HA via WUD"
+  echo "  /opt/container-ops/ops.sh backup-all            # backup de todas as apps"
+  echo "  cat /opt/container-ops/GUIA.md                  # guia em português"
 }
 
 cmd_backup_all() {
@@ -376,6 +423,8 @@ Comandos:
   backup <app>              Backup dos volumes do app
   backup-all                Backup de todas as apps cadastradas
   update <app> <nova_tag>   Backup + update tag + validação + prune (keep=1) + refresh HA
+                            Ex.: update hermes latest
+  update all                Actualiza TODAS as apps (latest; Immich=release; Kuma=2)
   rollback <app> <tag>      Reverte tag e recria container + refresh HA
   refresh-ha [app]          Força WUD a republicar sensores no Home Assistant
   prune <app> [keep]        Remove backups antigos (padrão keep=1)
