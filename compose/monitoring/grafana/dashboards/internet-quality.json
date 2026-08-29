@@ -1,0 +1,150 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Latência ICMP (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ping_rtt_mean_seconds * 1000",
+          "legendFormat": "{{target}}",
+          "refId": "A"
+        },
+        {
+          "expr": "avg by (instance) (probe_duration_seconds{job=\"blackbox-icmp\"}) * 1000",
+          "legendFormat": "bb {{instance}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "decimals": 1 }
+      }
+    },
+    {
+      "title": "Perda de pacotes (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ping_loss_ratio * 100",
+          "legendFormat": "{{target}}",
+          "refId": "A"
+        },
+        {
+          "expr": "(1 - avg by (instance) (probe_success{job=\"blackbox-icmp\"})) * 100",
+          "legendFormat": "bb {{instance}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100 }
+      }
+    },
+    {
+      "title": "Jitter ICMP (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ping_rtt_std_deviation_seconds * 1000",
+          "legendFormat": "{{target}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "decimals": 1 }
+      }
+    },
+    {
+      "title": "HTTP externo (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_duration_seconds{job=\"blackbox-http\"} * 1000",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "decimals": 0 }
+      }
+    },
+    {
+      "title": "DNS lookup (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_dns_lookup_time_seconds{job=~\"blackbox-dns.*\"} * 1000",
+          "legendFormat": "{{job}} {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "decimals": 1 }
+      }
+    },
+    {
+      "title": "Velocidade (Mbps) — teste a cada 6h",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "speedtest_download_bits_per_second / 1e6",
+          "legendFormat": "download",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_upload_bits_per_second / 1e6",
+          "legendFormat": "upload",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Mbits", "decimals": 1 }
+      }
+    },
+    {
+      "title": "Uso do link eth0 (Mbps)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{device=\"eth0\"}[5m]) * 8 / 1e6",
+          "legendFormat": "download",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total{device=\"eth0\"}[5m]) * 8 / 1e6",
+          "legendFormat": "upload",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Mbits", "decimals": 1 }
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["internet", "homelab"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "title": "Qualidade Internet",
+  "uid": "internet-quality",
+  "version": 1
+}

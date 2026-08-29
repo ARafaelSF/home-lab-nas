@@ -29,6 +29,23 @@ Snippet versionado: `config/adguard/AdGuardHome.http-doh.example.yaml`
 
 ---
 
+## DNS por WLAN no UniFi (recomendado)
+
+Em vez de apontar o DNS global da rede para o AdGuard, configure **por SSID/rede** no **UniFi Network**:
+
+| Onde no UniFi | Configuração |
+|---------------|--------------|
+| **Settings → WiFi → [SSID] → Advanced** ou **Settings → Networks → [rede]** | **DHCP DNS Server** / **DHCP Name Server** |
+| WLANs com filtro + domínios `*.antonio.rafael.nom.br` | `192.168.3.21` (AdGuard) |
+| WLANs de teste, convidados ou diagnóstico | `8.8.8.8`, `8.8.4.4` (bypass AdGuard) |
+| **Settings → Internet → DNS** (WAN) | DNS público ou automático do ISP — **não** usar AdGuard |
+
+**Servidor NAS (`192.168.3.21`):** usa DNS directo (`8.8.8.8` / `8.8.4.4`) via `systemd-resolved` — ver `etc/systemd/resolved.conf.d/homelab-dns.conf`. Evita loop e falhas no Docker/WUD quando o AdGuard reinicia.
+
+**Teste rápido:** ligar o telemóvel a uma WLAN com bypass e outra com AdGuard; `nslookup jellyfin.antonio.rafael.nom.br` deve devolver IP local só na WLAN com AdGuard.
+
+---
+
 ## Por que o painel «Criptografia» do AdGuard fica desligado
 
 Com **Cloudflare Tunnel** + **NPM** não é preciso activar HTTPS no AdGuard:

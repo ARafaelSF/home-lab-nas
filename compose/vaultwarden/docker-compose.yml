@@ -9,6 +9,7 @@ services:
       - wud.watch.digest=true
     environment:
       - TZ=America/Sao_Paulo
+      - DOMAIN=https://senhas.antonio.rafael.nom.br
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=false
       - INVITATIONS_ALLOWED=true

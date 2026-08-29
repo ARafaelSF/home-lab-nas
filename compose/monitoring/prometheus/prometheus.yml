@@ -19,3 +19,76 @@ scrape_configs:
         target_label: stack
       - source_labels: [name]
         target_label: container
+
+  - job_name: ping
+    static_configs:
+      - targets: ['ping-exporter:9427']
+
+  - job_name: blackbox-icmp
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    static_configs:
+      - targets:
+          - 192.168.3.1
+          - 8.8.8.8
+          - 1.1.1.1
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://www.google.com/generate_204
+          - https://www.cloudflare.com/cdn-cgi/trace
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox-dns
+    metrics_path: /probe
+    params:
+      module: [dns_adguard]
+    static_configs:
+      - targets:
+          - 192.168.3.21:53
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox-dns-public
+    metrics_path: /probe
+    params:
+      module: [dns_public]
+    static_configs:
+      - targets:
+          - 8.8.8.8:53
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: speedtest
+    scrape_interval: 360m
+    scrape_timeout: 2m
+    static_configs:
+      - targets: ['speedtest-exporter:9798']

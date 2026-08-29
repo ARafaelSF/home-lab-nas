@@ -95,6 +95,44 @@ services:
     devices:
       - /dev/kmsg
 
+  ping-exporter:
+    image: czerwonk/ping_exporter:${PING_EXPORTER_TAG:-latest}
+    container_name: ping-exporter
+    labels:
+      - wud.display.name=Ping Exporter
+      - wud.display.icon=si:prometheus
+      - wud.watch.digest=true
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+    volumes:
+      - ./ping/ping.yml:/config/config.yml:ro
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:${BLACKBOX_TAG:-latest}
+    container_name: blackbox-exporter
+    labels:
+      - wud.display.name=Blackbox Exporter
+      - wud.display.icon=si:prometheus
+      - wud.watch.digest=true
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+
+  speedtest-exporter:
+    image: ghcr.io/tzockt/speedtest-exporter:${SPEEDTEST_EXPORTER_TAG:-latest}
+    container_name: speedtest-exporter
+    labels:
+      - wud.display.name=Speedtest Exporter
+      - wud.display.icon=si:speedtest
+      - wud.watch.digest=true
+    restart: unless-stopped
+    environment:
+      - SPEEDTEST_CACHE_DURATION=${SPEEDTEST_INTERVAL:-21600}
+      - SPEEDTEST_TIMEOUT=90
+
 volumes:
   prometheus_data:
   grafana_data:
