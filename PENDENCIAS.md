@@ -120,11 +120,31 @@ Causa do maior bloco: `switch.ld2410_escritorio_modo_engenharia` estava **ligado
 
 **Prioridade:** baixa. Nenhum vem da atualização 2026.9.0.
 
-- [ ] `float` sem `default` em templates: `sensor.fake_feels_like`, `sensor.cozinha_termo_sensacao_termica`, `sensor.cozinha_externa_termo_sensacao_termica`
-- [ ] `alexa_devices`: IDs únicos duplicados (`select.casa_arafaelsf_gmail_com_default_device`)
-- [ ] `select.suite_toldo_z2m_motor_direction`: recebe `back`, válidos são `normal`/`reversed`
-- [ ] `sensor.casa_agua_copasa_chuva_acumulada`: unidade `mm` inválida para `precipitation_intensity`
+- [x] **Templates `float` sem `default`** (2026-09-03) — ver detalhe abaixo
+- [ ] `alexa_devices`: IDs únicos duplicados (`select.casa_arafaelsf_gmail_com_default_device`) — defeito da integração, nada a corrigir localmente
+- [ ] `select.suite_toldo_z2m_motor_direction`: recebe `back`, válidos são `normal`/`reversed` — converter Z2M
+- [~] `sensor.casa_agua_copasa_chuva_acumulada`: unidade `mm` inválida para `precipitation_intensity` — ver detalhe abaixo
 - [ ] Integrações custom com `via_device` obsoleto (param sai no HA 2027.8): `hikvision_axpro`, `alexa_media`, `ttlock`, `solarman`
+- [ ] Constantes obsoletas (também HA 2027.8): `sonoff`, `localtuya`, `alexa_media`
+- [ ] `localtuya`: 2 dispositivos inalcançáveis (`Errno 113`) — "Unidade Celsius" `192.168.2.230` e "Umidificador Cecília" `192.168.2.51`, ambos na VLAN IoT
+- [ ] `alexa_devices`: 5 dispositivos com *refresh* falhado (usa cache) — 2 Echo Dot + 3 FireStick
+
+### 8.1 Templates corrigidos (2026-09-03)
+
+**Sensação térmica cozinha / cozinha externa** (helpers de UI, entries `01KQCJA35P…` e `01KQCJAMGP…`): já protegiam com `is_number()`, mas devolviam a *string* literal `unknown`, que o validador de sensores numéricos rejeita. Passaram a devolver `{{ none }}`. Estado final continua `unknown`; não se usou `availability` para não trocar o estado por `unavailable` e afetar dashboards.
+
+**`sensor.fake_feels_like`** — causa raiz diferente: `input_number.fake_temperature` e `input_number.fake_humidity` tinham sido **apagados**, deixando o pacote `packages/template/fake.yaml` a apontar para o vazio. O arnês de teste está em uso (todos os `input_boolean.fake_*` existem e `automation.lab_fake_luz_por_presenca_inteligente` está ativa), por isso os dois helpers foram **recriados** (−10..50 °C e 0..100%, valores 25/60) em vez de se apagar o pacote. Os três templates do `sensor:` foram ainda blindados com `is_number()` + `{{ none }}` para não voltarem a rebentar se os helpers desaparecerem. Aplicado com `template.reload`, `check_config` ok.
+
+### 8.2 Sensor de chuva do ESPHome — correção parcial
+
+`Chuva Acumulada` (dispositivo `agua-copasa`) reporta `mm` com `device_class: precipitation_intensity`, que exige `mm/h` ou `mm/d`. Sendo um **acumulado**, o correto é `precipitation` (aceita `mm`).
+
+Feito: override *Show As* no registry para `precipitation` — o estado passa a expor a combinação válida.
+
+A fazer (precisa do ESPHome Device Builder + flash OTA, inalcançável por MCP; os YAML do ESPHome **não** estão neste repo):
+- [ ] `device_class: precipitation` no YAML do `agua-copasa`
+- [ ] Avaliar `state_class: total_increasing` — hoje o sensor **não tem** `state_class`, logo não alimenta estatísticas de longo prazo
+- [ ] Confirmar se o aviso de arranque desaparece; o override é de *display* e o HA pode validar contra o `original_device_class`
 
 ---
 
