@@ -128,13 +128,21 @@ Causa do maior bloco: `switch.ld2410_escritorio_modo_engenharia` estava **ligado
 
 ---
 
-## 9. Hermes Agent — sem acesso ao HA
+## 9. Hermes Agent — sem acesso ao HA (decisão: manter assim)
 
-**Prioridade:** média
+**Prioridade:** — (adiado por decisão do utilizador, 2026-09-03)
 
-`HASS_TOKEN=` está **vazio** em `compose/hermes-agent/.env`, por isso o agente arranca com todas as ferramentas do HA indisponíveis (`_check_ha_available returned False`). `HASS_URL` está correcto.
+`HASS_TOKEN=` está **vazio** em `compose/hermes-agent/.env`, por isso as 4 ferramentas do HA (`ha_list_entities`, `ha_get_state`, `ha_list_services`, `ha_call_service`) ficam indisponíveis. `HASS_URL` está correcto.
 
-- [ ] Criar token *long-lived* no HA (Perfil → Segurança) e preencher `HASS_TOKEN`, depois `ops.sh update hermes latest`
+**Decisão:** não dar acesso ao HA por agora. O Hermes funciona normalmente para o resto (Docker, Glances, backups, Telegram). Única perda: não consegue investigar falhas de backup reportadas pelo HA, como pede o `SOUL-homelab.md`.
+
+Notas para quando/se se decidir avançar:
+- `ha_call_service` dá **controlo** da casa, não só leitura; token *long-lived* herda as permissões de quem o cria e o HA não tem permissões por entidade
+- Preferir utilizador HA dedicado **não-admin** (limita config/apps/updates, mas não impede controlar luzes/clima)
+- O token fica em texto simples no `.env` (os outros segredos estão no Vaultwarden)
+- Risco de exposição é baixo: `TELEGRAM_ALLOWED_USERS` tem 1 utilizador e há autorização em `gateway/authz_mixin.py`
+
+- [ ] **Adiado** — criar token em Perfil → Segurança, preencher `HASS_TOKEN`, `ops.sh update hermes latest`
 
 ---
 
