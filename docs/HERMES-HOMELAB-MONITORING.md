@@ -144,6 +144,30 @@ O `homelab-watchdog.sh` **não alerta** containers parados de propósito pelo Du
 
 Mensagens do watchdog em **português claro**. Em `config.yaml`: `cron.wrap_response: false` (remove o cabeçalho/rodapé em inglês “Cronjob Response…”).
 
+### Notificação “Gateway shutting down” (Telegram)
+
+O Hermes envia essa mensagem ao receber `SIGTERM` (ex.: `docker stop` no PRE do Duplicati). Para **interrupções previstas**, desactivar no `config.yaml` do volume:
+
+```yaml
+gateway:
+  platforms:
+    telegram:
+      gateway_restart_notification: false
+```
+
+Script idempotente (já aplicado no servidor):
+
+```bash
+chmod +x /root/homelab/scripts/hermes-apply-homelab-config.sh
+/root/homelab/scripts/hermes-apply-homelab-config.sh
+```
+
+Ou manualmente: `docker exec hermes-agent hermes config set gateway.platforms.telegram.gateway_restart_notification false` **e reiniciar o container** (`docker compose ... restart hermes`).
+
+**Importante:** a flag só entra em vigor no processo gateway **depois de um restart**. Se alterares o YAML com o Hermes a correr, o backup dessa noite ainda pode enviar o aviso uma vez. O `pre-backup.sh` também usa `docker kill` no Hermes (em vez de `stop`) para não disparar o shutdown gracioso com Telegram.
+
+**Nota:** com isto desligado, também não recebes aviso se reiniciares o Hermes manualmente com uma conversa activa — aceitável para o bot de monitorização do homelab.
+
 ### 6. Cron — resumo diário (com LLM)
 
 ```bash

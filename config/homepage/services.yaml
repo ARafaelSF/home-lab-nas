@@ -193,6 +193,12 @@
             icon: prometheus.png
             description: Métricas (30 dias)
             siteMonitor: http://192.168.3.21:9090/-/healthy
+    - InfluxDB:
+        - LAN:
+            href: http://192.168.3.21:8086
+            icon: /icons/influxdb.png
+            description: Banco de séries temporais
+            siteMonitor: http://192.168.3.21:8086/ping
     - Duplicati:
         - HTTPS:
             href: https://duplicati.antonio.rafael.nom.br/

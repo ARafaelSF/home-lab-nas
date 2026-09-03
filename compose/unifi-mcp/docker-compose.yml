@@ -1,0 +1,32 @@
+# UniFi Network MCP (HTTP) — para o Cursor no Windows via Tailscale
+# Endpoint: http://<tailscale-ip>:3010/mcp
+#
+# No Cursor: Tools & MCP → New MCP Server → URL
+
+services:
+  unifi-network-mcp:
+    image: ghcr.io/sirkirby/unifi-network-mcp:${UNIFI_MCP_TAG:-latest}
+    container_name: unifi-network-mcp
+    restart: unless-stopped
+    labels:
+      - wud.display.name=UniFi Network MCP
+      - wud.display.icon=si:ubiquiti
+      - wud.watch=true
+    env_file:
+      - .env
+    environment:
+      UNIFI_MCP_HTTP_ENABLED: "true"
+      UNIFI_MCP_HTTP_TRANSPORT: streamable-http
+      UNIFI_MCP_HOST: "0.0.0.0"
+      UNIFI_MCP_PORT: "3000"
+      UNIFI_MCP_HTTP_FORCE: "true"
+      # Aceitar Host do Tailscale / LAN
+      UNIFI_MCP_ALLOWED_HOSTS: "localhost,127.0.0.1,100.118.156.15,homelab-docker.tail1574a9.ts.net,192.168.3.21"
+      UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION: "true"
+      UNIFI_CONTROLLER_TYPE: proxy
+      UNIFI_VERIFY_SSL: "false"
+    # Só Tailscale (+ loopback via TS IP). Não expor na internet.
+    ports:
+      - "100.118.156.15:3010:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -41,6 +41,8 @@ Todas as noites (~02:00) o job Duplicati corre hooks que **param de propósito**
 
 **Não trates isto como falha.** Só investiga se, depois das ~02:30, algum desses serviços continuar parado ou se o Home Assistant reportar falha do backup.
 
+O Telegram **não** deve receber “Gateway shutting down” nesta janela (`gateway_restart_notification: false` no Hermes).
+
 ## Como agir
 
 - Investigação: confirma o sintoma → Glances/Uptime Kuma → Grafana ou Dozzle → sugere uma ação concreta em linguagem simples.

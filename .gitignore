@@ -2,6 +2,9 @@
 .env
 *.env
 !*.env.example
+# ficheiros de tokens gerados pelo influxdb-setup.sh (.env.tokens.new, etc.)
+.env.tokens*
+**/.env.tokens*
 stack.env
 stack.env.bak
 **/stack.env
@@ -11,11 +14,13 @@ compose/dozzle/users.yml
 **/.dashboard-password
 compose/hermes-agent/.dashboard-password
 **/secrets/
+homeassistant/localthings-certs/
 
 # Backups locais (podem conter dados sensíveis)
 backups/*.tar.gz
 backups/*.db
 backups/manifests/runtime-*.txt
+backups/influx-migration/
 
 # Cursor / IDE
 .cursor/
@@ -24,3 +29,6 @@ backups/manifests/runtime-*.txt
 # OS
 .DS_Store
 *~
+
+# UniFi MCP secrets
+compose/unifi-mcp/.env

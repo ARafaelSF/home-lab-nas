@@ -1,0 +1,1350 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 5000
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'casa_kron_rede_eletrica_potencia_total') AND $timeFilter",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Pot\u00eancia da rede",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'casa_kron_usina_fotovoltaica_usina_fotovoltaica_potencia_fase_1') AND $timeFilter",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Gera\u00e7\u00e3o solar",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "unit": "kwatth"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__energy\" WHERE (\"entity_id\" = 'casa_rede_eletrica_entrada') AND $timeFilter",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Importa\u00e7\u00e3o acumulada",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 4,
+          "unit": "currencyBRL"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__monetary\" WHERE (\"entity_id\" = 'tarifas_cemig_d_tarifa_vigente') AND $timeFilter",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Tarifa vigente",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 2
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Rede",
+          "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'casa_kron_rede_eletrica_potencia_total') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "Solar",
+          "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'casa_kron_usina_fotovoltaica_usina_fotovoltaica_potencia_fase_1') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Rede e gera\u00e7\u00e3o solar \u2014 detalhado",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 2
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Fase 1",
+          "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'potencia_fase_1') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "Fase 2",
+          "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'potencia_fase_2') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "Fase 3",
+          "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'potencia_fase_3') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Balan\u00e7o de pot\u00eancia por fase",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 4,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_kron_usina_fotovoltaica_usina_fotovoltaica_potencia_fase_1.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Usina fotovoltaica \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_kron_rede_eletrica_potencia_total.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Pot\u00eancia total"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*potencia_fase_1.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Fase 1"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*potencia_fase_2.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Fase 2"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*potencia_fase_3.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Fase 3"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*suite_ar_condicionado_potencia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Su\u00edte \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sala_de_tv_ar_condicionado_potencia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Sala de TV \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_ar_condicionado_potencia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Escrit\u00f3rio \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*ar_condicionado_quarto_cecilia_potencia.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Quarto Cec\u00edlia \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_geladeira_potencia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Geladeira \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_geladeira_midea_potencia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Geladeira Midea \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*lavanderia_lava_louca_potencia_1x.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lava-lou\u00e7as \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*lavanderia_lava_roupa_potencia_1x.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lava-roupas \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_externa_forno_z2m_power.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Forno de convec\u00e7\u00e3o \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sala_de_tv_multimidia_potencia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Multim\u00eddia Sala de TV \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sistema_home_assistant_potencia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Servidor Home Assistant \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_monitores_potencia_tasmota.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Monitores Escrit\u00f3rio \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_servidor_minipc_potencia_tasmota.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Mini-PC Escrit\u00f3rio \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*chuveiro_suite_potencia.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Chuveiro Su\u00edte \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*caixa_d_agua_potencia.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Bomba da caixa d\u2019\u00e1gua \u2014 Pot\u00eancia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*oficina_regua_z2m_power.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "R\u00e9gua Oficina \u2014 Pot\u00eancia"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "alias": "$tag_entity_id",
+          "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE \"entity_id\" =~ /^$equipamento_potencia$/ AND $timeFilter GROUP BY time($__interval), \"entity_id\" fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Pot\u00eancia por equipamento",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "description": "Diferen\u00e7a n\u00e3o negativa dos contadores acumulados; n\u00e3o preenche lacunas.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "decimals": 3,
+          "unit": "kwatth"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_usina_fotovoltaica_producao.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Usina fotovoltaica \u2014 Produ\u00e7\u00e3o"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_rede_eletrica_entrada.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Importa\u00e7\u00e3o"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_rede_eletrica_saida.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Exporta\u00e7\u00e3o"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*suite_ar_condicionado_energia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Su\u00edte \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sala_de_tv_ar_condicionado_energia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Sala de TV \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_ar_condicionado_energia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Escrit\u00f3rio \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*quarto_cecilia_ar_condicionado_medidor_esphome.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Quarto Cec\u00edlia \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_geladeira_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Geladeira \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_geladeira_midea_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Geladeira Midea \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*lavanderia_lava_loucas.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lava-lou\u00e7as \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*lavanderia_lava_roupas.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lava-roupas \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_externa_forno_convecao_energia.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Forno de convec\u00e7\u00e3o \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sala_de_tv_multimidia_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Multim\u00eddia Sala de TV \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sistema_home_assistant_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Servidor Home Assistant \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_monitores_energia_total_tasmota.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Monitores Escrit\u00f3rio \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_servidor_minipc_energia_total_tasmota.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Mini-PC Escrit\u00f3rio \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*chuveiro_suite_consumo_total.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Chuveiro Su\u00edte \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*caixa_d_agua_consumo_total.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Bomba da caixa d\u2019\u00e1gua \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*oficina_regua_z2m_energy.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "R\u00e9gua Oficina \u2014 Energia"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "alias": "$tag_entity_id",
+          "query": "SELECT non_negative_difference(last(\"value\")) AS \"kWh\" FROM \"raw_30d\".\"sensor__energy\" WHERE \"entity_id\" =~ /^$equipamento_energia$/ AND $timeFilter GROUP BY time(1h), \"entity_id\" fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Consumo hor\u00e1rio \u2014 \u00faltimos 30 dias",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-hourly-inf"
+      },
+      "description": "Usa os resumos hor\u00e1rios permanentes; ideal para per\u00edodos maiores que 30 dias.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "decimals": 3,
+          "unit": "kwatth"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_usina_fotovoltaica_producao.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Usina fotovoltaica \u2014 Produ\u00e7\u00e3o"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_rede_eletrica_entrada.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Importa\u00e7\u00e3o"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*casa_rede_eletrica_saida.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rede el\u00e9trica \u2014 Exporta\u00e7\u00e3o"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*suite_ar_condicionado_energia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Su\u00edte \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sala_de_tv_ar_condicionado_energia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Sala de TV \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_ar_condicionado_energia_smartthings.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Escrit\u00f3rio \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*quarto_cecilia_ar_condicionado_medidor_esphome.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ar-condicionado Quarto Cec\u00edlia \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_geladeira_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Geladeira \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_geladeira_midea_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Geladeira Midea \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*lavanderia_lava_loucas.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lava-lou\u00e7as \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*lavanderia_lava_roupas.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lava-roupas \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*cozinha_externa_forno_convecao_energia.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Forno de convec\u00e7\u00e3o \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sala_de_tv_multimidia_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Multim\u00eddia Sala de TV \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*sistema_home_assistant_energia_sonoff.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Servidor Home Assistant \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_monitores_energia_total_tasmota.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Monitores Escrit\u00f3rio \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*escritorio_servidor_minipc_energia_total_tasmota.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Mini-PC Escrit\u00f3rio \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*chuveiro_suite_consumo_total.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Chuveiro Su\u00edte \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*caixa_d_agua_consumo_total.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Bomba da caixa d\u2019\u00e1gua \u2014 Energia"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*oficina_regua_z2m_energy.*"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "R\u00e9gua Oficina \u2014 Energia"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "alias": "$tag_entity_id",
+          "query": "SELECT non_negative_difference(last(\"value\")) AS \"kWh\" FROM \"autogen\".\"sensor__energy\" WHERE \"entity_id\" =~ /^$equipamento_energia$/ AND $timeFilter GROUP BY time(1h), \"entity_id\" fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Consumo hor\u00e1rio \u2014 hist\u00f3rico permanente",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "energy-raw-30d"
+      },
+      "description": "Positivo = produziu mais que consumiu no dia. Negativo = consumiu mais que produziu. Usa a varia\u00e7\u00e3o di\u00e1ria dos contadores acumulados (spread), evitando falso pico no primeiro dia de hist\u00f3rico.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisCenteredZero": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "kwatth"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Saldo"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Saldo (Produ\u00e7\u00e3o \u2212 Consumo)"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 11,
+      "options": {
+        "barWidth": 0.8,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelMaxLength": 12,
+        "xTickLabelRotation": -45,
+        "xTickLabelSpacing": 80
+      },
+      "targets": [
+        {
+          "hide": true,
+          "query": "SELECT spread(\"value\") AS \"producao\" FROM \"raw_30d\".\"sensor__energy\" WHERE \"entity_id\" = 'casa_usina_fotovoltaica_producao' AND $timeFilter GROUP BY time(1d) fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "hide": true,
+          "query": "SELECT spread(\"value\") AS \"entrada\" FROM \"raw_30d\".\"sensor__energy\" WHERE \"entity_id\" = 'casa_rede_eletrica_entrada' AND $timeFilter GROUP BY time(1d) fill(null)",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        },
+        {
+          "hide": true,
+          "query": "SELECT spread(\"value\") AS \"saida\" FROM \"raw_30d\".\"sensor__energy\" WHERE \"entity_id\" = 'casa_rede_eletrica_saida' AND $timeFilter GROUP BY time(1d) fill(null)",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A - ($A + $B - $C)",
+          "hide": false,
+          "refId": "Saldo",
+          "type": "math"
+        }
+      ],
+      "timeFrom": "90d",
+      "title": "Saldo energ\u00e9tico di\u00e1rio (Produ\u00e7\u00e3o \u2212 Consumo)",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "energia",
+    "home-assistant",
+    "influxdb"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "Todos",
+          "value": "$__all"
+        },
+        "definition": "Usina fotovoltaica \u2014 Produ\u00e7\u00e3o : casa_usina_fotovoltaica_producao, Rede el\u00e9trica \u2014 Importa\u00e7\u00e3o : casa_rede_eletrica_entrada, Rede el\u00e9trica \u2014 Exporta\u00e7\u00e3o : casa_rede_eletrica_saida, Ar-condicionado Su\u00edte \u2014 Energia : suite_ar_condicionado_energia_smartthings, Ar-condicionado Sala de TV \u2014 Energia : sala_de_tv_ar_condicionado_energia_smartthings, Ar-condicionado Escrit\u00f3rio \u2014 Energia : escritorio_ar_condicionado_energia_smartthings, Ar-condicionado Quarto Cec\u00edlia \u2014 Energia : quarto_cecilia_ar_condicionado_medidor_esphome, Geladeira \u2014 Energia : cozinha_geladeira_energia_sonoff, Geladeira Midea \u2014 Energia : cozinha_geladeira_midea_energia_sonoff, Lava-lou\u00e7as \u2014 Energia : lavanderia_lava_loucas, Lava-roupas \u2014 Energia : lavanderia_lava_roupas, Forno de convec\u00e7\u00e3o \u2014 Energia : cozinha_externa_forno_convecao_energia, Multim\u00eddia Sala de TV \u2014 Energia : sala_de_tv_multimidia_energia_sonoff, Servidor Home Assistant \u2014 Energia : sistema_home_assistant_energia_sonoff, Monitores Escrit\u00f3rio \u2014 Energia : escritorio_monitores_energia_total_tasmota, Mini-PC Escrit\u00f3rio \u2014 Energia : escritorio_servidor_minipc_energia_total_tasmota, Chuveiro Su\u00edte \u2014 Energia : chuveiro_suite_consumo_total, Bomba da caixa d\u2019\u00e1gua \u2014 Energia : caixa_d_agua_consumo_total, R\u00e9gua Oficina \u2014 Energia : oficina_regua_z2m_energy",
+        "includeAll": true,
+        "label": "Equipamento (energia)",
+        "multi": true,
+        "name": "equipamento_energia",
+        "options": [],
+        "query": "Usina fotovoltaica \u2014 Produ\u00e7\u00e3o : casa_usina_fotovoltaica_producao, Rede el\u00e9trica \u2014 Importa\u00e7\u00e3o : casa_rede_eletrica_entrada, Rede el\u00e9trica \u2014 Exporta\u00e7\u00e3o : casa_rede_eletrica_saida, Ar-condicionado Su\u00edte \u2014 Energia : suite_ar_condicionado_energia_smartthings, Ar-condicionado Sala de TV \u2014 Energia : sala_de_tv_ar_condicionado_energia_smartthings, Ar-condicionado Escrit\u00f3rio \u2014 Energia : escritorio_ar_condicionado_energia_smartthings, Ar-condicionado Quarto Cec\u00edlia \u2014 Energia : quarto_cecilia_ar_condicionado_medidor_esphome, Geladeira \u2014 Energia : cozinha_geladeira_energia_sonoff, Geladeira Midea \u2014 Energia : cozinha_geladeira_midea_energia_sonoff, Lava-lou\u00e7as \u2014 Energia : lavanderia_lava_loucas, Lava-roupas \u2014 Energia : lavanderia_lava_roupas, Forno de convec\u00e7\u00e3o \u2014 Energia : cozinha_externa_forno_convecao_energia, Multim\u00eddia Sala de TV \u2014 Energia : sala_de_tv_multimidia_energia_sonoff, Servidor Home Assistant \u2014 Energia : sistema_home_assistant_energia_sonoff, Monitores Escrit\u00f3rio \u2014 Energia : escritorio_monitores_energia_total_tasmota, Mini-PC Escrit\u00f3rio \u2014 Energia : escritorio_servidor_minipc_energia_total_tasmota, Chuveiro Su\u00edte \u2014 Energia : chuveiro_suite_consumo_total, Bomba da caixa d\u2019\u00e1gua \u2014 Energia : caixa_d_agua_consumo_total, R\u00e9gua Oficina \u2014 Energia : oficina_regua_z2m_energy",
+        "type": "custom"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "Todos",
+          "value": "$__all"
+        },
+        "definition": "Usina fotovoltaica \u2014 Pot\u00eancia : casa_kron_usina_fotovoltaica_usina_fotovoltaica_potencia_fase_1, Rede el\u00e9trica \u2014 Pot\u00eancia total : casa_kron_rede_eletrica_potencia_total, Rede el\u00e9trica \u2014 Fase 1 : potencia_fase_1, Rede el\u00e9trica \u2014 Fase 2 : potencia_fase_2, Rede el\u00e9trica \u2014 Fase 3 : potencia_fase_3, Ar-condicionado Su\u00edte \u2014 Pot\u00eancia : suite_ar_condicionado_potencia_smartthings, Ar-condicionado Sala de TV \u2014 Pot\u00eancia : sala_de_tv_ar_condicionado_potencia_smartthings, Ar-condicionado Escrit\u00f3rio \u2014 Pot\u00eancia : escritorio_ar_condicionado_potencia_smartthings, Ar-condicionado Quarto Cec\u00edlia \u2014 Pot\u00eancia : ar_condicionado_quarto_cecilia_potencia, Geladeira \u2014 Pot\u00eancia : cozinha_geladeira_potencia_sonoff, Geladeira Midea \u2014 Pot\u00eancia : cozinha_geladeira_midea_potencia_sonoff, Lava-lou\u00e7as \u2014 Pot\u00eancia : lavanderia_lava_louca_potencia_1x, Lava-roupas \u2014 Pot\u00eancia : lavanderia_lava_roupa_potencia_1x, Forno de convec\u00e7\u00e3o \u2014 Pot\u00eancia : cozinha_externa_forno_z2m_power, Multim\u00eddia Sala de TV \u2014 Pot\u00eancia : sala_de_tv_multimidia_potencia_sonoff, Servidor Home Assistant \u2014 Pot\u00eancia : sistema_home_assistant_potencia_sonoff, Monitores Escrit\u00f3rio \u2014 Pot\u00eancia : escritorio_monitores_potencia_tasmota, Mini-PC Escrit\u00f3rio \u2014 Pot\u00eancia : escritorio_servidor_minipc_potencia_tasmota, Chuveiro Su\u00edte \u2014 Pot\u00eancia : chuveiro_suite_potencia, Bomba da caixa d\u2019\u00e1gua \u2014 Pot\u00eancia : caixa_d_agua_potencia, R\u00e9gua Oficina \u2014 Pot\u00eancia : oficina_regua_z2m_power",
+        "includeAll": true,
+        "label": "Equipamento (pot\u00eancia)",
+        "multi": true,
+        "name": "equipamento_potencia",
+        "options": [],
+        "query": "Usina fotovoltaica \u2014 Pot\u00eancia : casa_kron_usina_fotovoltaica_usina_fotovoltaica_potencia_fase_1, Rede el\u00e9trica \u2014 Pot\u00eancia total : casa_kron_rede_eletrica_potencia_total, Rede el\u00e9trica \u2014 Fase 1 : potencia_fase_1, Rede el\u00e9trica \u2014 Fase 2 : potencia_fase_2, Rede el\u00e9trica \u2014 Fase 3 : potencia_fase_3, Ar-condicionado Su\u00edte \u2014 Pot\u00eancia : suite_ar_condicionado_potencia_smartthings, Ar-condicionado Sala de TV \u2014 Pot\u00eancia : sala_de_tv_ar_condicionado_potencia_smartthings, Ar-condicionado Escrit\u00f3rio \u2014 Pot\u00eancia : escritorio_ar_condicionado_potencia_smartthings, Ar-condicionado Quarto Cec\u00edlia \u2014 Pot\u00eancia : ar_condicionado_quarto_cecilia_potencia, Geladeira \u2014 Pot\u00eancia : cozinha_geladeira_potencia_sonoff, Geladeira Midea \u2014 Pot\u00eancia : cozinha_geladeira_midea_potencia_sonoff, Lava-lou\u00e7as \u2014 Pot\u00eancia : lavanderia_lava_louca_potencia_1x, Lava-roupas \u2014 Pot\u00eancia : lavanderia_lava_roupa_potencia_1x, Forno de convec\u00e7\u00e3o \u2014 Pot\u00eancia : cozinha_externa_forno_z2m_power, Multim\u00eddia Sala de TV \u2014 Pot\u00eancia : sala_de_tv_multimidia_potencia_sonoff, Servidor Home Assistant \u2014 Pot\u00eancia : sistema_home_assistant_potencia_sonoff, Monitores Escrit\u00f3rio \u2014 Pot\u00eancia : escritorio_monitores_potencia_tasmota, Mini-PC Escrit\u00f3rio \u2014 Pot\u00eancia : escritorio_servidor_minipc_potencia_tasmota, Chuveiro Su\u00edte \u2014 Pot\u00eancia : chuveiro_suite_potencia, Bomba da caixa d\u2019\u00e1gua \u2014 Pot\u00eancia : caixa_d_agua_potencia, R\u00e9gua Oficina \u2014 Pot\u00eancia : oficina_regua_z2m_power",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "America/Sao_Paulo",
+  "title": "Energia da Casa",
+  "uid": "energia-da-casa"
+}

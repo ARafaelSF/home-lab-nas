@@ -12,7 +12,8 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-365d}
+      - --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-40GB}
       - --web.enable-lifecycle
     ports:
       - '9090:9090'
@@ -26,6 +27,37 @@ services:
       retries: 3
       start_period: 20s
 
+  influxdb:
+    image: influxdb:${INFLUXDB_TAG:-2.7}
+    container_name: influxdb
+    labels:
+      - wud.display.name=Influx
+      - wud.display.icon=si:influxdb
+      - wud.tag.include=^2\.7$$
+      - wud.watch.digest=true
+    restart: unless-stopped
+    ports:
+      - '8086:8086'
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Sao_Paulo
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_ADMIN_USER:-admin}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG:-homelab}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_DEFAULT_BUCKET:-monitoring}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+      - DOCKER_INFLUXDB_INIT_RETENTION=0s
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    healthcheck:
+      test: ['CMD', 'influx', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   grafana:
     image: grafana/grafana:${GRAFANA_TAG:-latest}
     container_name: grafana
@@ -36,6 +68,8 @@ services:
     restart: unless-stopped
     depends_on:
       prometheus:
+        condition: service_healthy
+      influxdb:
         condition: service_healthy
     ports:
       - '3005:3000'
@@ -48,6 +82,8 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://192.168.3.21:3005
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/node-exporter-full.json
+      - GF_PROVISIONING_ALLOW_ENV_VAR_EXPANSION=true
+      - INFLUXDB_GRAFANA_READ_TOKEN=${INFLUXDB_GRAFANA_READ_TOKEN}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -136,3 +172,4 @@ services:
 volumes:
   prometheus_data:
   grafana_data:
+  influxdb_data:

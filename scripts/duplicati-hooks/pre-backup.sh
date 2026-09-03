@@ -12,7 +12,7 @@ if [ -f "$STATE_FILE" ]; then
 fi
 
 # Uptime Kuma / Hermes param cedo para não emitir falsos alertas na janela de backup.
-# Prometheus/Grafana: evita FileLocked (lock / grafana.db) e backup mais consistente.
+# Prometheus/Grafana/InfluxDB: evita FileLocked (grafana.db, influxd.bolt) e backup mais consistente.
 # AdGuard fica no ar para manter DNS/rede.
 STOP_ORDER="
 uptime-kuma
@@ -26,6 +26,7 @@ portainer
 filebrowser
 prometheus
 grafana
+influxdb
 "
 
 : > "$STATE_FILE"
@@ -34,9 +35,17 @@ echo "[$(date '+%F %T')] PRE: iniciando parada controlada" >> "$LOG_FILE"
 for c in $STOP_ORDER; do
   [ -z "$c" ] && continue
   if docker ps --format '{{.Names}}' | grep -qx "$c"; then
-    docker stop -t 30 "$c" >/dev/null
+    # Hermes: SIGKILL evita o aviso Telegram "Gateway shutting down" no shutdown
+    # gracioso (SIGTERM). A config gateway_restart_notification só entra em vigor
+    # após restart do gateway — parada brusca no backup é segura (sem sessões activas).
+    if [ "$c" = "hermes-agent" ]; then
+      docker kill "$c" >/dev/null 2>&1 || true
+      echo "[$(date '+%F %T')] PRE: parado $c (kill, sem aviso Telegram)" >> "$LOG_FILE"
+    else
+      docker stop -t 30 "$c" >/dev/null
+      echo "[$(date '+%F %T')] PRE: parado $c" >> "$LOG_FILE"
+    fi
     echo "$c" >> "$STATE_FILE"
-    echo "[$(date '+%F %T')] PRE: parado $c" >> "$LOG_FILE"
   else
     echo "[$(date '+%F %T')] PRE: $c já estava parado/ausente" >> "$LOG_FILE"
   fi

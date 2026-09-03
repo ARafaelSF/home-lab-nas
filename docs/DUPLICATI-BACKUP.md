@@ -30,13 +30,21 @@ Com Docker a correr, alguns ficheiros ficam bloqueados. O Duplicati **ignora** o
 | `sessions.db` / `stats.db` (AdGuard) | Estatísticas/sessões | Só perde histórico de queries |
 | `diun.db` | Estado do DIUN | Notificações antigas |
 | `portainer.db` / `filebrowser.db` | UI com SQLite aberto | Hooks param o container + `sleep 3`; se ainda falhar, reconfiguras pela UI (composes estão no `homelab/`) |
-| `prometheus/.../lock`, `hermes.../*.lock` | Locks de runtime | Hooks param Prometheus/Grafana/Hermes — se ainda aparecer warning, é outro serviço a correr |
+| `prometheus/.../lock`, `hermes.../*.lock` | Locks de runtime | Hooks param Prometheus/Grafana/InfluxDB — se ainda aparecer warning, é outro serviço a correr |
+| `influxd.bolt` (InfluxDB) | Base interna do InfluxDB 2.x | Hooks param InfluxDB; impacto baixo se faltar — container recria |
 
 Filtros de exclusão no job: `metadata.db`, `*/sessions.db`, `*/stats.db`, `*/diun.db`.
 
 ## Hooks (antes / depois do backup)
 
 Scripts em `/opt/duplicati-scripts/` (cópia versionada em `homelab/scripts/duplicati-hooks/`).
+
+O PRE para o **Hermes** de propósito (evita falsos alertas). Duas camadas contra o spam *"Gateway shutting down"* no Telegram:
+
+1. `gateway_restart_notification: false` no Hermes (requer **restart** do container para o gateway carregar)
+2. `docker kill hermes-agent` no PRE (sem shutdown gracioso → sem mensagem), ver `scripts/duplicati-hooks/pre-backup.sh`
+
+Script: `scripts/hermes-apply-homelab-config.sh`
 
 Cada job deve ter nas **opções avançadas** (texto livre):
 
@@ -73,9 +81,9 @@ Antes do backup, **param** (ordem):
 1. Uptime Kuma, Hermes Agent
 2. Immich (server, ML, Postgres)
 3. Mealie, Vaultwarden, Portainer, FileBrowser
-4. Prometheus, Grafana
+4. Prometheus, Grafana, InfluxDB
 
-**AdGuard fica no ar** (DNS). Depois do backup, **sobem na ordem inversa** (Uptime Kuma ~90s depois).
+**AdGuard fica no ar** (DNS). Depois do backup, **sobem na ordem inversa** (InfluxDB antes de Grafana; Uptime Kuma ~90s depois).
 
 Também gera manifesto em `homelab/backups/manifests/runtime-*.txt` (`docker ps`, volumes, redes).
 

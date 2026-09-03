@@ -10,3 +10,13 @@ providers:
     allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards
+
+  - name: casa
+    orgId: 1
+    folder: Casa
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 300
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/casa
