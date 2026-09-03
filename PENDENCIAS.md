@@ -92,10 +92,58 @@ Retenção Prometheus: **365d** (tecto 40 GB) — antes eram 30d e já estava a 
 
 ---
 
+## 7. Home Assistant — base de dados do recorder
+
+**Prioridade:** média
+
+**Diagnóstico 2026-09-03:** a base MariaDB estava em 6,4 GB com só ~10 dias de retenção. Sonda SQL temporária mediu **460 098 linhas em 6 h** (~1,8 M/dia). Três grupos faziam **82%**:
+
+| Grupo | Linhas/6 h | Peso |
+|-------|-----------|------|
+| LD2410 escritório (energia por gate) | 246 439 | 54% |
+| `sensor.forno_area_gourmet_leitura_chama_adc` | 100 237 | 22% |
+| Gateway UniFi escritório (temp + CPU + memória) | 30 299 | 7% |
+
+Causa do maior bloco: `switch.ld2410_escritorio_modo_engenharia` estava **ligado** — modo de calibração que faz o radar transmitir a energia dos 9 gates em contínuo.
+
+- [x] LD2410 removido do HA (entrada ESPHome + proxy BT + `ld2410_ble`) — sensor vai sair fisicamente (2026-09-03)
+- [x] `exclude` do ADC do forno no `recorder` (o útil é `binary_sensor.forno_area_gourmet_chama_acesa`) (2026-09-03)
+- [ ] Purga `recorder.purge_entities` do LD2410/ADC — lançada, ~2–3 h em segundo plano
+- [ ] `recorder.purge` com `repack: true` **depois da purga** — InnoDB não devolve espaço ao disco sem isto
+- [ ] Decidir diagnósticos do gateway UniFi (7%): Prometheus **não** recolhe UniFi, excluir perde histórico de temp/CPU
+
+> `configuration.yaml` do HA **não** é versionado neste repo — a alteração ao recorder vive só no HA.
+
+---
+
+## 8. Home Assistant — erros de log pré-existentes
+
+**Prioridade:** baixa. Nenhum vem da atualização 2026.9.0.
+
+- [ ] `float` sem `default` em templates: `sensor.fake_feels_like`, `sensor.cozinha_termo_sensacao_termica`, `sensor.cozinha_externa_termo_sensacao_termica`
+- [ ] `alexa_devices`: IDs únicos duplicados (`select.casa_arafaelsf_gmail_com_default_device`)
+- [ ] `select.suite_toldo_z2m_motor_direction`: recebe `back`, válidos são `normal`/`reversed`
+- [ ] `sensor.casa_agua_copasa_chuva_acumulada`: unidade `mm` inválida para `precipitation_intensity`
+- [ ] Integrações custom com `via_device` obsoleto (param sai no HA 2027.8): `hikvision_axpro`, `alexa_media`, `ttlock`, `solarman`
+
+---
+
+## 9. Hermes Agent — sem acesso ao HA
+
+**Prioridade:** média
+
+`HASS_TOKEN=` está **vazio** em `compose/hermes-agent/.env`, por isso o agente arranca com todas as ferramentas do HA indisponíveis (`_check_ha_available returned False`). `HASS_URL` está correcto.
+
+- [ ] Criar token *long-lived* no HA (Perfil → Segurança) e preencher `HASS_TOKEN`, depois `ops.sh update hermes latest`
+
+---
+
 ## Já resolvido (referência)
 
 | Item | Data |
 |------|------|
+| HA Core `2026.8.3` → `2026.9.0` (backup `Pre-Core-2026.9.0` / `c1e90b9a`, 4,4 GB) | 2026-09-03 |
+| Container `hermes-agent` actualizado via `container-ops` | 2026-09-03 |
 | **Internet 2** desativada (`enabled=false`; UniFi não permite apagar — `attr_no_delete`) | 2026-09-03 |
 | **Visitantes isolados** + exceção **DNS → AdGuard** (`192.168.3.21:53`); DNS guest = AdGuard | 2026-09-03 |
 | SSID **Hangar Visitantes** → `Vlan_Visitantes` (`192.168.10.0/27`) | 2026-09-03 |
