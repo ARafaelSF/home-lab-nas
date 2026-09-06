@@ -15,9 +15,9 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Servidor Home Assistant",
+          "heading": "Servidor",
           "heading_style": "title",
-          "icon": "mdi:home-assistant",
+          "icon": "mdi:server",
           "grid_options": {
             "columns": 12,
             "rows": 1
@@ -30,7 +30,7 @@
           "cards": [
             {
               "type": "tile",
-              "entity": "switch.sistema_home_assistant_sonoff",
+              "entity": "switch.escritorio_servidor_minipc_tasmota",
               "name": "Energia do mini PC",
               "icon": "mdi:power-plug",
               "color": "green",
@@ -38,7 +38,7 @@
             },
             {
               "type": "tile",
-              "entity": "sensor.sistema_home_assistant_potencia_sonoff",
+              "entity": "sensor.escritorio_servidor_minipc_potencia_tasmota",
               "name": "Consumo agora",
               "icon": "mdi:flash",
               "color": "amber"
@@ -57,7 +57,8 @@
           "grid_options": {
             "columns": 6,
             "rows": 2
-          }
+          },
+          "name": "Servidor MiniPC"
         },
         {
           "show_name": true,
@@ -69,253 +70,6 @@
           "grid_options": {
             "columns": 6,
             "rows": 2
-          }
-        },
-        {
-          "type": "entities",
-          "title": "Resumo rápido",
-          "show_header_toggle": false,
-          "entities": [
-            {
-              "entity": "sensor.system_monitor_uso_do_processador",
-              "name": "Processador",
-              "icon": "mdi:cpu-64-bit"
-            },
-            {
-              "entity": "sensor.system_monitor_uso_de_memoria",
-              "name": "Memória em uso",
-              "icon": "mdi:memory"
-            },
-            {
-              "entity": "sensor.system_monitor_utilizacao_do_disco",
-              "name": "Disco em uso",
-              "icon": "mdi:harddisk"
-            },
-            {
-              "entity": "sensor.sistema_temperatura_cpu",
-              "name": "Temperatura CPU",
-              "icon": "mdi:cpu-64-bit"
-            },
-            {
-              "entity": "sensor.system_monitor_ultima_inicializacao",
-              "name": "Ultima reinicializacao",
-              "icon": "mdi:restart"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Home Assistant — uso agora",
-          "heading_style": "subtitle",
-          "icon": "mdi:gauge",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "grid",
-          "columns": 3,
-          "square": false,
-          "cards": [
-            {
-              "type": "gauge",
-              "entity": "sensor.system_monitor_uso_do_processador",
-              "name": "CPU",
-              "min": 0,
-              "max": 100,
-              "needle": true,
-              "severity": {
-                "green": 0,
-                "yellow": 60,
-                "red": 85
-              }
-            },
-            {
-              "type": "gauge",
-              "entity": "sensor.system_monitor_uso_de_memoria",
-              "name": "RAM",
-              "min": 0,
-              "max": 100,
-              "needle": true,
-              "severity": {
-                "green": 0,
-                "yellow": 65,
-                "red": 85
-              }
-            },
-            {
-              "type": "gauge",
-              "entity": "sensor.system_monitor_utilizacao_do_disco",
-              "name": "Disco",
-              "min": 0,
-              "max": 100,
-              "needle": true,
-              "severity": {
-                "green": 0,
-                "yellow": 70,
-                "red": 90
-              }
-            }
-          ]
-        },
-        {
-          "type": "entities",
-          "title": "Capacidade",
-          "show_header_toggle": false,
-          "entities": [
-            {
-              "entity": "sensor.system_monitor_uso_do_disco",
-              "name": "Disco usado",
-              "icon": "mdi:harddisk"
-            },
-            {
-              "entity": "sensor.system_monitor_disco_livre",
-              "name": "Disco livre",
-              "icon": "mdi:harddisk-plus"
-            },
-            {
-              "entity": "sensor.sistema_memoria_usada_gib",
-              "name": "Memória usada",
-              "icon": "mdi:memory"
-            },
-            {
-              "entity": "sensor.sistema_memoria_livre_gib",
-              "name": "Memória livre",
-              "icon": "mdi:memory"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Home Assistant — histórico 7 dias",
-          "heading_style": "subtitle",
-          "icon": "mdi:chart-line",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "CPU — 7 dias",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.system_monitor_uso_do_processador",
-              "name": "CPU"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Memória — 7 dias",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.system_monitor_uso_de_memoria",
-              "name": "Memória"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Home Assistant — temperatura",
-          "heading_style": "subtitle",
-          "icon": "mdi:thermometer",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "grid",
-          "columns": 3,
-          "square": false,
-          "cards": [
-            {
-              "type": "gauge",
-              "entity": "sensor.sistema_temperatura_cpu",
-              "name": "Temperatura CPU",
-              "min": 0,
-              "max": 100,
-              "needle": true,
-              "severity": {
-                "green": 0,
-                "yellow": 60,
-                "red": 80
-              }
-            },
-            {
-              "type": "gauge",
-              "entity": "sensor.escritorio_termo_higrometro_ha_z2m_temperature",
-              "name": "Temperatura gabinete",
-              "min": 0,
-              "max": 60,
-              "needle": true,
-              "severity": {
-                "green": 0,
-                "yellow": 35,
-                "red": 45
-              }
-            }
-          ]
-        },
-        {
-          "type": "history-graph",
-          "title": "Temperatura — 7 dias",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.sistema_temperatura_cpu",
-              "name": "CPU"
-            },
-            {
-              "entity": "sensor.escritorio_termo_higrometro_ha_z2m_temperature",
-              "name": "Gabinete"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Homelab NAS (Docker)",
-          "heading_style": "title",
-          "icon": "mdi:server",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
           }
         },
         {
@@ -339,8 +93,109 @@
               "icon": "mdi:harddisk"
             },
             {
+              "entity": "sensor.sistema_temperatura_cpu",
+              "name": "Temperatura CPU",
+              "icon": "mdi:thermometer"
+            },
+            {
               "entity": "sensor.escritorio_homelab_nas_uptime",
               "name": "Uptime",
+              "icon": "mdi:clock-outline"
+            }
+          ]
+        },
+        {
+          "type": "custom:mushroom-title-card",
+          "title": "Gráficos !",
+          "title_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/dashboard-casa/graficos_servidor"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Atualizações",
+          "heading_style": "title",
+          "icon": "mdi:update",
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          }
+        },
+        {
+          "type": "markdown",
+          "title": "Docker - Status dos Containers",
+          "content": "{% set updates = states.update | selectattr('entity_id', 'match', '^update\\.(wud_container_local_|sistema_docker_)') | list %}\n{% set total = updates | count %}\n{% set pendentes = updates | selectattr('state', 'eq', 'on') | list | count %}\n{% set desconhecidos = updates | selectattr('state', 'eq', 'unknown') | list | count %}\n{% set atualizados = total - pendentes - desconhecidos %}\n**Atualizados:** {{ atualizados }}  \n**Para atualizar:** {{ pendentes }}  \n**Desconhecidos:** {{ desconhecidos }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/dashboard-casa/docker-atualizacoes"
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Backups Duplicati",
+          "heading_style": "title",
+          "icon": "mdi:backup-restore"
+        },
+        {
+          "type": "markdown",
+          "content": "SSD = **docker-local** (diário, alerta após 36h). OneDrive = **homelab-onedrive** (semanal, alerta após 9 dias)."
+        },
+        {
+          "type": "entities",
+          "title": "Resumo",
+          "show_header_toggle": false,
+          "state_color": true,
+          "entities": [
+            {
+              "entity": "sensor.sistema_docker_backup_ssd_linha",
+              "name": "Backup SSD",
+              "icon": "mdi:harddisk"
+            },
+            {
+              "entity": "sensor.sistema_docker_backup_onedrive_linha",
+              "name": "Backup OneDrive",
+              "icon": "mdi:microsoft-onedrive"
+            },
+            {
+              "entity": "sensor.sistema_docker_backup_problemas",
+              "name": "Problemas",
+              "icon": "mdi:alert-circle"
+            }
+          ]
+        },
+        {
+          "square": false,
+          "type": "grid",
+          "columns": 2,
+          "cards": [
+            {
+              "type": "tile",
+              "entity": "input_select.sistema_docker_backup_ssd_estado",
+              "name": "Estado SSD",
+              "icon": "mdi:harddisk"
+            },
+            {
+              "type": "tile",
+              "entity": "input_datetime.sistema_docker_backup_ssd_ultimo",
+              "name": "Último SSD",
+              "icon": "mdi:clock-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "input_select.sistema_docker_backup_onedrive_estado",
+              "name": "Estado OneDrive",
+              "icon": "mdi:microsoft-onedrive"
+            },
+            {
+              "type": "tile",
+              "entity": "input_datetime.sistema_docker_backup_onedrive_ultimo",
+              "name": "Último OneDrive",
               "icon": "mdi:clock-outline"
             }
           ]
@@ -352,7 +207,7 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Homelab NAS — uso agora",
+          "heading": "Servidor — uso agora",
           "heading_style": "subtitle",
           "icon": "mdi:gauge",
           "grid_options": {
@@ -440,43 +295,46 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Homelab NAS — histórico 7 dias",
+          "heading": "Servidor — temperatura",
           "heading_style": "subtitle",
-          "icon": "mdi:chart-line",
+          "icon": "mdi:thermometer",
           "grid_options": {
             "columns": 12,
             "rows": 1
           }
         },
         {
-          "type": "history-graph",
-          "title": "CPU — 7 dias",
-          "hours_to_show": 168,
-          "entities": [
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
             {
-              "entity": "sensor.escritorio_homelab_nas_cpu",
-              "name": "CPU"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Memória — 7 dias",
-          "hours_to_show": 168,
-          "entities": [
+              "type": "gauge",
+              "entity": "sensor.sistema_temperatura_cpu",
+              "name": "Temperatura CPU",
+              "min": 0,
+              "max": 100,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 60,
+                "red": 80
+              }
+            },
             {
-              "entity": "sensor.escritorio_homelab_nas_memoria",
-              "name": "Memória"
+              "type": "gauge",
+              "entity": "sensor.escritorio_termo_higrometro_ha_z2m_temperature",
+              "name": "Temperatura gabinete",
+              "min": 0,
+              "max": 60,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 35,
+                "red": 45
+              }
             }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
+          ]
         }
       ]
     },
@@ -566,35 +424,6 @@
               "entity": "sensor.suite_ap_unifi_uptime",
               "name": "Uptime AP Suíte",
               "icon": "mdi:clock-outline"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "LED dos access points",
-          "heading_style": "subtitle",
-          "icon": "mdi:led-on",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "grid",
-          "columns": 2,
-          "square": false,
-          "cards": [
-            {
-              "type": "tile",
-              "entity": "light.escritorio_ap_unifi_led",
-              "name": "U7 Pro Escritório",
-              "icon": "mdi:led-on"
-            },
-            {
-              "type": "tile",
-              "entity": "light.suite_ap_unifi_led",
-              "name": "U7 Pro Suíte",
-              "icon": "mdi:led-on"
             }
           ]
         }
@@ -795,242 +624,6 @@
                 "yellow": 65,
                 "red": 85
               }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Ubiquiti — histórico 7 dias",
-          "heading_style": "title",
-          "icon": "mdi:chart-line",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "UCG Ultra (gateway)",
-          "heading_style": "subtitle",
-          "icon": "mdi:router",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "CPU — UCG Ultra (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_gateway_unifi_cpu",
-              "name": "CPU"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Memória — UCG Ultra (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_gateway_unifi_memoria",
-              "name": "Memória"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Temperatura — UCG Ultra (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_gateway_unifi_temperatura",
-              "name": "Temperatura"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "USW Flex Mini",
-          "heading_style": "subtitle",
-          "icon": "mdi:lan",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "CPU — Flex Mini (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_switch_unifi_cpu",
-              "name": "CPU"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Memória — Flex Mini (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_switch_unifi_memoria",
-              "name": "Memória"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "U7 Pro Escritório",
-          "heading_style": "subtitle",
-          "icon": "mdi:wifi",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "CPU — AP Escritório (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_ap_unifi_cpu",
-              "name": "CPU"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Memória — AP Escritório (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.escritorio_ap_unifi_memoria",
-              "name": "Memória"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "U7 Pro Suíte",
-          "heading_style": "subtitle",
-          "icon": "mdi:wifi",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "CPU — AP Suíte (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.suite_ap_unifi_cpu",
-              "name": "CPU"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        },
-        {
-          "type": "history-graph",
-          "title": "Memória — AP Suíte (7 dias)",
-          "hours_to_show": 168,
-          "entities": [
-            {
-              "entity": "sensor.suite_ap_unifi_memoria",
-              "name": "Memória"
-            }
-          ],
-          "grid_options": {
-            "columns": 12,
-            "rows": 5
-          }
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Atualizações",
-          "heading_style": "title",
-          "icon": "mdi:update",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "grid",
-          "columns": 2,
-          "square": false,
-          "cards": [
-            {
-              "type": "tile",
-              "entity": "update.home_assistant_core_update",
-              "name": "Core",
-              "icon": "mdi:home-assistant"
-            },
-            {
-              "type": "tile",
-              "entity": "update.home_assistant_supervisor_update",
-              "name": "Supervisor",
-              "icon": "mdi:home-assistant"
-            },
-            {
-              "type": "tile",
-              "entity": "update.home_assistant_operating_system_update",
-              "name": "Sistema operacional",
-              "icon": "mdi:linux"
-            },
-            {
-              "type": "tile",
-              "entity": "update.home_assistant_mcp_server_update",
-              "name": "MCP Server",
-              "icon": "mdi:server"
             }
           ]
         }

@@ -3,7 +3,7 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-03
+**Atualizado:** 2026-09-06
 
 ---
 
@@ -55,7 +55,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 **Prioridade:** média  
 **Contexto:** U7 Pro Suíte (`192.168.68.3`) com uplink **100 Mbps**; U7 Pro Escritório a **1 Gbps**. No UCG, **Port 2** está a 100 Mbps (candidato ao cabo da Suíte).
 
-- [ ] Verificar cabo / porta / injector PoE da Suíte
+- [ ] Verificar cabo / porta / injector PoE da Suíte — cabo trocado 2026-09-06; UniFi **continua a 100 Mbps** (investigar outra ponta / porta AP / Port 2 do UCG)
 
 ---
 
@@ -163,6 +163,22 @@ Notas para quando/se se decidir avançar:
 - Risco de exposição é baixo: `TELEGRAM_ALLOWED_USERS` tem 1 utilizador e há autorização em `gateway/authz_mixin.py`
 
 - [ ] **Adiado** — criar token em Perfil → Segurança, preencher `HASS_TOKEN`, `ops.sh update hermes latest`
+
+---
+
+## 10. AdGuard — redundância se o DNS cair
+
+**Prioridade:** média (quando houver tempo)  
+**Contexto (2026-09-06):** DHCP das VLANs aponta **só** para AdGuard `192.168.3.21`. Se o AdGuard cair, a casa fica sem resolução DNS (parece “sem internet”). Watchdog/restart já ajudam; falta redundância de verdade.
+
+**Não fazer:** meter `8.8.8.8` (ou outro DNS público) como secundário no DHCP UniFi — muitos clientes usam os dois em paralelo e furam o bloqueio/rewrites locais.
+
+**Fazer depois (escolher um caminho):**
+
+- [ ] Manter DHCP **só** com AdGuard (como está) + confirmar watchdog/alerta estáveis
+- [ ] Avaliar **2.º AdGuard** (UCG, outra VM, ou 2.º contentor) com a **mesma config** (filters + rewrites)
+- [ ] Decidir failover: **IP flutuante (VIP)** *ou* 2.º IP interno AdGuard no DHCP (ambos teus — nunca DNS público na LAN)
+- [ ] Documentar o desenho escolhido em `docs/ADGUARD-DNS-REMOTO.md`
 
 ---
 

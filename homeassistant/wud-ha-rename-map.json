@@ -27,7 +27,8 @@
     {"old": "update.wud_container_local_influxdb", "name": "Influx", "new": "update.sistema_docker_influx"},
     {"old": "update.wud_container_local_ping_exporter", "name": "Ping Exporter", "new": "update.sistema_docker_ping_exporter"},
     {"old": "update.wud_container_local_blackbox_exporter", "name": "Blackbox Exporter", "new": "update.sistema_docker_blackbox_exporter"},
-    {"old": "update.wud_container_local_speedtest_exporter", "name": "Speedtest Exporter", "new": "update.sistema_docker_speedtest_exporter"}
+    {"old": "update.wud_container_local_speedtest_exporter", "name": "Speedtest Exporter", "new": "update.sistema_docker_speedtest_exporter"},
+    {"old": "update.wud_container_local_unifi_network_mcp", "name": "UniFi Network MCP", "new": "update.sistema_docker_unifi_mcp"}
   ],
   "aggregates": [
     {"old": "binary_sensor.what_s_up_docker_total_container_update_status", "name": "Atualizações pendentes", "new": "binary_sensor.sistema_docker_atualizacoes_pendentes"},
