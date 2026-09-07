@@ -2,7 +2,11 @@
 set -eu
 
 STATE_FILE="/tmp/duplicati-stopped-containers.txt"
-LOG_FILE="/scripts/hooks.log"
+if [ -d /config ] && [ -w /config ]; then
+  LOG_FILE="/config/duplicati-hooks.log"
+else
+  LOG_FILE="/scripts/hooks.log"
+fi
 
 # Home Assistant (DUPLICATI__* definidas pelo Duplicati no run-script-after)
 if [ -n "${DUPLICATI__PARSED_RESULT:-}" ] && [ -x /scripts/duplicati_to_ha.sh ]; then

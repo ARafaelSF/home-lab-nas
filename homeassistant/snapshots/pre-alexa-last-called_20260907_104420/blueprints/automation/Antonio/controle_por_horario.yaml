@@ -1,0 +1,633 @@
+blueprint:
+  name: "⏱️ Controle Inteligente (Switch, Light, Cover)"
+  domain: automation
+  author: "Antonio Rafael (Modificado)"
+  description: >
+    Liga/abre no Evento 1 e desliga/fecha no Evento 2.
+    Também reconcilia no start do HA e a cada 15 min se o estado esperado não bater (sem spam de notificação).
+    DIFERENCIAL: Verifica se a ação é necessária. Se a luz já estiver acesa no horário programado,
+    envia uma mensagem diferente (opcional) ou não envia nada.
+
+    Scripts necessários (1 linha):
+    - script.enviar_notificacao_app
+    - script.enviar_notificacao_alexa
+    - script.enviar_notificacao_telegram
+  input:
+    target_settings:
+      name: "🎯 Entidade alvo"
+      collapsed: false
+      input:
+        target_entity:
+          name: "Entidades (Switch, Light ou Cover)"
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - switch
+                - light
+                - cover
+    start_settings:
+      name: "🟢 Evento 1 — Ligar/Abrir"
+      collapsed: false
+      input:
+        start_trigger_type:
+          name: "Tipo do Evento 1"
+          default: time
+          selector:
+            select:
+              options:
+                - label: "⏰ Horário fixo"
+                  value: time
+                - label: "☀️ Evento solar"
+                  value: sun
+        start_time:
+          name: "Horário (se fixo)"
+          default: "09:00:00"
+          selector:
+            time: {}
+        start_sun_event:
+          name: "Evento solar (se solar)"
+          default: sunrise
+          selector:
+            select:
+              options:
+                - label: "🌅 Nascer do sol"
+                  value: sunrise
+                - label: "🌇 Pôr do sol"
+                  value: sunset
+        start_offset:
+          name: "Offset (se solar)"
+          default: "00:00:00"
+          selector:
+            text: {}
+    stop_settings:
+      name: "🔴 Evento 2 — Desligar/Fechar"
+      collapsed: false
+      input:
+        stop_trigger_type:
+          name: "Tipo do Evento 2"
+          default: time
+          selector:
+            select:
+              options:
+                - label: "⏰ Horário fixo"
+                  value: time
+                - label: "☀️ Evento solar"
+                  value: sun
+        stop_time:
+          name: "Horário (se fixo)"
+          default: "20:00:00"
+          selector:
+            time: {}
+        stop_sun_event:
+          name: "Evento solar (se solar)"
+          default: sunset
+          selector:
+            select:
+              options:
+                - label: "🌅 Nascer do sol"
+                  value: sunrise
+                - label: "🌇 Pôr do sol"
+                  value: sunset
+        stop_offset:
+          name: "Offset (se solar)"
+          default: "00:00:00"
+          selector:
+            text: {}
+    reliability_settings:
+      name: "🔁 Garantia de execução"
+      collapsed: true
+      input:
+        retry_max_attempts:
+          name: "Tentativas de reenvio"
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 30
+              mode: slider
+        retry_wait:
+          name: "Tempo entre tentativas"
+          default: "00:01:00"
+          selector:
+            text: {}
+    notify_app_settings:
+      name: "📱 Notificações — App"
+      collapsed: true
+      input:
+        app_devices:
+          name: "Destinatários"
+          default: []
+          selector:
+            device:
+              integration: mobile_app
+              multiple: true
+        app_titulo_on:
+          name: "Título (Evento 1)"
+          default: ""
+          selector:
+            text: {}
+        app_msg_on:
+          name: "Mensagem: AÇÃO REALIZADA (Evento 1)"
+          description: "Ex: Luz foi ligada."
+          default: ""
+          selector:
+            text: {}
+        app_msg_on_already:
+          name: "Mensagem: JÁ ESTAVA NO ESTADO (Evento 1)"
+          description: "Ex: Luz já estava ligada. (Deixe vazio para não notificar neste caso)"
+          default: ""
+          selector:
+            text: {}
+        app_titulo_off:
+          name: "Título (Evento 2)"
+          default: ""
+          selector:
+            text: {}
+        app_msg_off:
+          name: "Mensagem: AÇÃO REALIZADA (Evento 2)"
+          description: "Ex: Luz foi desligada."
+          default: ""
+          selector:
+            text: {}
+        app_msg_off_already:
+          name: "Mensagem: JÁ ESTAVA NO ESTADO (Evento 2)"
+          description: "Ex: Luz já estava desligada. (Deixe vazio para não notificar neste caso)"
+          default: ""
+          selector:
+            text: {}
+    notify_alexa_settings:
+      name: "🎙️ Notificações — Alexa"
+      collapsed: true
+      input:
+        alexa_devices:
+          name: "Dispositivos Alexa"
+          default: []
+          selector:
+            device:
+              multiple: true
+              integration: alexa_devices
+        alexa_tipo_on:
+          name: "Tipo (Evento 1)"
+          default: "tts"
+          selector:
+            select:
+              options:
+                - label: "tts"
+                  value: "tts"
+                - label: "announce"
+                  value: "announce"
+        alexa_volume_on:
+          name: "Volume (Evento 1)"
+          default: 0.6
+          selector:
+            number:
+              min: 0
+              max: 1
+              step: 0.05
+              mode: slider
+        alexa_msg_on:
+          name: "Mensagem: AÇÃO REALIZADA (Evento 1)"
+          default: ""
+          selector:
+            text: {}
+        alexa_msg_on_already:
+          name: "Mensagem: JÁ ESTAVA NO ESTADO (Evento 1)"
+          default: ""
+          selector:
+            text: {}
+        alexa_tipo_off:
+          name: "Tipo (Evento 2)"
+          default: "tts"
+          selector:
+            select:
+              options:
+                - label: "tts"
+                  value: "tts"
+                - label: "announce"
+                  value: "announce"
+        alexa_volume_off:
+          name: "Volume (Evento 2)"
+          default: 0.6
+          selector:
+            number:
+              min: 0
+              max: 1
+              step: 0.05
+              mode: slider
+        alexa_msg_off:
+          name: "Mensagem: AÇÃO REALIZADA (Evento 2)"
+          default: ""
+          selector:
+            text: {}
+        alexa_msg_off_already:
+          name: "Mensagem: JÁ ESTAVA NO ESTADO (Evento 2)"
+          default: ""
+          selector:
+            text: {}
+    notify_telegram_settings:
+      name: "💬 Notificações — Telegram"
+      collapsed: true
+      input:
+        telegram_destinatarios:
+          name: "Destinatários"
+          default: []
+          selector:
+            select:
+              multiple: true
+              custom_value: true
+              options:
+                - "Antonio"
+                - "Renata"
+        telegram_titulo_on:
+          name: "Título (Evento 1)"
+          default: ""
+          selector:
+            text: {}
+        telegram_enable_msg_on:
+          name: "Ativar — AÇÃO REALIZADA (Evento 1)"
+          default: true
+          selector:
+            boolean: {}
+        telegram_msg_on:
+          name: "Mensagem: AÇÃO REALIZADA (Evento 1)"
+          default: ""
+          selector:
+            text: {}
+        telegram_enable_msg_on_already:
+          name: "Ativar — JÁ ESTAVA NO ESTADO (Evento 1)"
+          default: true
+          selector:
+            boolean: {}
+        telegram_msg_on_already:
+          name: "Mensagem: JÁ ESTAVA NO ESTADO (Evento 1)"
+          default: ""
+          selector:
+            text: {}
+        telegram_titulo_off:
+          name: "Título (Evento 2)"
+          default: ""
+          selector:
+            text: {}
+        telegram_enable_msg_off:
+          name: "Ativar — AÇÃO REALIZADA (Evento 2)"
+          default: true
+          selector:
+            boolean: {}
+        telegram_msg_off:
+          name: "Mensagem: AÇÃO REALIZADA (Evento 2)"
+          default: ""
+          selector:
+            text: {}
+        telegram_enable_msg_off_already:
+          name: "Ativar — JÁ ESTAVA NO ESTADO (Evento 2)"
+          default: true
+          selector:
+            boolean: {}
+        telegram_msg_off_already:
+          name: "Mensagem: JÁ ESTAVA NO ESTADO (Evento 2)"
+          default: ""
+          selector:
+            text: {}
+
+trigger:
+  - platform: time
+    at: !input start_time
+    id: start_time_trigger
+  - platform: sun
+    event: !input start_sun_event
+    offset: !input start_offset
+    id: start_sun_trigger
+  - platform: time
+    at: !input stop_time
+    id: stop_time_trigger
+  - platform: sun
+    event: !input stop_sun_event
+    offset: !input stop_offset
+    id: stop_sun_trigger
+  # Reconcile: boot + verificação periódica (não depende só do evento pontual).
+  - platform: homeassistant
+    event: start
+    id: reconcile_boot_trigger
+  - platform: time_pattern
+    minutes: "/15"
+    id: reconcile_periodic_trigger
+
+variables:
+  start_trigger_type_v: !input start_trigger_type
+  stop_trigger_type_v: !input stop_trigger_type
+  start_sun_event_v: !input start_sun_event
+  stop_sun_event_v: !input stop_sun_event
+  start_time_v: !input start_time
+  stop_time_v: !input stop_time
+  is_reconcile: "{{ trigger.id in ['reconcile_boot_trigger', 'reconcile_periodic_trigger'] }}"
+  # Janela "ligado" atual (para reconcile após restart).
+  should_be_on: >-
+    {% if start_trigger_type_v == 'sun' and stop_trigger_type_v == 'sun' %}
+      {% if start_sun_event_v == 'sunset' and stop_sun_event_v == 'sunrise' %}
+        {{ is_state('sun.sun', 'below_horizon') }}
+      {% elif start_sun_event_v == 'sunrise' and stop_sun_event_v == 'sunset' %}
+        {{ is_state('sun.sun', 'above_horizon') }}
+      {% else %}
+        {{ false }}
+      {% endif %}
+    {% elif start_trigger_type_v == 'time' and stop_trigger_type_v == 'time' %}
+      {% set now_t = now().strftime('%H:%M:%S') %}
+      {% set t0 = start_time_v %}
+      {% set t1 = stop_time_v %}
+      {% if t0 < t1 %}
+        {{ t0 <= now_t < t1 }}
+      {% else %}
+        {{ now_t >= t0 or now_t < t1 }}
+      {% endif %}
+    {% else %}
+      {{ false }}
+    {% endif %}
+  is_start: >-
+    {{ (trigger.id == 'start_time_trigger' and start_trigger_type_v == 'time')
+       or (trigger.id == 'start_sun_trigger' and start_trigger_type_v == 'sun')
+       or (is_reconcile and should_be_on) }}
+  is_stop: >-
+    {{ (trigger.id == 'stop_time_trigger' and stop_trigger_type_v == 'time')
+       or (trigger.id == 'stop_sun_trigger' and stop_trigger_type_v == 'sun')
+       or (is_reconcile and not should_be_on) }}
+  ents: !input target_entity
+  retry_max_attempts: !input retry_max_attempts
+  retry_wait: !input retry_wait
+
+  # APP
+  app_devices_list: !input app_devices
+  app_dest_v: >
+    {% set ns = namespace(result=[]) %}
+    {% for device_id in app_devices_list %}
+      {% set device_name = device_attr(device_id, 'name') %}
+      {% if device_name %}{% set ns.result = ns.result + [device_name] %}{% endif %}
+    {% endfor %}
+    {{ ns.result }}
+  app_tit_on_v: !input app_titulo_on
+  app_msg_on_v: !input app_msg_on
+  app_msg_on_already_v: !input app_msg_on_already
+  app_tit_off_v: !input app_titulo_off
+  app_msg_off_v: !input app_msg_off
+  app_msg_off_already_v: !input app_msg_off_already
+
+  # ALEXA
+  alexa_devices_list: !input alexa_devices
+  alexa_disp_v: >
+    {% set ns = namespace(result=[]) %}
+    {% for device_id in alexa_devices_list %}
+      {% set device_name = device_attr(device_id, 'name') %}
+      {% if device_name %}{% set ns.result = ns.result + [device_name] %}{% endif %}
+    {% endfor %}
+    {{ ns.result }}
+  alexa_tipo_on_v: !input alexa_tipo_on
+  alexa_vol_on_v: !input alexa_volume_on
+  alexa_msg_on_v: !input alexa_msg_on
+  alexa_msg_on_already_v: !input alexa_msg_on_already
+  alexa_tipo_off_v: !input alexa_tipo_off
+  alexa_vol_off_v: !input alexa_volume_off
+  alexa_msg_off_v: !input alexa_msg_off
+  alexa_msg_off_already_v: !input alexa_msg_off_already
+
+  # TELEGRAM
+  tel_raw_dest_v: !input telegram_destinatarios
+  tel_dest_v: "{{ (tel_raw_dest_v | list) | map('trim') | select('ne','') | list }}"
+  tel_enable_msg_on_v: !input telegram_enable_msg_on
+  tel_enable_msg_on_already_v: !input telegram_enable_msg_on_already
+  tel_enable_msg_off_v: !input telegram_enable_msg_off
+  tel_enable_msg_off_already_v: !input telegram_enable_msg_off_already
+  tel_title_on_v: !input telegram_titulo_on
+  tel_msg_on_v: !input telegram_msg_on
+  tel_msg_on_already_v: !input telegram_msg_on_already
+  tel_title_off_v: !input telegram_titulo_off
+  tel_msg_off_v: !input telegram_msg_off
+  tel_msg_off_already_v: !input telegram_msg_off_already
+
+condition:
+  - condition: template
+    value_template: "{{ is_start or is_stop }}"
+  # Reconcile só age se algum alvo estiver fora do estado esperado.
+  - condition: template
+    value_template: >-
+      {% if not is_reconcile %}
+        {{ true }}
+      {% else %}
+        {% set want_on = is_start %}
+        {% set ns = namespace(bad=false) %}
+        {% for ent in ents %}
+          {% set is_cover = (ent | string).startswith('cover.') %}
+          {% set st = states(ent) %}
+          {% if st in ['unavailable', 'unknown', 'none'] %}
+            {% set ns.bad = true %}
+          {% elif want_on %}
+            {% set ok = (st in ['open', 'opening']) if is_cover else (st == 'on') %}
+            {% if not ok %}{% set ns.bad = true %}{% endif %}
+          {% else %}
+            {% set ok = (st in ['closed', 'closing']) if is_cover else (st == 'off') %}
+            {% if not ok %}{% set ns.bad = true %}{% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.bad }}
+      {% endif %}
+
+action:
+  - if:
+      - condition: template
+        value_template: "{{ trigger.id == 'reconcile_boot_trigger' }}"
+    then:
+      # Espera entidades (Z2M etc.) ficarem disponíveis após o boot.
+      - delay: "00:01:00"
+      - wait_template: "{{ states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
+        timeout: "00:02:00"
+        continue_on_timeout: true
+  - choose:
+      # ========================= EVENTO 1 (LIGAR/ABRIR) ======================
+      - conditions:
+          - condition: template
+            value_template: "{{ is_start }}"
+        sequence:
+          - variables:
+              action_performed: >
+                {% set ns = namespace(performed=false) %}
+                {% for ent in ents %}
+                  {% set is_cover = (ent | string).startswith('cover.') %}
+                  {% set is_ok = (is_state(ent,'open') or is_state(ent,'opening')) if is_cover else is_state(ent,'on') %}
+                  {% if not is_ok %}
+                    {% set ns.performed = true %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.performed }}
+
+          - repeat:
+              for_each: "{{ ents }}"
+              sequence:
+                - variables:
+                    ent: "{{ repeat.item }}"
+                    is_cover: "{{ (ent | string).startswith('cover.') }}"
+                    service_on: "{{ 'cover.open_cover' if is_cover else 'homeassistant.turn_on' }}"
+                    current_is_ok: "{{ (is_state(ent,'open') or is_state(ent,'opening')) if is_cover else is_state(ent,'on') }}"
+
+                - if:
+                    - condition: template
+                      value_template: "{{ not current_is_ok and not (states(ent) in ['unavailable','unknown','none']) }}"
+                  then:
+                    - repeat:
+                        sequence:
+                          - service: "{{ service_on }}"
+                            target:
+                              entity_id: "{{ ent }}"
+                          - wait_template: "{{ (is_state(ent,'open') or is_state(ent,'opening')) if is_cover else is_state(ent,'on') }}"
+                            timeout: "{{ retry_wait }}"
+                            continue_on_timeout: true
+                        until: >
+                          {{ ((is_state(ent,'open') or is_state(ent,'opening')) if is_cover else is_state(ent,'on')) or repeat.index >= retry_max_attempts }}
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ action_performed }}"
+                sequence:
+                  - if: "{{ not is_reconcile and app_msg_on_v | trim != '' and (app_dest_v | count) > 0 }}"
+                    then:
+                      - service: script.enviar_notificacao_app
+                        data:
+                          destinatarios: "{{ app_dest_v }}"
+                          titulo: "{{ app_tit_on_v }}"
+                          mensagem: "{{ app_msg_on_v }}"
+                  - if: "{{ not is_reconcile and alexa_msg_on_v | trim != '' and (alexa_disp_v | count) > 0 }}"
+                    then:
+                      - service: script.enviar_notificacao_alexa
+                        data:
+                          dispositivos: "{{ alexa_disp_v }}"
+                          tipo: "{{ alexa_tipo_on_v }}"
+                          volume: "{{ alexa_vol_on_v }}"
+                          mensagem: "{{ alexa_msg_on_v }}"
+                  - if: "{{ not is_reconcile and tel_enable_msg_on_v and tel_msg_on_v | trim != '' and (tel_dest_v | count) > 0 }}"
+                    then:
+                      - service: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios: "{{ tel_dest_v }}"
+                          titulo: "{{ tel_title_on_v }}"
+                          mensagem: "{{ tel_msg_on_v }}"
+                          parse_mode: "MarkdownV2"
+
+            default:
+              - if: "{{ not is_reconcile and app_msg_on_already_v | trim != '' and (app_dest_v | count) > 0 }}"
+                then:
+                  - service: script.enviar_notificacao_app
+                    data:
+                      destinatarios: "{{ app_dest_v }}"
+                      titulo: "{{ app_tit_on_v }}"
+                      mensagem: "{{ app_msg_on_already_v }}"
+              - if: "{{ not is_reconcile and alexa_msg_on_already_v | trim != '' and (alexa_disp_v | count) > 0 }}"
+                then:
+                  - service: script.enviar_notificacao_alexa
+                    data:
+                      dispositivos: "{{ alexa_disp_v }}"
+                      tipo: "{{ alexa_tipo_on_v }}"
+                      volume: "{{ alexa_vol_on_v }}"
+                      mensagem: "{{ alexa_msg_on_already_v }}"
+              - if: "{{ not is_reconcile and tel_enable_msg_on_already_v and tel_msg_on_already_v | trim != '' and (tel_dest_v | count) > 0 }}"
+                then:
+                  - service: script.enviar_notificacao_telegram
+                    data:
+                      destinatarios: "{{ tel_dest_v }}"
+                      titulo: "{{ tel_title_on_v }}"
+                      mensagem: "{{ tel_msg_on_already_v }}"
+                      parse_mode: "MarkdownV2"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ is_stop }}"
+        sequence:
+          - variables:
+              action_performed: >
+                {% set ns = namespace(performed=false) %}
+                {% for ent in ents %}
+                  {% set is_cover = (ent | string).startswith('cover.') %}
+                  {% set is_ok = is_state(ent,'closed') if is_cover else is_state(ent,'off') %}
+                  {% if not is_ok %}
+                    {% set ns.performed = true %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.performed }}
+
+          - repeat:
+              for_each: "{{ ents }}"
+              sequence:
+                - variables:
+                    ent: "{{ repeat.item }}"
+                    is_cover: "{{ (ent | string).startswith('cover.') }}"
+                    service_off: "{{ 'cover.close_cover' if is_cover else 'homeassistant.turn_off' }}"
+                    current_is_ok: "{{ is_state(ent,'closed') if is_cover else is_state(ent,'off') }}"
+
+                - if:
+                    - condition: template
+                      value_template: "{{ not current_is_ok and not (states(ent) in ['unavailable','unknown','none']) }}"
+                  then:
+                    - repeat:
+                        sequence:
+                          - service: "{{ service_off }}"
+                            target:
+                              entity_id: "{{ ent }}"
+                          - wait_template: "{{ is_state(ent,'closed') if is_cover else is_state(ent,'off') }}"
+                            timeout: "{{ retry_wait }}"
+                            continue_on_timeout: true
+                        until: >
+                          {{ (is_state(ent,'closed') if is_cover else is_state(ent,'off')) or repeat.index >= retry_max_attempts }}
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ action_performed }}"
+                sequence:
+                  - if: "{{ not is_reconcile and app_msg_off_v | trim != '' and (app_dest_v | count) > 0 }}"
+                    then:
+                      - service: script.enviar_notificacao_app
+                        data:
+                          destinatarios: "{{ app_dest_v }}"
+                          titulo: "{{ app_tit_off_v }}"
+                          mensagem: "{{ app_msg_off_v }}"
+                  - if: "{{ not is_reconcile and alexa_msg_off_v | trim != '' and (alexa_disp_v | count) > 0 }}"
+                    then:
+                      - service: script.enviar_notificacao_alexa
+                        data:
+                          dispositivos: "{{ alexa_disp_v }}"
+                          tipo: "{{ alexa_tipo_off_v }}"
+                          volume: "{{ alexa_vol_off_v }}"
+                          mensagem: "{{ alexa_msg_off_v }}"
+                  - if: "{{ not is_reconcile and tel_enable_msg_off_v and tel_msg_off_v | trim != '' and (tel_dest_v | count) > 0 }}"
+                    then:
+                      - service: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios: "{{ tel_dest_v }}"
+                          titulo: "{{ tel_title_off_v }}"
+                          mensagem: "{{ tel_msg_off_v }}"
+                          parse_mode: "MarkdownV2"
+
+            default:
+              - if: "{{ not is_reconcile and app_msg_off_already_v | trim != '' and (app_dest_v | count) > 0 }}"
+                then:
+                  - service: script.enviar_notificacao_app
+                    data:
+                      destinatarios: "{{ app_dest_v }}"
+                      titulo: "{{ app_tit_off_v }}"
+                      mensagem: "{{ app_msg_off_already_v }}"
+              - if: "{{ not is_reconcile and alexa_msg_off_already_v | trim != '' and (alexa_disp_v | count) > 0 }}"
+                then:
+                  - service: script.enviar_notificacao_alexa
+                    data:
+                      dispositivos: "{{ alexa_disp_v }}"
+                      tipo: "{{ alexa_tipo_off_v }}"
+                      volume: "{{ alexa_vol_off_v }}"
+                      mensagem: "{{ alexa_msg_off_already_v }}"
+              - if: "{{ not is_reconcile and tel_enable_msg_off_already_v and tel_msg_off_already_v | trim != '' and (tel_dest_v | count) > 0 }}"
+                then:
+                  - service: script.enviar_notificacao_telegram
+                    data:
+                      destinatarios: "{{ tel_dest_v }}"
+                      titulo: "{{ tel_title_off_v }}"
+                      mensagem: "{{ tel_msg_off_already_v }}"
+                      parse_mode: "MarkdownV2"
+
+mode: restart

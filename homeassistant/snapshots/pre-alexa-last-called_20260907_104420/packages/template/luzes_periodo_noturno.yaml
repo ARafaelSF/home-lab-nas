@@ -1,0 +1,59 @@
+# Período noturno (pôr → nascer do sol) + contadores de luzes.
+# Flag e contagens usam o estado atual de sun.sun (não dependem de "pegar" o evento).
+# As 4 luzes da garagem saem do contador principal à noite e entram no contador noturno.
+
+binary_sensor:
+  - name: "Sistema Período Noturno"
+    unique_id: sistema_periodo_noturno
+    icon: mdi:weather-night
+    device_class: running
+    state: "{{ is_state('sun.sun', 'below_horizon') }}"
+    attributes:
+      descricao: "Entre pôr e nascer do sol (sun.below_horizon)"
+
+sensor:
+  - name: "Sistema Contador Luzes Acesas"
+    unique_id: sistema_contador_luzes_acesas_pkg
+    icon: mdi:lamps
+    state: >
+      {% set night = is_state('sun.sun', 'below_horizon') %}
+      {% set skip = [
+        'light.garagem_interruptor_cozinha_z2m_l2_garagen',
+        'light.garagem_interruptor_sala_de_tv_z2m_l1_alpendre',
+        'light.garagem_interruptor_cozinha_z2m_l3_jardim_garagem',
+        'light.garagem_interruptor_escritorio_z2m_l2_varanda',
+      ] %}
+      {% set lights = states.light
+           | selectattr('state', 'eq', 'on')
+           | rejectattr('entity_id', 'search', 'ap_unifi_led')
+           | rejectattr('entity_id', 'search', 'alarme_indicacao')
+           | list %}
+      {% if night %}
+        {{ lights | rejectattr('entity_id', 'in', skip) | list | count }}
+      {% else %}
+        {{ lights | count }}
+      {% endif %}
+
+  - name: "Sistema Contador Luzes Noturnas Acesas"
+    unique_id: sistema_contador_luzes_noturnas_acesas
+    icon: mdi:outdoor-lamp
+    state: >
+      {% set ids = [
+        'light.garagem_interruptor_cozinha_z2m_l2_garagen',
+        'light.garagem_interruptor_sala_de_tv_z2m_l1_alpendre',
+        'light.garagem_interruptor_cozinha_z2m_l3_jardim_garagem',
+        'light.garagem_interruptor_escritorio_z2m_l2_varanda',
+      ] %}
+      {% if is_state('sun.sun', 'below_horizon') %}
+        {{ expand(ids) | selectattr('state', 'eq', 'on') | list | count }}
+      {% else %}
+        0
+      {% endif %}
+    attributes:
+      luzes: >
+        {{ [
+          'light.garagem_interruptor_cozinha_z2m_l2_garagen',
+          'light.garagem_interruptor_sala_de_tv_z2m_l1_alpendre',
+          'light.garagem_interruptor_cozinha_z2m_l3_jardim_garagem',
+          'light.garagem_interruptor_escritorio_z2m_l2_varanda',
+        ] | tojson }}

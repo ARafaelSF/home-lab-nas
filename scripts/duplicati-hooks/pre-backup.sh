@@ -2,7 +2,12 @@
 set -eu
 
 STATE_FILE="/tmp/duplicati-stopped-containers.txt"
-LOG_FILE="/scripts/hooks.log"
+# /config é volume persistente; /scripts pode ser montagem read-only do repo
+if [ -d /config ] && [ -w /config ]; then
+  LOG_FILE="/config/duplicati-hooks.log"
+else
+  LOG_FILE="/scripts/hooks.log"
+fi
 MANIFEST_DIR="/source/homelab/backups/manifests"
 
 # Se um backup anterior travou depois do PRE, repõe os containers antes de parar de novo

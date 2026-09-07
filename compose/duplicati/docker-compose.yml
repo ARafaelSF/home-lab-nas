@@ -26,7 +26,8 @@ services:
       - /etc/network/if-up.d:/source/host/network/if-up.d:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker:ro
-      - /opt/duplicati-scripts:/scripts
+      # Hooks versionados no repo (evita sumirem de /opt após updates/reboots)
+      - /root/homelab/scripts/duplicati-hooks:/scripts:ro
     ports:
       - 8200:8200
     restart: unless-stopped
