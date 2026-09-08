@@ -1,0 +1,15 @@
+[Unit]
+Description=container-ops listener para o Home Assistant
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/container-ops/ha-update.env
+ExecStart=/usr/bin/python3 /opt/container-ops/ha-update-listener.py
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

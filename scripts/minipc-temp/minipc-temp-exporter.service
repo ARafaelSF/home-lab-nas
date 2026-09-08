@@ -1,0 +1,12 @@
+[Unit]
+Description=JSON da temperatura CPU do MiniPC (Proxmox)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/minipc-temp-exporter.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

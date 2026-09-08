@@ -14,7 +14,7 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes (qu
 2. Você diz: **“atualiza o mealie para a versão X”**.
 3. O script faz backup (se houver volume) → pull → restart → testa → limpa backups velhos → refresh no HA.
 
-**Não mexa** em stacks que não estão na lista (ex.: Glances, Portainer).
+**Não mexa** em stacks que não estão na lista (Portainer, Glances). Firefly e Influx (só 2.7) já estão cadastrados.
 
 ---
 
@@ -27,6 +27,7 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes (qu
 | Backup de **todos** | `/opt/container-ops/ops.sh backup-all` |
 | **Atualizar um** container | `/opt/container-ops/ops.sh update hermes latest` |
 | **Atualizar todos** | `/opt/container-ops/ops.sh update all` |
+| **Pelo Home Assistant** | Dash Docker: botão **Atualizar tudo** / toque no container pendente |
 | **Atualizar sensores HA** (só WUD) | `/opt/container-ops/ops.sh refresh-ha` ou `refresh-ha mealie` |
 | Voltar versão antiga | `/opt/container-ops/ops.sh rollback mealie v2.7.0` |
 | Apagar backups velhos (ficar com 3) | `/opt/container-ops/ops.sh prune mealie 3` |
@@ -48,6 +49,8 @@ Troque `mealie` pelo nome da app (coluna da esquerda no `list`).
 | `npm` | Proxy HTTPS | `latest` |
 | `adguard` | DNS | `latest` |
 | `duplicati` | Backups | `latest` |
+| `firefly` | Finanças (só a app; DB/cron ficam) | `latest` |
+| `influx` | InfluxDB (só linha 2.7) | `2.7` |
 | `immich` | Fotos (servidor) | `release` |
 | `immich-ml` | Fotos (ML) | `release` (usar a **mesma** tag que `immich`) |
 | `cloudflare` | Túnel | `latest` |

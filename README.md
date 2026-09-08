@@ -69,6 +69,8 @@ Se um app falhar, o `update all` continua com os restantes e no fim faz um únic
 | `node-exporter` | Métricas do host | `latest` | `/opt/container-ops/ops.sh update node-exporter latest` |
 | `immich` | Fotos (servidor) | `release` | `/opt/container-ops/ops.sh update immich release` |
 | `immich-ml` | Fotos (ML) | `release` | `/opt/container-ops/ops.sh update immich-ml release` |
+| `firefly` | Firefly III (só a app) | `latest` | `/opt/container-ops/ops.sh update firefly latest` |
+| `influx` | InfluxDB | `2.7` | `/opt/container-ops/ops.sh update influx 2.7` |
 | `…` | ver `list` | | `/opt/container-ops/ops.sh update all` |
 
 **Immich:** depois de actualizar o servidor, actualize também o ML com a **mesma tag** (o `update all` já faz os dois).
@@ -92,6 +94,8 @@ Se um app falhar, o `update all` continua com os restantes e no fim faz um únic
 /opt/container-ops/ops.sh refresh-ha              # todos os containers (~30 s)
 /opt/container-ops/ops.sh refresh-ha jellyfin     # só um (~3 s)
 ```
+
+Também podes atualizar **a partir do Home Assistant**: dash Casa → **Docker** (`/dashboard-casa/docker-atualizacoes`). Há um botão **Atualizar tudo** e, em cada container pendente, toque = `ops.sh update <app>`. O HA só dispara o pedido; o trabalho continua a ser o `ops.sh` no servidor (`192.168.3.21`).
 
 Guia completo em português: [`scripts/container-ops/GUIA.md`](scripts/container-ops/GUIA.md)
 

@@ -1,0 +1,20 @@
+# Temperatura CPU do MiniPC (host Proxmox), publicada a partir da VM Docker.
+# Cópia de /mnt/ha-config/packages/mqtt/minipc_proxmox.yaml
+sensor:
+  - name: "Temperatura CPU MiniPC"
+    unique_id: sistema_temperatura_cpu_minipc
+    object_id: sistema_temperatura_cpu_minipc
+    default_entity_id: sensor.sistema_temperatura_cpu_minipc
+    state_topic: "homelab/minipc/cpu_temp"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    suggested_display_precision: 1
+    icon: mdi:thermometer
+    expire_after: 180
+    device:
+      identifiers:
+        - "minipc_proxmox_host"
+      name: "MiniPC Proxmox"
+      manufacturer: "Homelab"
+      model: "Host Proxmox"

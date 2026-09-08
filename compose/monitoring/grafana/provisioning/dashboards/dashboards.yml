@@ -9,7 +9,7 @@ providers:
     updateIntervalSeconds: 300
     allowUiUpdates: true
     options:
-      path: /var/lib/grafana/dashboards
+      path: /var/lib/grafana/dashboards/homelab
 
   - name: casa
     orgId: 1

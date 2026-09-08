@@ -1,0 +1,9 @@
+[Unit]
+Description=Publica temperatura CPU do MiniPC no MQTT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=MINIPC_TEMP_ENV=/opt/container-ops/minipc-temp.env
+ExecStart=/opt/container-ops/minipc-temp/publish.sh

@@ -1,0 +1,173 @@
+# Last Called via Alexa Devices (event.*_voice_event).
+# Usa states.event (mais fiável que integration_entities neste HA).
+# Scripts: preferir echo_amigavel se age_seconds < 90; senão fallback AMP.
+
+sensor:
+  - name: "Alexa Devices Last Called"
+    unique_id: alexa_devices_last_called
+    icon: mdi:microphone-message
+    state: >
+      {% set events = states.event
+        | selectattr('entity_id', 'search', '_voice_event')
+        | rejectattr('entity_id', 'search', 'fire_tv')
+        | rejectattr('entity_id', 'search', 'firestick')
+        | list %}
+      {% set ns = namespace(best=none, best_ts=-1, best_cmd='') %}
+      {% for e in events %}
+        {% if e.state not in ['unavailable', 'unknown', 'none', ''] %}
+          {% set ts = as_timestamp(e.state, default=0) %}
+          {% set cmd = state_attr(e.entity_id, 'voice_command') | default('', true) | string %}
+          {% if ts > ns.best_ts or (ts == ns.best_ts and cmd and not ns.best_cmd) %}
+            {% set ns.best_ts = ts %}
+            {% set ns.best = e.entity_id %}
+            {% set ns.best_cmd = cmd %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {{ states(ns.best) if ns.best else 'unknown' }}
+    attributes:
+      event_entity: >
+        {% set events = states.event
+          | selectattr('entity_id', 'search', '_voice_event')
+          | rejectattr('entity_id', 'search', 'fire_tv')
+          | rejectattr('entity_id', 'search', 'firestick')
+          | list %}
+        {% set ns = namespace(best=none, best_ts=-1, best_cmd='') %}
+        {% for e in events %}
+          {% if e.state not in ['unavailable', 'unknown', 'none', ''] %}
+            {% set ts = as_timestamp(e.state, default=0) %}
+            {% set cmd = state_attr(e.entity_id, 'voice_command') | default('', true) | string %}
+            {% if ts > ns.best_ts or (ts == ns.best_ts and cmd and not ns.best_cmd) %}
+              {% set ns.best_ts = ts %}
+              {% set ns.best = e.entity_id %}
+              {% set ns.best_cmd = cmd %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.best }}
+      voice_command: >
+        {{ state_attr(this.attributes.event_entity, 'voice_command') if this.attributes.event_entity else none }}
+      voice_reply: >
+        {{ state_attr(this.attributes.event_entity, 'voice_reply') if this.attributes.event_entity else none }}
+      age_seconds: >
+        {% if this.state not in ['unknown', 'unavailable', 'none', ''] %}
+          {% set ts = as_timestamp(this.state, default=0) %}
+          {{ ((as_timestamp(now()) - ts) | int) if ts else none }}
+        {% else %}
+          {{ none }}
+        {% endif %}
+      area: >
+        {{ area_name(this.attributes.event_entity) if this.attributes.event_entity else none }}
+      echo_amigavel: >
+        {% set e = this.attributes.event_entity | default('', true) | string %}
+        {% set area = (area_name(e) | default('', true) | lower | string) if e else '' %}
+        {% set mapa_area = {
+          'sala de tv': 'sala',
+          'cozinha': 'cozinha',
+          'brinquedoteca': 'brinquedoteca',
+          'escritório': 'escritorio',
+          'escritorio': 'escritorio',
+          'oficina': 'oficina',
+          'suíte': 'suite',
+          'suite': 'suite',
+          'banheiro suíte': 'banheiro_suite',
+          'banheiro suite': 'banheiro_suite',
+          'banheiro social': 'banheiro_social',
+          'quarto cecília': 'quarto_cecilia',
+          'quarto cecilia': 'quarto_cecilia',
+          'sala de jantar': 'sala_de_jantar',
+        } %}
+        {% if area in mapa_area %}
+          {{ mapa_area[area] }}
+        {% elif 'sala_de_tv' in e %}
+          sala
+        {% elif 'cozinha' in e %}
+          cozinha
+        {% elif 'brinquedoteca' in e %}
+          brinquedoteca
+        {% elif 'escritorio' in e %}
+          escritorio
+        {% elif 'oficina' in e %}
+          oficina
+        {% elif 'banheiro_suite' in e %}
+          banheiro_suite
+        {% elif 'banheiro_social' in e %}
+          banheiro_social
+        {% elif 'quarto_cecilia' in e %}
+          quarto_cecilia
+        {% elif 'sala_de_jantar' in e %}
+          sala_de_jantar
+        {% elif 'suite' in e %}
+          suite
+        {% else %}
+          {{ none }}
+        {% endif %}
+      echo_nome: >
+        {% set nomes = {
+          'sala': 'Echo da Sala de TV',
+          'cozinha': 'Echo da Cozinha',
+          'brinquedoteca': 'Echo da Brinquedoteca',
+          'escritorio': 'Echo do Escritório',
+          'oficina': 'Echo da Oficina',
+          'suite': 'Echo da Suíte',
+          'banheiro_suite': 'Echo do Banheiro da Suíte',
+          'banheiro_social': 'Echo do Banheiro Social',
+          'quarto_cecilia': 'Echo do Quarto da Cecília',
+          'sala_de_jantar': 'Echo da Sala de Jantar',
+        } %}
+        {% set k = this.attributes.echo_amigavel %}
+        {{ nomes.get(k, area_name(this.attributes.event_entity) or k) }}
+      notify_falar: >
+        {% set mapa = {
+          'sala': 'notify.sala_de_tv_echo_devices_falar',
+          'cozinha': 'notify.cozinha_echo_devices_falar',
+          'brinquedoteca': 'notify.brinquedoteca_echo_devices_falar',
+          'escritorio': 'notify.escritorio_echo_devices_falar',
+          'oficina': 'notify.oficina_echo_devices_falar',
+          'suite': 'notify.suite_echo_devices_falar',
+          'banheiro_suite': 'notify.banheiro_suite_echo_devices_falar',
+          'banheiro_social': 'notify.banheiro_social_echo_devices_falar',
+          'quarto_cecilia': 'notify.quarto_cecilia_echo_devices_falar',
+          'sala_de_jantar': 'notify.sala_de_jantar_echo_devices_falar',
+        } %}
+        {{ mapa.get(this.attributes.echo_amigavel) }}
+      notify_anunciar: >
+        {% set mapa = {
+          'sala': 'notify.sala_de_tv_echo_devices_anunciar',
+          'cozinha': 'notify.cozinha_echo_devices_anunciar',
+          'brinquedoteca': 'notify.brinquedoteca_echo_devices_anunciar',
+          'escritorio': 'notify.escritorio_echo_devices_anunciar',
+          'oficina': 'notify.oficina_echo_devices_anunciar',
+          'suite': 'notify.suite_echo_devices_anunciar',
+          'banheiro_suite': 'notify.banheiro_suite_echo_devices_anunciar',
+          'banheiro_social': 'notify.banheiro_social_echo_devices_anunciar',
+          'quarto_cecilia': 'notify.quarto_cecilia_echo_devices_anunciar',
+          'sala_de_jantar': 'notify.sala_de_jantar_echo_devices_anunciar',
+        } %}
+        {{ mapa.get(this.attributes.echo_amigavel) }}
+      media_player: >
+        {% set e = this.attributes.event_entity %}
+        {% set dev = device_id(e) if e else none %}
+        {{
+          device_entities(dev)
+            | select('match', '^media_player\\.')
+            | first
+            | default(none)
+          if dev else none
+        }}
+      media_player_amp: >
+        {% set mapa = {
+          'sala': 'media_player.sala_de_tv_echo_mediaplayer',
+          'cozinha': 'media_player.cozinha_echo_mediaplayer',
+          'brinquedoteca': 'media_player.brinquedoteca_echo_mediaplayer',
+          'escritorio': 'media_player.escritorio_echo_mediaplayer',
+          'oficina': 'media_player.oficina_echo_mediaplayer',
+          'suite': 'media_player.suite_echo_mediaplayer',
+          'banheiro_suite': 'media_player.banheiro_suite_echo_mediaplayer',
+          'banheiro_social': 'media_player.banheiro_social_echo_mediaplayer',
+          'quarto_cecilia': 'media_player.quarto_cecilia_echo_mediaplayer',
+          'sala_de_jantar': 'media_player.sala_de_jantar_echo_mediaplayer',
+        } %}
+        {{ mapa.get(this.attributes.echo_amigavel) }}
+      device_id: >
+        {{ device_id(this.attributes.event_entity) if this.attributes.event_entity else none }}

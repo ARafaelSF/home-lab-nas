@@ -81,7 +81,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://192.168.3.21:3005
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/node-exporter-full.json
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/homelab/node-exporter-full.json
       - GF_PROVISIONING_ALLOW_ENV_VAR_EXPANSION=true
       - INFLUXDB_GRAFANA_READ_TOKEN=${INFLUXDB_GRAFANA_READ_TOKEN}
     volumes:

@@ -267,6 +267,7 @@ default_update_tag() {
   case "$1" in
     immich|immich-ml) echo "release" ;;
     uptime-kuma) echo "2" ;;
+    influx) echo "2.7" ;;
     *) echo "latest" ;;
   esac
 }
@@ -279,7 +280,11 @@ cmd_update() {
     return
   fi
 
-  local new_tag="${2:?nova_tag — ex.: latest (ou: update all)}"
+  local new_tag="${2:-}"
+  if [[ -z "$new_tag" ]]; then
+    new_tag="$(default_update_tag "$app")"
+    log "Tag omitida — a usar a habitual: ${new_tag}"
+  fi
   load_app "$app"
   verify_stack
   log "=== update: ${APP_NAME} → tag ${new_tag} ==="
@@ -308,7 +313,7 @@ cmd_update() {
 cmd_update_all() {
   local line name tag failed=0 ok=0
   log "=== update all (tag habitual por app) ==="
-  log "Immich/ML → release | Uptime Kuma → 2 | restantes → latest"
+  log "Immich/ML → release | Uptime Kuma → 2 | Influx → 2.7 | restantes → latest"
   export CONTAINER_OPS_LENIENT=1
   export CONTAINER_OPS_SKIP_WUD=1
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -363,7 +368,7 @@ cmd_list() {
     line="${line%%#*}"
     line="$(echo "$line" | xargs)"
     [[ -z "$line" ]] && continue
-    IFS='|' read -r name dir svc key vols proj <<<"$line"
+    IFS='|' read -r name dir svc key vols proj wud <<<"$line"
     printf '  %-14s serviço=%-22s tag=%-18s projeto=%s\n' "$name" "$svc" "$key" "${proj:-auto}"
     printf '  %-14s %s\n' "" "volumes: ${vols:-(nenhum)}"
   done <"$APPS_CONF"
@@ -422,8 +427,9 @@ Comandos:
   list                      Lista apps e backups
   backup <app>              Backup dos volumes do app
   backup-all                Backup de todas as apps cadastradas
-  update <app> <nova_tag>   Backup + update tag + validação + prune (keep=1) + refresh HA
+  update <app> [nova_tag]   Backup + update tag + validação + prune (keep=1) + refresh HA
                             Ex.: update hermes latest
+                            Sem tag: usa a habitual (latest / Immich=release / Kuma=2)
   update all                Actualiza TODAS as apps (latest; Immich=release; Kuma=2)
   rollback <app> <tag>      Reverte tag e recria container + refresh HA
   refresh-ha [app]          Força WUD a republicar sensores no Home Assistant

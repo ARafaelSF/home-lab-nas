@@ -1,0 +1,4 @@
+destino,instance,disponibilidade_pct_7d
+Gateway LAN (192.168.3.1),192.168.3.1,99.8343
+Cloudflare 1.1.1.1,1.1.1.1,98.3280
+Google 8.8.8.8,8.8.8.8,97.7857
