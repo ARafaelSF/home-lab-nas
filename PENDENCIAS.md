@@ -3,16 +3,39 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-08
+**Atualizado:** 2026-09-08 (noite — RF UniFi)
 
 ---
 
-## 1. UniFi — AP Suíte a 100 Mbps
+## 1. UniFi — AP Suíte a 100 Mbps (físico)
 
 **Prioridade:** média  
-**Contexto:** U7 Pro Suíte (`192.168.68.3`) com uplink **100 Mbps**; U7 Pro Escritório a **1 Gbps**. No UCG, **Port 2** está a 100 Mbps (candidato ao cabo da Suíte). Cabo trocado 2026-09-06; UniFi **continua a 100 Mbps**.
+**Contexto:** U7 Pro Suíte (`192.168.68.3`) com uplink **100 Mbps**; Escritório a **1 Gbps**. Já testado: cabo UCG↔injector, cabo injector↔AP (tester 8 pinos OK), troca dos PoE, troca das portas no UCG. O problema acompanha o cabo/ponta da suíte, não o injector nem a porta do UCG.
 
-- [ ] Verificar outra ponta / porta do AP / Port 2 do UCG / injector PoE
+**Não é configuração UniFi.** RF (canais, SSIDs) já está aplicado — ver `docs/UNIFI-RF.md`.
+
+- [ ] Recrimpar as duas pontas, ou testar o AP da suíte junto ao UCG com cabo curto
+- [ ] Se o cabo curto der 1 Gbps: o lançamento/conector é o culpado
+- [ ] Se o cabo curto continuar a 100 Mbps: porta Ethernet do AP
+
+---
+
+## 1b. UniFi — min. rate 2.4 GHz (a monitorizar, **não mudar agora**)
+
+**Prioridade:** baixa  
+**Contexto:** 2.4 GHz separado (escritório 11 / suíte 6). Min. rate continua **1 Mbps**. Subir para 6 Mbps pode largar IoT fraco. A gravar snapshots a cada 10 min neste PC: `scripts/unifi-rf-study/`.
+
+**Não aplicar** até haver uns dias de amostras e decisão explícita.
+
+Candidatos a problema (leitura 2026-09-08):
+
+- Risco alto: Tuya Indicador Alarme (−74), Sonoff Luz Brinquedoteca (−74)
+- Risco médio: Sonoff Tomada Sala TV, portões Tuya, soldador/repelente oficina, Luz Cozinha, EspHome AC Cecília
+- Rate baixo com sinal ok (provavelmente a dormir): Geladeira, Bancada Cozinha, Nebulosa, Kron QGD/Usina, Ventilador Jantar
+
+- [ ] Deixar gravar **alguns dias** (`scripts/unifi-rf-study/data/clients.jsonl`)
+- [ ] Analisar quem vive abaixo de 6 Mbps vs. quem só cochila
+- [ ] Só então decidir se sobe o min. rate (SSID-wide; sem exclusão por aparelho)
 
 ---
 
@@ -26,16 +49,16 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ---
 
-## 3. AdGuard — redundância se o DNS cair
+## 3. AdGuard — failover DHCP (opcional)
 
-**Prioridade:** média (quando houver tempo)  
-**Contexto:** DHCP das VLANs aponta **só** para AdGuard `192.168.3.21`. Se o AdGuard cair, a casa fica sem DNS.
+**Prioridade:** baixa  
+**Contexto:** 2.º AdGuard no Pi Zero (`192.168.3.22`, VLAN Servidor) já está de pé. O switch do HA espelha a protecção nos dois. DHCP das VLANs ainda aponta **só** para `192.168.3.21`.
 
-**Não fazer:** meter `8.8.8.8` (ou outro DNS público) como secundário no DHCP UniFi.
+**Não fazer:** meter `8.8.8.8` como secundário no DHCP UniFi.
 
-- [ ] Manter DHCP **só** com AdGuard + confirmar watchdog/alerta estáveis
-- [ ] Avaliar **2.º AdGuard** (UCG, outra VM, ou 2.º contentor) com a **mesma config**
-- [ ] Decidir failover: **IP flutuante (VIP)** *ou* 2.º IP interno AdGuard no DHCP
+- [x] 2.º AdGuard no Pi + UniFi VLAN Servidor `.22`
+- [x] HA: `rest_command.adguard_backup_protection` + automação a espelhar `switch.adguard_home_protecao`
+- [ ] Se quiseres failover automático: 2.º IP AdGuard no DHCP **ou** VIP — decidir depois
 - [ ] Documentar o desenho em `docs/ADGUARD-DNS-REMOTO.md`
 
 ---
@@ -83,6 +106,8 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 | Evidências ISP (Trix): dashboard + retenção 90d + pacote em `docs/evidencias-isp-trix-20260907/` — reanalisar sob pedido | 2026-09-07 |
 | Dash Servidor: Sonoff HomeLab, Tasmota backup visível (ainda não ligado), temp CPU MiniPC via Proxmox | 2026-09-07 |
 | Updates Docker a partir do HA (`ops.sh` + listener `:8787`); Firefly e Influx cadastrados | 2026-09-07 |
+| AdGuard backup Pi `.22` + botão HA a filtrar nos dois | 2026-09-08 |
+| UniFi RF: 2.4 ch 11/6, Zigbee 11, 6 GHz 160, Aeron off, Visitantes só 5 GHz | 2026-09-08 |
 
 ---
 
@@ -95,3 +120,4 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 | `docs/ADGUARD-DNS-REMOTO.md` | DNS / AdGuard |
 | `homeassistant/snapshots/pre-alexa-last-called_20260907_104420/` | Rollback pré–Last Alexa |
 | `docs/CONTINUAR.md` | Como retomar noutro computador |
+| `docs/UNIFI-RF.md` | Canais Wi-Fi × Zigbee, o que não mexer, estudo min. rate |

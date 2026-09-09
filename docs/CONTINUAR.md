@@ -1,4 +1,4 @@
-# Continuar noutro computador (2026-09-08)
+# Continuar noutro computador (2026-09-08 noite)
 
 Repo: `git@github.com-home-lab-nas:ARafaelSF/home-lab-nas.git`  
 Branch: `main`
@@ -17,6 +17,10 @@ Abrir esta pasta no Cursor (não `/root`). O config do Home Assistant **não est
 | Firefly + Influx no `ops.sh` | `scripts/container-ops/apps.conf` |
 | Grafana pastas Homelab / Casa | `compose/monitoring/grafana/dashboards/` |
 | Pacote ISP Trix | `docs/evidencias-isp-trix-20260907/` |
+| UniFi RF: 2.4 **11 / 6**, 6 GHz **37/160** e **101/160**, Aeron off | UCG — ver `docs/UNIFI-RF.md` |
+| Zigbee canal **11** (SLZB escritório) | Z2M — **não mudar** |
+| AdGuard backup Pi `192.168.3.22` + HA a espelhar protecção | VLAN Servidor; automação no HA |
+| Estudo min. rate 2.4 (snapshots 10 min) | `scripts/unifi-rf-study/` neste PC; dados **fora do git** |
 
 ## Segredos (não estão no git)
 
@@ -30,7 +34,9 @@ Abrir esta pasta no Cursor (não `/root`). O config do Home Assistant **não est
 1. `git pull` em `home-lab-nas` (`main`).
 2. Abrir o Cursor **nessa pasta**.
 3. SSH à VM `192.168.3.21` (e HA `192.168.3.10`) — a dash e os serviços já estão lá.
-4. Pendências: `PENDENCIAS.md` (Pirata + Last Alexa para validar; mini backup Tasmota ainda não ligado).
+4. Pendências: `PENDENCIAS.md`.
+5. **Rede Wi-Fi:** canais já aplicados. Por agora **não mexer mais em RF**. Falta só o cabo da suíte (físico) e, daqui a uns dias, decidir o min. rate com as amostras — `docs/UNIFI-RF.md`.
+6. O collector do estudo corre **neste host** (`/root/homelab/scripts/unifi-rf-study/data/`). Noutro PC só vês o script; as amostras não vão no git.
 
 ## Se precisares de reaplicar só a dash Servidor
 

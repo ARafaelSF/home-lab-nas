@@ -359,6 +359,8 @@ git push -u origin main
 | Testar DNS 4G / LAN | `scripts/testar-dns-remoto.sh` |
 | Reaplicar firewall | `/etc/docker/homelab-firewall.sh` |
 | Pendências | `PENDENCIAS.md` |
+| Retomar noutro PC | `docs/CONTINUAR.md` |
+| UniFi RF / Zigbee | `docs/UNIFI-RF.md` |
 
 ---
 

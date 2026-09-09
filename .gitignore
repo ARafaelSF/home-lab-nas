@@ -32,3 +32,7 @@ backups/influx-migration/
 
 # UniFi MCP secrets
 compose/unifi-mcp/.env
+
+# Estudo RF UniFi (amostras com MAC/IP)
+scripts/unifi-rf-study/data/
+scripts/**/__pycache__/
