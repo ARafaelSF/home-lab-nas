@@ -56,4 +56,4 @@ O wrapper `/opt/container-ops/ops.sh` ainda funciona (só redireciona para o git
 
 ## Rede Wi-Fi / RF
 
-Canais já aplicados — ver `docs/UNIFI-RF.md`. Por agora **não mexer mais em RF** excepto o cabo físico da suíte e, mais tarde, min. rate com amostras em `scripts/unifi-rf-study/`.
+Canais já aplicados — ver `docs/UNIFI-RF.md`. Por agora **não mexer mais em RF**. Uplink a 100 Mbps está no **escritório** (suíte a 1G após teste 2026-09-09) — `PENDENCIAS.md` §1. Min. rate: amostras em `scripts/unifi-rf-study/`.
