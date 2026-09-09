@@ -1,26 +1,51 @@
-# Continuar noutro computador (2026-09-08 noite)
+# Continuar noutro computador
 
 Repo: `git@github.com-home-lab-nas:ARafaelSF/home-lab-nas.git`  
-Branch: `main`
+Branch: `main`  
+Servidor Docker: `192.168.3.21` (`/root/homelab`)
 
-Abrir esta pasta no Cursor (não `/root`). O config do Home Assistant **não está neste git** — vive em `/mnt/ha-config` na VM Docker (`192.168.3.21`).
+## Regra de ouro (para não “desaparecer” nada)
 
-## Já aplicado em produção (não reinstalar)
+| O quê | Onde vive | Notas |
+|--------|-----------|--------|
+| **Código** (scripts, compose, docs) | Git em `/root/homelab` | Única fonte. `git pull` no servidor chega. |
+| **Dados / segredos** | `/opt/container-ops/*.env`, `backups/`, `logs/` | **Fora do git.** Nunca apagar `/opt` nem fazer `ln -sfn` do repo em cima. |
+| **Home Assistant** | `/mnt/ha-config` na VM | **Fora deste git.** |
+| **Unidades systemd / rotas / DNS** | `/etc/...` no host | Instaladas por `scripts/install-host.sh` a partir do git. |
+
+**Não copies** `ops.sh` / listener / `apps.conf` para `/opt`. O HA e o systemd já apontam para o git.
+
+## Checklist ao abrir noutro PC
+
+1. `git pull` **no servidor** (`192.168.3.21:/root/homelab`) — ou SSH e puxa lá. O Cursor noutro PC só vê o clone local; o que corre em produção é o repo **no servidor**.
+2. Se alteraste systemd, rotas ou DNS no git:
+   ```bash
+   ssh root@192.168.3.21 '/root/homelab/scripts/install-host.sh'
+   ```
+3. Se só alteraste `ops.sh` / `apps.conf` / compose: **nada a instalar** — o próximo update já usa o ficheiro do git.
+4. Pendências: `PENDENCIAS.md`.
+5. Abrir o Cursor na pasta do clone; para mudanças no host, trabalhar via SSH no `192.168.3.21` (ou Remote-SSH).
+
+## Comandos do dia a dia (sempre no servidor)
+
+```bash
+/root/homelab/scripts/container-ops/ops.sh list
+/root/homelab/scripts/container-ops/ops.sh update hermes latest
+/root/homelab/scripts/container-ops/ops.sh update all
+/root/homelab/scripts/install-host.sh   # só quando mudaste units/rotas/DNS
+```
+
+O wrapper `/opt/container-ops/ops.sh` ainda funciona (só redireciona para o git).
+
+## Já aplicado em produção (não reinstalar à mão)
 
 | O quê | Onde |
 |--------|------|
-| View **Servidor** (Sonoff HomeLab, sem Estação de Trabalho, Mini backup Tasmota visível) | HA `dashboard-casa`, gravada via API |
-| Sensor `sensor.sistema_temperatura_cpu_minipc` | MQTT discovery + YAML em `/mnt/ha-config/packages/mqtt/minipc_proxmox.yaml` |
-| Exportador de temperatura | Proxmox `192.168.3.20:9108` — `minipc-temp-exporter.service` |
-| Publicação MQTT a cada 30 s | VM Docker — `minipc-temp-publisher.timer` (`/opt/container-ops/minipc-temp.env`, **não está no git**) |
-| Listener de updates Docker pelo HA | `:8787` — `container-ops-ha-update.service` |
-| Firefly + Influx no `ops.sh` | `scripts/container-ops/apps.conf` |
-| Grafana pastas Homelab / Casa | `compose/monitoring/grafana/dashboards/` |
-| Pacote ISP Trix | `docs/evidencias-isp-trix-20260907/` |
-| UniFi RF: 2.4 **11 / 6**, 6 GHz **37/160** e **101/160**, Aeron off | UCG — ver `docs/UNIFI-RF.md` |
-| Zigbee canal **11** (SLZB escritório) | Z2M — **não mudar** |
-| AdGuard backup Pi `192.168.3.22` + HA a espelhar protecção | VLAN Servidor; automação no HA |
-| Estudo min. rate 2.4 (snapshots 10 min) | `scripts/unifi-rf-study/` neste PC; dados **fora do git** |
+| Listener updates Docker pelo HA (`:8787`) | systemd → **git** + token em `/opt/container-ops/ha-update.env` |
+| Temp MiniPC MQTT a cada 30 s | timer → **git** `scripts/minipc-temp/` + `/opt/container-ops/minipc-temp.env` |
+| Sync AdGuard → Pi | timer → **git** `scripts/adguard-sync/` |
+| Rota Hangar `192.168.68.0/24` | `/etc/network/if-up.d/route-lan68` (via `install-host.sh`) |
+| DNS do host NAS | `/etc/systemd/resolved.conf.d/homelab-dns.conf` |
 
 ## Segredos (não estão no git)
 
@@ -29,20 +54,6 @@ Abrir esta pasta no Cursor (não `/root`). O config do Home Assistant **não est
 - Token do listener Docker: `/opt/container-ops/ha-update.env`
 - Token HA: variável `HA_TOKEN` / ficheiro fora do repo
 
-## Como retomar no outro PC
+## Rede Wi-Fi / RF
 
-1. `git pull` em `home-lab-nas` (`main`).
-2. Abrir o Cursor **nessa pasta**.
-3. SSH à VM `192.168.3.21` (e HA `192.168.3.10`) — a dash e os serviços já estão lá.
-4. Pendências: `PENDENCIAS.md`.
-5. **Rede Wi-Fi:** canais já aplicados. Por agora **não mexer mais em RF**. Falta só o cabo da suíte (físico) e, daqui a uns dias, decidir o min. rate com as amostras — `docs/UNIFI-RF.md`.
-6. O collector do estudo corre **neste host** (`/root/homelab/scripts/unifi-rf-study/data/`). Noutro PC só vês o script; as amostras não vão no git.
-
-## Se precisares de reaplicar só a dash Servidor
-
-```bash
-export HA_TOKEN='…'
-python3 scripts/apply-dash-servidor-20260907.py
-```
-
-Isto grava a view via WebSocket. Editar `.storage` no disco **não** actualiza a dash ao vivo.
+Canais já aplicados — ver `docs/UNIFI-RF.md`. Por agora **não mexer mais em RF** excepto o cabo físico da suíte e, mais tarde, min. rate com amostras em `scripts/unifi-rf-study/`.

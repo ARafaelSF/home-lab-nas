@@ -1,0 +1,9 @@
+[Unit]
+Description=Sincronizar AdGuard oficial → backup (Pi)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/homelab/scripts/adguard-sync/adguard-backup-sync.sh
+User=root

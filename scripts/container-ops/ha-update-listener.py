@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Listener LAN para o Home Assistant disparar /opt/container-ops/ops.sh."""
+"""Listener LAN para o Home Assistant disparar o ops.sh do repositório homelab."""
 from __future__ import annotations
 
 import json
@@ -12,8 +12,9 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-OPS_SH = os.environ.get("CONTAINER_OPS_SH", "/opt/container-ops/ops.sh")
-APPS_CONF = os.environ.get("CONTAINER_OPS_APPS", "/opt/container-ops/apps.conf")
+_REPO = Path(__file__).resolve().parent
+OPS_SH = os.environ.get("CONTAINER_OPS_SH", str(_REPO / "ops.sh"))
+APPS_CONF = os.environ.get("CONTAINER_OPS_APPS", str(_REPO / "apps.conf"))
 TOKEN = os.environ.get("DOCKER_OPS_TOKEN", "")
 HA_WEBHOOK = os.environ.get(
     "HA_WEBHOOK_URL",
@@ -104,15 +105,121 @@ def friendly_name(app: str) -> str:
     return APP_LABELS.get(app, app)
 
 
-def friendly_summary(ok: bool, app: str) -> str:
+FALHOU_RE = re.compile(r"FALHOU:\s+(\S+)")
+FAILED_APPS_RE = re.compile(r"FAILED_APPS=(.+)")
+UPDATED_APPS_RE = re.compile(r"UPDATED_APPS=(.+)")
+VERSION_RE = re.compile(r"VERSION_(FROM|TO)=([^|\s]+)\|([^\n]+)")
+OK_APP_RE = re.compile(r"\] OK: ([a-z0-9]+(?:-[a-z0-9]+)*)\s*$", re.M)
+
+
+def _unique_apps(apps: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for app in apps:
+        if app and app not in seen:
+            seen.add(app)
+            ordered.append(app)
+    return ordered
+
+
+def parse_failed_apps(text: str) -> list[str]:
+    apps: list[str] = []
+    for match in FAILED_APPS_RE.finditer(text):
+        apps.extend(a for a in match.group(1).replace(",", " ").split() if a)
+    if not apps:
+        apps = FALHOU_RE.findall(text)
+    return _unique_apps(apps)
+
+
+def parse_updated_apps(text: str) -> list[str]:
+    apps: list[str] = []
+    for match in UPDATED_APPS_RE.finditer(text):
+        apps.extend(a for a in match.group(1).replace(",", " ").split() if a)
+    if not apps:
+        apps = OK_APP_RE.findall(text)
+    return _unique_apps(apps)
+
+
+def _clean_ver(ver: str) -> str:
+    v = (ver or "").strip()
+    if not v or v == "?":
+        return ""
+    return v
+
+
+def parse_versions(text: str) -> tuple[dict[str, str], dict[str, str]]:
+    froms: dict[str, str] = {}
+    tos: dict[str, str] = {}
+    for match in VERSION_RE.finditer(text):
+        kind, app, ver = match.group(1), match.group(2).strip(), _clean_ver(match.group(3))
+        if not ver:
+            continue
+        if kind == "FROM":
+            froms[app] = ver
+        else:
+            tos[app] = ver
+    return froms, tos
+
+
+def version_lines(
+    froms: dict[str, str],
+    tos: dict[str, str],
+    failed: list[str],
+    updated: list[str] | None = None,
+) -> list[str]:
+    failed_set = set(failed)
+    apps: list[str] = []
+    for app in list(updated or []) + list(froms) + list(tos) + failed:
+        if app not in apps:
+            apps.append(app)
+    lines: list[str] = []
+    for app in apps:
+        nome = friendly_name(app)
+        atual, nova = froms.get(app), tos.get(app)
+        if app in failed_set:
+            if atual:
+                lines.append(f"{nome}: falhou (estava {atual})")
+            else:
+                lines.append(f"{nome}: falhou")
+        elif atual and nova:
+            lines.append(f"{nome}: {atual} → {nova}")
+        elif nova:
+            lines.append(f"{nome}: → {nova}")
+        elif atual:
+            lines.append(f"{nome}: estava {atual}")
+        else:
+            lines.append(f"{nome}: atualizado")
+    return lines
+
+
+def friendly_summary(
+    ok: bool,
+    app: str,
+    failed: list[str] | None = None,
+    froms: dict[str, str] | None = None,
+    tos: dict[str, str] | None = None,
+    updated: list[str] | None = None,
+) -> str:
     nome = friendly_name(app)
+    failed = failed or []
+    updated = list(updated or [])
+    if app != "all" and app not in updated and ok:
+        updated = [app] + updated
+    lines = version_lines(froms or {}, tos or {}, failed, updated)
+    extra = ("\n" + "\n".join(lines)) if lines else ""
     if app == "all":
         if ok:
-            return "Atualizei todos os containers. Já estão a correr."
-        return "Alguns containers não atualizaram. Vê o detalhe no Home Assistant."
+            return "Atualizei os containers com update pendente." + extra
+        if failed:
+            nomes = ", ".join(friendly_name(a) for a in failed)
+            return f"Não atualizei: {nomes}. Os outros ficaram ok." + extra
+        return "Alguns containers não atualizaram. Vê o detalhe no Home Assistant." + extra
     if ok:
+        if extra:
+            return f"O {nome} foi atualizado.{extra}"
         return f"O {nome} foi atualizado e já está a correr."
-    return f"Não consegui atualizar o {nome}. Vê o detalhe no Home Assistant."
+    return f"Não consegui atualizar o {nome}. Vê o detalhe no Home Assistant." + extra
+
 
 
 def notify_ha(ok: bool, app: str, message: str, summary: str | None = None) -> None:
@@ -155,17 +262,13 @@ def run_update(app: str) -> None:
                 check=False,
             )
         text = log_path.read_text(errors="replace")
-        useful = [
-            ln
-            for ln in text.splitlines()
-            if ln.strip()
-            and "Extracting" not in ln
-            and "Downloading" not in ln
-            and "Pull complete" not in ln
-        ]
-        tail = "\n".join(useful[-12:]) or "(sem output)"
         ok = proc.returncode == 0
-        notify_ha(ok, app, tail)
+        failed = parse_failed_apps(text)
+        updated = parse_updated_apps(text)
+        froms, tos = parse_versions(text)
+        summary = friendly_summary(ok, app, failed, froms, tos, updated)
+        log(f"resumo: {summary.replace(chr(10), ' | ')}")
+        notify_ha(ok, app, summary, summary=summary)
     except subprocess.TimeoutExpired:
         notify_ha(
             False,

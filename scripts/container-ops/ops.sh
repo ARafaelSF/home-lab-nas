@@ -2,8 +2,10 @@
 # container-ops — backup, update, rollback e prune de stacks Docker Compose
 set -euo pipefail
 
-OPS_ROOT="/opt/container-ops"
-APPS_CONF="${OPS_ROOT}/apps.conf"
+# Código = este diretório (git). Dados/segredos = /opt/container-ops (fora do git).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OPS_ROOT="${CONTAINER_OPS_DATA:-/opt/container-ops}"
+APPS_CONF="${CONTAINER_OPS_APPS:-${SCRIPT_DIR}/apps.conf}"
 BACKUP_ROOT="${OPS_ROOT}/backups"
 TIMESTAMP="$(date +%Y-%m-%d_%H%M%S)"
 
@@ -390,12 +392,12 @@ cmd_list() {
   echo
   echo
   log "=== Comandos úteis ==="
-  echo "  /opt/container-ops/ops.sh backup <app>          # ex.: mealie, jellyfin, immich"
-  echo "  /opt/container-ops/ops.sh update <app> <tag>    # ex.: update hermes latest"
-  echo "  /opt/container-ops/ops.sh update all            # todas as apps (latest/release/2)"
-  echo "  /opt/container-ops/ops.sh refresh-ha [app]      # actualizar sensores HA via WUD"
-  echo "  /opt/container-ops/ops.sh backup-all            # backup de todas as apps"
-  echo "  cat /opt/container-ops/GUIA.md                  # guia em português"
+  echo "  /root/homelab/scripts/container-ops/ops.sh backup <app>          # ex.: mealie, jellyfin, immich"
+  echo "  /root/homelab/scripts/container-ops/ops.sh update <app> <tag>    # ex.: update hermes latest"
+  echo "  /root/homelab/scripts/container-ops/ops.sh update all            # todas as apps (latest/release/2)"
+  echo "  /root/homelab/scripts/container-ops/ops.sh refresh-ha [app]      # actualizar sensores HA via WUD"
+  echo "  /root/homelab/scripts/container-ops/ops.sh backup-all            # backup de todas as apps"
+  echo "  cat /root/homelab/scripts/container-ops/GUIA.md  # guia em português"
 }
 
 cmd_backup_all() {

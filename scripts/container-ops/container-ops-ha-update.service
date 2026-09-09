@@ -6,7 +6,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 EnvironmentFile=/opt/container-ops/ha-update.env
-ExecStart=/usr/bin/python3 /opt/container-ops/ha-update-listener.py
+# Código no git — não usar cópia em /opt (essa some / fica desactualizada)
+ExecStart=/usr/bin/python3 /root/homelab/scripts/container-ops/ha-update-listener.py
 Restart=on-failure
 RestartSec=5
 User=root

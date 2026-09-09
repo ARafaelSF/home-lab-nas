@@ -6,4 +6,4 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 Environment=MINIPC_TEMP_ENV=/opt/container-ops/minipc-temp.env
-ExecStart=/opt/container-ops/minipc-temp/publish.sh
+ExecStart=/root/homelab/scripts/minipc-temp/publish.sh

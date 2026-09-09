@@ -1,6 +1,10 @@
 # Como usar o container-ops (guia simples)
 
-Ferramenta no servidor: **`/opt/container-ops/ops.sh`**
+Ferramenta no servidor: **`/root/homelab/scripts/container-ops/ops.sh`**  
+(wrapper opcional: `/opt/container-ops/ops.sh` → aponta para o git)
+
+**Código = git. Dados = `/opt/container-ops` (backups, `.env`).** Não copies scripts para `/opt`.
+
 
 Serve para **atualizar um container** com segurança: faz backup dos volumes (quando faz sentido), muda a versão (tag), sobe de novo e, se der certo, limpa backups antigos e atualiza os sensores do WUD no Home Assistant.
 
@@ -156,7 +160,8 @@ Tudo aponta para o Git:
 
 O Portainer edita a mesma coisa se você sincronizar com `homelab/scripts/sync-portainer-compose.sh`.
 
-Cópia deste guia no Git: `/root/homelab/scripts/container-ops/GUIA.md` (no servidor: `/opt/container-ops/GUIA.md`).
+Cópia deste guia: `/root/homelab/scripts/container-ops/GUIA.md`.
+No host, dados em `/opt/container-ops/` (backups, `.env`). Após mudar systemd/rotas: `/root/homelab/scripts/install-host.sh`.
 
 ---
 

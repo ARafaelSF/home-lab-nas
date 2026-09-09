@@ -8,19 +8,20 @@ Repositório: [github.com/ARafaelSF/home-lab-nas](https://github.com/ARafaelSF/h
 
 ## Atualizar containers (uso diário)
 
-No servidor Docker (`192.168.3.21`), use o script **`container-ops`**:
+No servidor Docker (`192.168.3.21`), o código corre **sempre a partir do git**:
 
 ```text
-/opt/container-ops/ops.sh          ← no servidor (cópia activa)
-homelab/scripts/container-ops/     ← código-fonte neste repositório
+/root/homelab/scripts/container-ops/ops.sh   ← fonte de verdade (git)
+/opt/container-ops/                          ← só dados: backups/, *.env, logs/
+/opt/container-ops/ops.sh                    ← wrapper fino (opcional; aponta ao git)
 ```
 
-Depois de um `git pull`, sincronize a cópia activa:
+**Não copies** scripts para `/opt` e **não faças** `ln -sfn` do repo em cima de `/opt` (apagas backups e `.env`).
+
+Depois de um `git pull` no servidor, se mexeste em unidades systemd / rotas / DNS:
 
 ```bash
-cp /root/homelab/scripts/container-ops/ops.sh /opt/container-ops/ops.sh
-cp /root/homelab/scripts/container-ops/apps.conf /opt/container-ops/apps.conf
-cp /root/homelab/scripts/container-ops/GUIA.md /opt/container-ops/GUIA.md
+/root/homelab/scripts/install-host.sh
 ```
 
 ### Exemplos (o essencial)
@@ -28,15 +29,15 @@ cp /root/homelab/scripts/container-ops/GUIA.md /opt/container-ops/GUIA.md
 Atualizar **um** container (backup → pull → restart → validação → refresh no HA):
 
 ```bash
-/opt/container-ops/ops.sh update hermes latest
-/opt/container-ops/ops.sh update jellyfin latest
-/opt/container-ops/ops.sh update adguard latest
+/root/homelab/scripts/container-ops/ops.sh update hermes latest
+/root/homelab/scripts/container-ops/ops.sh update jellyfin latest
+/root/homelab/scripts/container-ops/ops.sh update adguard latest
 ```
 
 Atualizar **todos** os apps cadastrados de uma vez (tag habitual: `latest`; Immich/`immich-ml` → `release`; Uptime Kuma → `2`):
 
 ```bash
-/opt/container-ops/ops.sh update all
+/root/homelab/scripts/container-ops/ops.sh update all
 ```
 
 Se um app falhar, o `update all` continua com os restantes e no fim faz um único refresh WUD→HA.
@@ -48,51 +49,51 @@ Se um app falhar, o `update all` continua com os restantes e no fim faz um únic
 2. **Listar apps que o script conhece:**
 
 ```bash
-/opt/container-ops/ops.sh list
+/root/homelab/scripts/container-ops/ops.sh list
 ```
 
 3. **Atualizar** — um app ou todos:
 
 ```bash
-/opt/container-ops/ops.sh update <app> <tag>
-/opt/container-ops/ops.sh update all
+/root/homelab/scripts/container-ops/ops.sh update <app> <tag>
+/root/homelab/scripts/container-ops/ops.sh update all
 ```
 
 | App no comando | Serviço | Tag habitual | Exemplo |
 |----------------|---------|--------------|---------|
-| `hermes` | Hermes Agent | `latest` | `/opt/container-ops/ops.sh update hermes latest` |
-| `jellyfin` | Jellyfin | `latest` | `/opt/container-ops/ops.sh update jellyfin latest` |
-| `duplicati` | Duplicati | `latest` | `/opt/container-ops/ops.sh update duplicati latest` |
-| `mealie` | Receitas | `latest` | `/opt/container-ops/ops.sh update mealie latest` |
-| `adguard` | DNS AdGuard | `latest` | `/opt/container-ops/ops.sh update adguard latest` |
-| `wud` | What's Up Docker | `latest` ou `8.3.0` | `/opt/container-ops/ops.sh update wud latest` |
-| `node-exporter` | Métricas do host | `latest` | `/opt/container-ops/ops.sh update node-exporter latest` |
-| `immich` | Fotos (servidor) | `release` | `/opt/container-ops/ops.sh update immich release` |
-| `immich-ml` | Fotos (ML) | `release` | `/opt/container-ops/ops.sh update immich-ml release` |
-| `firefly` | Firefly III (só a app) | `latest` | `/opt/container-ops/ops.sh update firefly latest` |
-| `influx` | InfluxDB | `2.7` | `/opt/container-ops/ops.sh update influx 2.7` |
-| `…` | ver `list` | | `/opt/container-ops/ops.sh update all` |
+| `hermes` | Hermes Agent | `latest` | `/root/homelab/scripts/container-ops/ops.sh update hermes latest` |
+| `jellyfin` | Jellyfin | `latest` | `/root/homelab/scripts/container-ops/ops.sh update jellyfin latest` |
+| `duplicati` | Duplicati | `latest` | `/root/homelab/scripts/container-ops/ops.sh update duplicati latest` |
+| `mealie` | Receitas | `latest` | `/root/homelab/scripts/container-ops/ops.sh update mealie latest` |
+| `adguard` | DNS AdGuard | `latest` | `/root/homelab/scripts/container-ops/ops.sh update adguard latest` |
+| `wud` | What's Up Docker | `latest` ou `8.3.0` | `/root/homelab/scripts/container-ops/ops.sh update wud latest` |
+| `node-exporter` | Métricas do host | `latest` | `/root/homelab/scripts/container-ops/ops.sh update node-exporter latest` |
+| `immich` | Fotos (servidor) | `release` | `/root/homelab/scripts/container-ops/ops.sh update immich release` |
+| `immich-ml` | Fotos (ML) | `release` | `/root/homelab/scripts/container-ops/ops.sh update immich-ml release` |
+| `firefly` | Firefly III (só a app) | `latest` | `/root/homelab/scripts/container-ops/ops.sh update firefly latest` |
+| `influx` | InfluxDB | `2.7` | `/root/homelab/scripts/container-ops/ops.sh update influx 2.7` |
+| `…` | ver `list` | | `/root/homelab/scripts/container-ops/ops.sh update all` |
 
 **Immich:** depois de actualizar o servidor, actualize também o ML com a **mesma tag** (o `update all` já faz os dois).
 
 4. **Se algo correr mal**, volte à tag anterior (backups em `/opt/container-ops/backups/<app>/`):
 
 ```bash
-/opt/container-ops/ops.sh rollback jellyfin latest
+/root/homelab/scripts/container-ops/ops.sh rollback jellyfin latest
 ```
 
 5. **Só backup** (sem update):
 
 ```bash
-/opt/container-ops/ops.sh backup jellyfin
-/opt/container-ops/ops.sh backup-all
+/root/homelab/scripts/container-ops/ops.sh backup jellyfin
+/root/homelab/scripts/container-ops/ops.sh backup-all
 ```
 
 6. **Forçar verificação WUD** (opcional — o `update` já faz isto automaticamente):
 
 ```bash
-/opt/container-ops/ops.sh refresh-ha              # todos os containers (~30 s)
-/opt/container-ops/ops.sh refresh-ha jellyfin     # só um (~3 s)
+/root/homelab/scripts/container-ops/ops.sh refresh-ha              # todos os containers (~30 s)
+/root/homelab/scripts/container-ops/ops.sh refresh-ha jellyfin     # só um (~3 s)
 ```
 
 Também podes atualizar **a partir do Home Assistant**: dash Casa → **Docker** (`/dashboard-casa/docker-atualizacoes`). Há um botão **Atualizar tudo** e, em cada container pendente, toque = `ops.sh update <app>`. O HA só dispara o pedido; o trabalho continua a ser o `ops.sh` no servidor (`192.168.3.21`).
@@ -348,7 +349,7 @@ git push -u origin main
 
 | Tarefa | Comando / ficheiro |
 |--------|-------------------|
-| **Atualizar containers** | `/opt/container-ops/ops.sh update hermes latest` — ou tudo: `update all` |
+| **Atualizar containers** | `/root/homelab/scripts/container-ops/ops.sh update hermes latest` — ou tudo: `update all` |
 | Verificar updates (WUD) | Fila horária (`/etc/cron.d/wud-stagger`); manual um: `docker exec wud curl -s -X POST http://127.0.0.1:3000/api/containers/<id>/watch` |
 | Token GHCR (WUD) | `/etc/docker/wud-registries.env` — ver `etc/docker/wud-registries.env.example` |
 | Verificar backups | `scripts/duplicati-verificar-backup.sh` |
