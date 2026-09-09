@@ -26,7 +26,7 @@ SSIDs:
 1. **Não subir o min. rate 2.4** (hoje 1 Mbps). É da SSID inteira; não dá para excluir um Sonoff.
 2. **Não mudar o canal Zigbee.**
 3. **Não desligar o 2.4 do Hangar Multimídia.**
-4. Cabo/AP da suíte a 100 Mbps é **físico**, não RF — ver `PENDENCIAS.md` §1.
+4. Uplink a 100 Mbps é **físico** (hoje no **escritório**, não na suíte) — ver `PENDENCIAS.md` §1.
 
 ## Echos no 5 GHz fraco
 

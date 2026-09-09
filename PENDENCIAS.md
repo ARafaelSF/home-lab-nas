@@ -3,20 +3,32 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-08 (noite — RF UniFi)
+**Atualizado:** 2026-09-09 (noite — uplink APs)
 
 ---
 
-## 1. UniFi — AP Suíte a 100 Mbps (físico)
+## 1. UniFi — uplink AP a 100 Mbps (físico)
 
 **Prioridade:** média  
-**Contexto:** U7 Pro Suíte (`192.168.68.3`) com uplink **100 Mbps**; Escritório a **1 Gbps**. Já testado: cabo UCG↔injector, cabo injector↔AP (tester 8 pinos OK), troca dos PoE, troca das portas no UCG. O problema acompanha o cabo/ponta da suíte, não o injector nem a porta do UCG.
+**Estado actual (API 2026-09-09 ~19:48):**
 
-**Não é configuração UniFi.** RF (canais, SSIDs) já está aplicado — ver `docs/UNIFI-RF.md`.
+| AP | IP | Porta UCG | Uplink |
+|----|-----|-----------|--------|
+| **U7 Pro Escritório** | `192.168.68.2` | porta **1** | **100 Mbps** ← problema agora |
+| **U7 Pro Suíte** | `192.168.68.3` | porta **2** | **1 Gbps** ← ficou bom |
 
-- [ ] Recrimpar as duas pontas, ou testar o AP da suíte junto ao UCG com cabo curto
-- [ ] Se o cabo curto der 1 Gbps: o lançamento/conector é o culpado
-- [ ] Se o cabo curto continuar a 100 Mbps: porta Ethernet do AP
+**Histórico:** antes o 100 Mbps era na **suíte**. Testes anteriores: cabo UCG↔injector, cabo injector↔AP (tester 8 pinos OK), troca dos PoE, troca das portas no UCG — o problema acompanhava o cabo/ponta da suíte.
+
+**2026-09-09:** AP da suíte levado junto ao PoE e depois reposto. Resultado: suíte passou a **1 Gbps**; o **escritório** ficou a **100 Mbps**. O defeito **mudou de sítio** → reforça causa física (cabo/ponta/injector/troca ao remontar), não RF nem config UniFi.
+
+**Hipóteses ao remontar:** pontas/injectores trocados entre os dois APs; APs trocados de sítio; ou ponta do escritório afrouxada.
+
+**Não é configuração UniFi.** RF (canais, SSIDs) — ver `docs/UNIFI-RF.md`.
+
+- [ ] No UCG, trocar só as fichas porta 1 ↔ 2 (ou só os dois injectores) e ver se os 100 Mbps seguem o cabo ou o AP
+- [ ] Se seguirem o cabo: recrimpar / substituir esse lançamento (ou testar com cabo curto junto ao UCG)
+- [ ] Se ficarem no mesmo AP após a troca: suspeitar da porta Ethernet desse U7
+- [x] Teste “AP suíte junto ao PoE” feito (2026-09-09) — suíte recuperou 1G; problema passou ao escritório
 
 ---
 
@@ -108,6 +120,7 @@ Candidatos a problema (leitura 2026-09-08):
 | Updates Docker a partir do HA (`ops.sh` + listener `:8787`); Firefly e Influx cadastrados | 2026-09-07 |
 | AdGuard backup Pi `.22` + botão HA a filtrar nos dois | 2026-09-08 |
 | UniFi RF: 2.4 ch 11/6, Zigbee 11, 6 GHz 160, Aeron off, Visitantes só 5 GHz | 2026-09-08 |
+| Teste AP suíte junto ao PoE: suíte a 1G; 100 Mbps passou ao escritório | 2026-09-09 |
 
 ---
 
