@@ -182,6 +182,54 @@ validate_service() {
   log "Imagem em uso: ${image}"
 }
 
+# Rótulo legível para Telegram/HA: "08/09 14:39 (a70b7bf7)"
+# Usa Created do container + RepoDigest (comparável entre FROM e TO).
+version_label_from_cid() {
+  local cid="${1:-}"
+  if [[ -z "$cid" ]]; then
+    echo "?"
+    return 0
+  fi
+  CID="$cid" python3 - <<'PY'
+import json, os, subprocess, datetime
+
+cid = os.environ["CID"]
+try:
+    created_s, image_id = subprocess.check_output(
+        ["docker", "inspect", cid, "--format", "{{.Created}} {{.Image}}"],
+        text=True,
+    ).strip().split(" ", 1)
+    created = datetime.datetime.fromisoformat(created_s.replace("Z", "+00:00"))
+    stamp = created.astimezone().strftime("%d/%m %H:%M")
+    digest = ""
+    digests = json.loads(
+        subprocess.check_output(
+            ["docker", "image", "inspect", image_id, "--format", "{{json .RepoDigests}}"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        or "[]"
+    )
+    for row in digests:
+        if "@sha256:" in row:
+            digest = row.split("@sha256:", 1)[1][:8]
+            break
+    if not digest:
+        digest = image_id[7:15] if image_id.startswith("sha256:") else image_id[:8]
+    print(f"{stamp} ({digest})")
+except Exception:
+    print("?")
+PY
+}
+
+report_version() {
+  local kind="$1" # FROM | TO
+  local cid label
+  cid="$(compose ps -q "$APP_SERVICE" 2>/dev/null || true)"
+  label="$(version_label_from_cid "$cid")"
+  log "VERSION_${kind}=${APP_NAME}|${label}"
+}
+
 resolve_wud_name() {
   if [[ -n "${APP_WUD_NAME:-}" ]]; then
     echo "$APP_WUD_NAME"
@@ -290,6 +338,7 @@ cmd_update() {
   load_app "$app"
   verify_stack
   log "=== update: ${APP_NAME} → tag ${new_tag} ==="
+  report_version FROM
   log "Backup automático antes do update..."
   cmd_backup "$app"
   set_env_tag "$new_tag"
@@ -297,14 +346,16 @@ cmd_update() {
   if ! compose pull "$APP_SERVICE"; then
     die "pull falhou — backups preservados em ${APP_BACKUP_DIR}" || return 1
   fi
-  log "Up -d ${APP_SERVICE}..."
-  if ! compose up -d "$APP_SERVICE"; then
+  log "Up -d ${APP_SERVICE} (force-recreate para aplicar digest novo em tags latest)..."
+  if ! compose up -d --force-recreate --no-deps "$APP_SERVICE"; then
     die "up falhou — backups preservados em ${APP_BACKUP_DIR}" || return 1
   fi
   sleep 3
   if ! validate_service; then
     die "validação falhou — backups preservados em ${APP_BACKUP_DIR}" || return 1
   fi
+  report_version TO
+  log "UPDATED_APPS=${APP_NAME}"
   log "Update concluído com sucesso."
   prune_backups 1
   wud_refresh_ha app
@@ -314,6 +365,7 @@ cmd_update() {
 # Continua se uma falhar; no fim faz um único refresh WUD→HA.
 cmd_update_all() {
   local line name tag failed=0 ok=0
+  local -a updated_apps=() failed_apps=()
   log "=== update all (tag habitual por app) ==="
   log "Immich/ML → release | Uptime Kuma → 2 | Influx → 2.7 | restantes → latest"
   export CONTAINER_OPS_LENIENT=1
@@ -328,13 +380,21 @@ cmd_update_all() {
     if cmd_update "$name" "$tag"; then
       log "OK: ${name}"
       ok=$((ok + 1))
+      updated_apps+=("$name")
     else
       log "FALHOU: ${name} (seguindo para a seguinte)"
       failed=1
+      failed_apps+=("$name")
     fi
   done <"$APPS_CONF"
   unset CONTAINER_OPS_LENIENT
   unset CONTAINER_OPS_SKIP_WUD
+  if ((${#updated_apps[@]})); then
+    log "UPDATED_APPS=${updated_apps[*]}"
+  fi
+  if ((${#failed_apps[@]})); then
+    log "FAILED_APPS=${failed_apps[*]}"
+  fi
   log "=== update all: ${ok} OK ==="
   wud_refresh_ha all || true
   [[ "$failed" -eq 0 ]] || die "Um ou mais updates falharam (ver logs acima)"
@@ -349,7 +409,7 @@ cmd_rollback() {
   log "=== rollback: ${APP_NAME} → tag ${old_tag} ==="
   set_env_tag "$old_tag"
   compose pull "$APP_SERVICE"
-  compose up -d "$APP_SERVICE"
+  compose up -d --force-recreate --no-deps "$APP_SERVICE"
   sleep 3
   validate_service
   log "Rollback concluído."
