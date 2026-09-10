@@ -1,0 +1,70 @@
+# Sensores MQTT do medidor Kron - Usina Fotovoltaica
+# Tópico: kron/usina_fotovoltaica
+sensor:
+    # Tensão Fase 1
+    - name: "Usina Fotovoltaica - Tensão Fase 1"
+      unique_id: kron_usina_fotovoltaica_tensao_fase_1
+      # A âncora do tópico é definida aqui, na primeira ocorrência
+      state_topic: &kron_usina_fotovoltaica_topic "kron/usina_fotovoltaica"
+      unit_of_measurement: "V"
+      device_class: voltage
+      value_template: "{{ value_json[0].metadata.U1 }}"
+      icon: mdi:solar-panel-large
+      # A âncora do dispositivo é definida aqui, na primeira ocorrência
+      device: &kron_usina_fotovoltaica_device
+        identifiers:
+          - "kron_usina_fotovoltaica"
+        name: "Medidor Kron - Usina Fotovoltaica"
+        manufacturer: "Kron"
+        model: "Medidor (MQTT)"
+        # sw_version: "1.0.0" # Opcional, se não tiver, pode remover
+
+    # Corrente Fase 1
+    - name: "Usina Fotovoltaica - Corrente Fase 1"
+      unique_id: kron_usina_fotovoltaica_corrente_fase_1
+      state_topic: *kron_usina_fotovoltaica_topic # Referencia a âncora do tópico
+      unit_of_measurement: "A"
+      device_class: current
+      value_template: "{{ value_json[0].metadata.I1 }}"
+      icon: mdi:current-ac
+      device: *kron_usina_fotovoltaica_device # Referencia a âncora do dispositivo
+
+    # Frequência Fase 1
+    - name: "Usina Fotovoltaica - Frequência Fase 1"
+      unique_id: kron_usina_fotovoltaica_frequencia_fase_1
+      state_topic: *kron_usina_fotovoltaica_topic
+      unit_of_measurement: "Hz"
+      device_class: frequency
+      value_template: "{{ value_json[0].metadata.F1 }}"
+      icon: mdi:sine-wave
+      device: *kron_usina_fotovoltaica_device
+
+    # Potência Fase 1
+    - name: "Usina Fotovoltaica - Potência Fase 1"
+      unique_id: kron_usina_fotovoltaica_potencia_fase_1
+      state_topic: *kron_usina_fotovoltaica_topic
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      value_template: "{{ value_json[0].metadata.P1 }}"
+      icon: mdi:flash
+      device: *kron_usina_fotovoltaica_device
+
+    # Energia Ativa Total (kWh) - Geração
+    - name: "Usina Fotovoltaica - Energia Ativa Total"
+      unique_id: kron_usina_fotovoltaica_energia_ativa_total
+      state_topic: *kron_usina_fotovoltaica_topic
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      value_template: "{{ value_json[0].metadata.EA }}"
+      icon: mdi:solar-power
+      device: *kron_usina_fotovoltaica_device
+
+    # Código de Erro do Medidor
+    - name: "Usina Fotovoltaica - Código de Erro Medidor"
+      unique_id: kron_usina_fotovoltaica_codigo_erro
+      state_topic: *kron_usina_fotovoltaica_topic
+      value_template: "{{ value_json[0].metadata.CE }}"
+      icon: mdi:alert-circle
+      device: *kron_usina_fotovoltaica_device

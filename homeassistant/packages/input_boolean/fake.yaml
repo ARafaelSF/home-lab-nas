@@ -1,0 +1,40 @@
+# yaml/fake/input_boolean.yaml
+fake_fan_power:
+  name: Ventilador Fake
+  initial: off
+
+fake_door:
+  name: Sensor de Porta Fake
+  initial: off
+
+fake_window:
+  name: Sensor de Janela Fake
+  initial: off
+
+fake_leak:
+  name: Sensor de Vazamento de Água Fake
+  initial: off
+
+fake_occupancy:
+  name: Sensor de Ocupação Fake
+  initial: off
+
+fake_light_1:
+  name: Luz Fake 1
+  initial: off
+
+fake_light_2:
+  name: Luz Fake 2
+  initial: off
+
+fake_light_3:
+  name: Luz Fake 3
+  initial: off
+
+fake_outlet_1:
+  name: Tomada Fake 1
+  initial: off
+
+fake_outlet_2:
+  name: Tomada Fake 2
+  initial: off

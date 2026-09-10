@@ -1,0 +1,8 @@
+source: Home Assistant long-term statistics
+energy_points: 73515
+energy_entities: 18
+energy_first_utc: 2026-01-25T12:00:00Z
+energy_last_utc: 2026-07-15T13:00:00Z
+future_energy_change_cq: cq_energy_change_hourly
+grafana_dashboard_version: 3
+status: completed

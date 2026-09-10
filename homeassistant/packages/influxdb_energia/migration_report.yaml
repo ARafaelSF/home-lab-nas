@@ -1,0 +1,10 @@
+source: MariaDB recorder via Home Assistant history API
+started_at_utc: 2026-07-04T12:59:51Z
+cutoff_utc: 2026-07-15T13:24:44Z
+raw_power_points: 86997
+raw_energy_points: 5408
+raw_tariff_points: 1
+hourly_power_points: 2050
+hourly_energy_points: 1669
+hourly_tariff_points: 1
+status: completed

@@ -1,0 +1,521 @@
+# =============================================================================
+# Alexa Smart Home Skill — dispositivos expostos ao app Alexa
+# =============================================================================
+# Caminho no servidor: /config/packages/alexa_skill/alexa_skill.yaml
+# Documentação: https://www.home-assistant.io/integrations/alexa/
+#
+# Como usar este ficheiro:
+#   1. include_entities — lista o entity_id atual no Home Assistant (após Z2M).
+#   2. entity_config     — define como cada dispositivo aparece na Alexa (name).
+#      Ajuste os valores de "name" e "description" ao seu gosto; o entity_id não muda.
+#   3. Depois de editar: Configuração → Verificar → Reiniciar HA (ou reload Alexa).
+#   4. Na Alexa: "Alexa, descobre dispositivos" (ou desligar/ligar skill).
+#
+# Nota: entity_id com prefixo de área (ex. escritorio_interruptor_escritorio_z2m_…)
+# =============================================================================
+
+smart_home:
+  endpoint: https://api.amazonalexa.com/v3/events
+  client_id: !secret alexa_client_id
+  client_secret: !secret alexa_client_secret
+
+  filter:
+    include_entities:
+
+      # -----------------------------------------------------------------------
+      # Natal (descomente quando existir entidade e nome na Alexa)
+      # -----------------------------------------------------------------------
+      # - light.natal_...
+
+      # -----------------------------------------------------------------------
+      # Escritório
+      # -----------------------------------------------------------------------
+      - light.escritorio_interruptor_escritorio_z2m_l1_cortineiro
+      - light.escritorio_interruptor_escritorio_z2m_l3_spot_computador
+      - light.escritorio_interruptor_escritorio_z2m_l4_spot_mezanino
+      - light.escritorio_estante_avioes_sonoff
+      - cover.escritorio_cortina_z2m
+      - climate.escritorio_ar_condicionado_smartthings
+      - switch.escritorio_desktop_sonoff
+      - switch.escritorio_repelente_z2m
+      - switch.escritorio_monitores_tasmota
+      #- binary_sensor.escritorio_porta_varanda_z2m_contact
+      # - sensor.escritorio_termo_higrometro_ha_z2m_temperature  # só leitura; descomente se quiser na Alexa
+
+      # -----------------------------------------------------------------------
+      # Corredor
+      # -----------------------------------------------------------------------
+      - light.corredor_interruptor_escada_z2m_l1_balizador
+      - light.corredor_interruptor_escada_z2m_l2_trilho_corredor
+      - light.corredor_interruptor_escada_z2m_l3_jardim_japones
+      - switch.jardim_japones_fonte
+      - switch.jardim_japones_gerador_de_nevoa
+      - light.jardim_japones_lanterna_japonesa
+      
+      # -----------------------------------------------------------------------
+      # Sala de Jantar (+ pé-direito da escada, físico nesta área)
+      # -----------------------------------------------------------------------
+      - light.sala_de_jantar_interruptor_sala_de_jantar_z2m_l1_lustre
+      - light.sala_de_jantar_interruptor_sala_de_jantar_z2m_l4_arandela
+      - light.sala_de_jantar_interruptor_escada_z2m_l4_pe_direito
+      - switch.sala_de_jantar_repelente_sonoff
+      - fan.ventilador_sala_de_jantar_ventilador
+
+      # -----------------------------------------------------------------------
+      # Sala de TV (alpendre: interruptor na entidade garagem_* — mesmo circuito)
+      # -----------------------------------------------------------------------
+      - light.sala_de_tv_interruptor_sala_de_tv_z2m_l2_spot_sofa
+      - light.sala_de_tv_interruptor_sala_de_tv_z2m_l4_spot_sala
+      - light.sala_de_tv_cristaleira_z2m
+      - light.sala_de_tv_painel_z2m
+      - cover.sala_de_tv_cortina_z2m
+      - climate.sala_de_tv_ar_condicionado_smartthings
+      - switch.sala_de_tv_bone_sonoff
+      - switch.sala_de_tv_repelente_sonoff
+      #- sensor.sala_de_tv_termo_temperatura
+      #- binary_sensor.sala_de_tv_porta_z2m_contact
+      #- binary_sensor.sala_de_tv_janela_direita_z2m_contact
+      #- binary_sensor.sala_de_tv_janela_esquerda_z2m_contact
+
+      # -----------------------------------------------------------------------
+      # Banheiro da Suíte
+      # -----------------------------------------------------------------------
+      - light.banheiro_suite_interruptor_banheiro_suite_z2m_l2_box_suite
+      - light.banheiro_suite_interruptor_banheiro_suite_z2m_l3_espelho_suite
+      - light.banheiro_suite_interruptor_banheiro_suite_z2m_l4_pia_suite
+      - light.banheiro_suite_led_banheiro_suite
+
+      # -----------------------------------------------------------------------
+      # Lavanderia
+      # -----------------------------------------------------------------------
+      - light.lavanderia_interruptor_lavanderia_z2m_l2_lavanderia
+
+      # -----------------------------------------------------------------------
+      # Suíte
+      # -----------------------------------------------------------------------
+      - light.suite_cabeceira_antonio_localtuya
+      - light.suite_cabeceira_renata_localtuya
+      - light.suite_luz_indireta_z2m
+      - light.suite_spot_sonoff
+      - light.suite_painel_z2m
+      - cover.suite_persiana_z2m
+      - cover.suite_toldo_z2m
+      - climate.suite_ar_condicionado_smartthings
+      - switch.suite_repelente_sonoff
+      - switch.suite_tomada_camera_z2m
+      - media_player.suite_tv_roku
+      #- binary_sensor.suite_janela_z2m_contact
+
+      # -----------------------------------------------------------------------
+      # Banheiro social
+      # -----------------------------------------------------------------------
+      - light.banheiro_social_espelho_sonoff
+      - light.banheiro_social_luz_sonoff
+
+      # -----------------------------------------------------------------------
+      # Cozinha
+      # -----------------------------------------------------------------------
+      - light.cozinha_bancada_sonoff
+      - light.cozinha_luz_sonoff
+      #- sensor.cozinha_geladeira_termo_temperatura
+      #- binary_sensor.cozinha_porta_terreiro_z2m_contact
+      #- binary_sensor.cozinha_porta_alta_z2m_contact
+      #- binary_sensor.cozinha_porta_baixa_z2m_contact
+
+      # -----------------------------------------------------------------------
+      # Brinquedoteca
+      # -----------------------------------------------------------------------
+      - light.brinquedoteca_luz_sonoff
+      - switch.brinquedoteca_repelente_sonoff
+      - light.brinquedoteca_nebulosa_estrelas_localtuya
+      - light.brinquedoteca_nebulosa_localtuya
+      #- binary_sensor.brinquedoteca_janela_z2m_contact
+
+      # -----------------------------------------------------------------------
+      # Quarto da Cecília
+      # -----------------------------------------------------------------------
+      - light.quarto_cecilia_luz_sonoff
+      - light.quarto_cecilia_abajur_z2m
+      - switch.quarto_cecilia_repelente_z2m
+      - cover.quarto_cecilia_persiana_z2m
+      - humidifier.quarto_cecilia_umidificador_localtuya
+      - climate.quarto_cecilia_ar_condicionado_smartir
+      #- binary_sensor.quarto_cecilia_janela_z2m_contact
+      #- sensor.quarto_cecilia_termo_higrometro_z2m_temperature
+
+      # -----------------------------------------------------------------------
+      # Cozinha externa
+      # -----------------------------------------------------------------------
+      - light.cozinha_externa_pendentes_z2m
+      - light.cozinha_externa_interruptor_cozinha_externa_z2m_l2_cozinha_externa
+      - light.cozinha_externa_led_z2m
+
+      # -----------------------------------------------------------------------
+      # Terreiro / exterior (interruptores Z2M com área terreiro_*)
+      # -----------------------------------------------------------------------
+      - light.terreiro_interruptor_cozinha_externa_z2m_l4_refletor
+      - light.terreiro_interruptor_lavanderia_z2m_l1_jardim_terreiro
+      - light.terreiro_interruptor_lavanderia_z2m_l3_arandela_terreiro
+
+      # -----------------------------------------------------------------------
+      # Oficina
+      # -----------------------------------------------------------------------
+      - light.oficina_luz_sonoff
+      - light.bancada_oficina_bancada_oficina
+      - fan.ventilador_oficina_ventilador
+      - switch.oficina_regua_z2m
+      #- binary_sensor.oficina_porta_z2m_contact
+      #- binary_sensor.oficina_janela_z2m_contact
+
+      # -----------------------------------------------------------------------
+      # Garagem
+      # -----------------------------------------------------------------------
+      - light.garagem_interruptor_cozinha_z2m_l2_garagen
+      - light.garagem_interruptor_cozinha_z2m_l3_jardim_garagem
+      - light.garagem_interruptor_escritorio_z2m_l2_varanda
+      - light.garagem_interruptor_sala_de_tv_z2m_l1_alpendre
+      
+      # -----------------------------------------------------------------------
+      # Casa
+      # -----------------------------------------------------------------------
+      - valve.casa_valvula_gas_z2m
+      - valve.casa_valvula_agua_z2m
+      - switch.caixa_d_agua_agua_pressurizada
+      
+      # -----------------------------------------------------------------------
+      # Scripts (rotinas por voz — aparecem como cenas/rotinas na Alexa)
+      # -----------------------------------------------------------------------
+      - script.contar_garrafa_de_agua_com_gas_e_anunciar
+      - script.armar_alarme
+      - script.saida_casa_verificar_e_armar_alarme
+
+  # ===========================================================================
+  # Nomes na Alexa — edite "name" e "description" à vontade
+  # ===========================================================================
+  entity_config:
+
+    # --- Escritório ---
+    light.escritorio_interruptor_escritorio_z2m_l1_cortineiro:
+      name: "Cortineiro"
+      description: "Cortineiro do escritório"
+    light.escritorio_interruptor_escritorio_z2m_l3_spot_computador:
+      name: "Spot computador"
+      description: "Spot da mesa do computador"
+    light.escritorio_interruptor_escritorio_z2m_l4_spot_mezanino:
+      name: "Spot mezanino"
+      description: "Spot do mezanino"
+    light.escritorio_estante_avioes_z2m:
+      name: "Estante aviões"
+      description: "Luz da estante de aviões"
+    cover.escritorio_cortina_z2m:
+      name: "Cortina Escritório"
+      description: "Cortina do escritório"
+    climate.escritorio_ar_condicionado_smartthings:
+      name: "Ar condicionado Escritório"
+      description: "Ar-condicionado do escritório"
+      display_categories: THERMOSTAT
+    switch.escritorio_desktop_sonoff:
+      name: "Desktop"
+      description: "Tomada do desktop"
+    switch.escritorio_repelente_z2m:
+      name: "Repelente Escritório"
+      description: "Repelente elétrico do escritório"
+    switch.escritorio_monitores_tasmota:
+      name: "Monitor"
+      description: "Monitor do desktop"      
+    #binary_sensor.escritorio_porta_varanda_z2m_contact:
+    #  name: "Porta varanda"
+    #  description: "Sensor de porta para a varanda"
+
+    # --- Corredor ---
+    light.corredor_interruptor_escada_z2m_l1_balizador:
+      name: "Balizador"
+      description: "Balizador do corredor"
+    light.corredor_interruptor_escada_z2m_l2_trilho_corredor:
+      name: "Trilho Corredor"
+      description: "Trilho de luz do corredor"
+    light.corredor_interruptor_escada_z2m_l3_jardim_japones:
+      name: "Jardim japonês"
+      description: "Jardim japonês"
+    switch.jardim_japones_fonte:
+      name: "Fonte"
+      description: "Bomba da fonte do jardim japonês"
+    switch.jardim_japones_gerador_de_nevoa:
+      name: "Névoa"
+      description: "Gerador de névoa do jardim japonês"
+    light.jardim_japones_lanterna_japonesa:
+      name: "Lanterna Japonêsa"
+      description: "Lanterna decorativa do jardim japonês"
+      
+    # --- Sala de Jantar ---
+    light.sala_de_jantar_interruptor_sala_de_jantar_z2m_l1_lustre:
+      name: "Lustre"
+      description: "Lustre principal"
+    light.sala_de_jantar_interruptor_sala_de_jantar_z2m_l4_arandela:
+      name: "Arandela"
+      description: "Arandela da sala de jantar"
+    light.sala_de_jantar_interruptor_escada_z2m_l4_pe_direito:
+      name: "Pé direito"
+      description: "Luz de pé direito"
+    switch.sala_de_jantar_repelente_sonoff:
+      name: "Repelente Sala de Jantar"
+      description: "Repelente da sala de jantar"
+    fan.ventilador_sala_de_jantar_ventilador:
+      name: "Ventilador Sala de Jantar"
+      description: "Ventilador da sala de jantar"
+      display_categories: FAN
+
+    # --- Sala de TV ---
+    light.sala_de_tv_interruptor_sala_de_tv_z2m_l2_spot_sofa:
+      name: "Spot sofá"
+      description: "Spot sobre o sofá"
+    light.sala_de_tv_interruptor_sala_de_tv_z2m_l4_spot_sala:
+      name: "Spot sala"
+      description: "Spot da sala de TV"
+    light.sala_de_tv_cristaleira_z2m:
+      name: "Cristaleira"
+      description: "Luz da cristaleira"
+    light.sala_de_tv_painel_z2m:
+      name: "Painel Sala de TV"
+      description: "Fita do painel"
+    cover.sala_de_tv_cortina_z2m:
+      name: "Cortina Sala de TV"
+      description: "Cortina da sala de TV"
+    climate.sala_de_tv_ar_condicionado_smartthings:
+      name: "Ar condicionado Sala de TV"
+      description: "Ar-condicionado da sala de TV"
+      display_categories: THERMOSTAT
+    switch.sala_de_tv_bone_sonoff:
+      name: "Boné"
+      description: "Tomada do boné"
+    switch.sala_de_tv_repelente_sonoff:
+      name: "Repelente Sala de TV"
+      description: "Repelente da sala de TV"
+    #sensor.sala_de_tv_termo_temperatura:
+    #  name: "Temperatura Sala de TV"
+    #  description: "Temperatura ambiente (sensor)"
+    #binary_sensor.sala_de_tv_porta_z2m_contact:
+    #  name: "Porta Sala"
+    #  description: "Porta da sala de TV"
+    #binary_sensor.sala_de_tv_janela_direita_z2m_contact:
+    #  name: "Janela direita"
+    #  description: "Janela direita"
+    #binary_sensor.sala_de_tv_janela_esquerda_z2m_contact:
+    #  name: "Janela esquerda"
+    #  description: "Janela esquerda"
+
+    # --- Banheiro da Suíte ---
+    light.banheiro_suite_interruptor_banheiro_suite_z2m_l2_box_suite:
+      name: "Box Suíte"
+      description: "Luz do box do banheiro"
+    light.banheiro_suite_interruptor_banheiro_suite_z2m_l3_espelho_suite:
+      name: "Espelho Suíte"
+      description: "Luz do espelho"
+    light.banheiro_suite_interruptor_banheiro_suite_z2m_l4_pia_suite:
+      name: "Pia Suíte"
+      description: "Luz da pia"
+    light.banheiro_suite_led_banheiro_suite:
+      name: "Led Banheiro Suíte"
+      description: "Luz led do armario"
+    
+
+    # --- Lavanderia ---
+    light.lavanderia_interruptor_lavanderia_z2m_l2_lavanderia:
+      name: "Luz Lavanderia"
+      description: "Iluminação da lavanderia"
+
+    # --- Suíte ---
+    light.suite_cabeceira_antonio_localtuya:
+      name: "Cabeceira Antônio"
+      description: "Luz da cabeceira Antônio"
+    light.suite_cabeceira_renata_localtuya:
+      name: "Cabeceira Renata"
+      description: "Luz da cabeceira Renata"
+    light.suite_luz_indireta_z2m:
+      name: "Indireta Suíte"
+      description: "Iluminação indireta da suíte"
+    light.suite_spot_sonoff:
+      name: "Spot Suíte"
+      description: "Spot da suíte"
+    light.suite_painel_z2m:
+      name: "Painel Suíte"
+      description: "Led do painel da TV"
+    cover.suite_persiana_z2m:
+      name: "Persiana Suíte"
+      description: "Persiana motorizada"
+    cover.suite_toldo_z2m:
+      name: "Toldo Suíte"
+      description: "Toldo externo da suíte"
+    climate.suite_ar_condicionado_smartthings:
+      name: "Ar condicionado Suíte"
+      description: "Ar-condicionado da suíte"
+      display_categories: THERMOSTAT
+    switch.suite_repelente_sonoff:
+      name: "Repelente Suíte"
+      description: "Repelente da suíte"
+    switch.suite_tomada_camera_z2m:
+      name: "Tomada câmera"
+      description: "Tomada da câmera na suíte"
+    media_player.suite_tv_roku:
+      name: "TV Suíte"
+      description: "Televisão Roku da suíte"
+    #binary_sensor.suite_janela_z2m_contact:
+    #  name: "Janela Suíte"
+    #  description: "Sensor de janela da suíte"
+
+    # --- Banheiro social ---
+    light.banheiro_social_espelho_sonoff:
+      name: "Espelho Banheiro Social"
+      description: "Luz do espelho"
+    light.banheiro_social_luz_sonoff:
+      name: "Luz Banheiro Social"
+      description: "Iluminação geral do banheiro social"
+
+    # --- Cozinha ---
+    light.cozinha_bancada_sonoff:
+      name: "Bancada Cozinha"
+      description: "Luz da bancada"
+    light.cozinha_luz_sonoff:
+      name: "Luz Cozinha"
+      description: "Iluminação geral da cozinha"
+    #sensor.cozinha_geladeira_termo_temperatura:
+    #  name: "Temperatura geladeira"
+    #  description: "Temperatura na geladeira"
+    #binary_sensor.cozinha_porta_terreiro_z2m_contact:
+    #  name: "Porta terreiro"
+    #  description: "Porta para o terreiro"
+    #binary_sensor.cozinha_porta_alta_z2m_contact:
+    #  name: "Porta alta Cozinha"
+    #  description: "Porta alta da cozinha"
+    #binary_sensor.cozinha_porta_baixa_z2m_contact:
+    #  name: "Porta baixa Cozinha"
+    #  description: "Porta baixa da cozinha"
+
+    # --- Brinquedoteca ---
+    light.brinquedoteca_luz_sonoff:
+      name: "Luz Brinquedoteca"
+      description: "Iluminação principal"
+    switch.brinquedoteca_repelente_sonoff:
+      name: "Repelente Brinquedoteca"
+      description: "Repelente da brinquedoteca"
+    light.brinquedoteca_nebulosa_estrelas_localtuya:
+      name: "Estrelas"
+      description: "Projetor estrelas da nebulosa"
+    light.brinquedoteca_nebulosa_localtuya:
+      name: "Nebulosa"
+      description: "Luz da nebulosa"
+    #binary_sensor.brinquedoteca_janela_z2m_contact:
+    #  name: "Janela Brinquedoteca"
+    #  description: "Sensor de janela"
+
+    # --- Quarto da Cecília ---
+    light.quarto_cecilia_luz_sonoff:
+      name: "Luz Cecília"
+      description: "Iluminação principal"
+    light.quarto_cecilia_abajur_z2m:
+      name: "Abajur Cecília"
+      description: "Abajur do quarto"
+    switch.quarto_cecilia_repelente_z2m:
+      name: "Repelente Cecília"
+      description: "Repelente do quarto"
+    cover.quarto_cecilia_persiana_z2m:
+      name: "Persiana Cecília"
+      description: "Persiana do quarto"
+    humidifier.quarto_cecilia_umidificador_localtuya:
+      name: "Umidificador Cecília"
+      description: "Umidificador de ar"
+    climate.quarto_cecilia_ar_condicionado_smartir:
+      name: "Ar condicionado Cecília"
+      description: "Ar-condicionado do quarto da Cecília"
+      display_categories: THERMOSTAT
+    #binary_sensor.quarto_cecilia_janela_z2m_contact:
+    #  name: "Janela Cecília"
+    #  description: "Sensor de janela"
+    #sensor.quarto_cecilia_termo_higrometro_z2m_temperature:
+    #  name: "Temperatura Quarto Cecília"
+    #  description: "Temperatura do termo-higrómetro"
+
+    # --- Cozinha externa ---
+    light.cozinha_externa_pendentes_z2m:
+      name: "Pendentes"
+      description: "Pendentes Cozinha Externa"
+    light.cozinha_externa_interruptor_cozinha_externa_z2m_l2_cozinha_externa:
+      name: "Luz Cozinha Externa"
+      description: "Luz da cozinha externa"
+    light.cozinha_externa_led_z2m:
+      name: "Bancada Cozinha Externa"
+      description: "Fita ou LED decorativo"
+
+    # --- Terreiro ---
+    light.terreiro_interruptor_cozinha_externa_z2m_l4_refletor:
+      name: "Refletor"
+      description: "Refletor externo (ex-L4 cozinha externa)"
+    light.terreiro_interruptor_lavanderia_z2m_l1_jardim_terreiro:
+      name: "Jardim Terreiro"
+      description: "Iluminação do jardim no terreiro"
+    light.terreiro_interruptor_lavanderia_z2m_l3_arandela_terreiro:
+      name: "Arandela Terreiro"
+      description: "Arandela do terreiro"
+
+    # --- Oficina ---
+    light.oficina_luz_sonoff:
+      name: "Luz Oficina"
+      description: "Iluminação geral da oficina"
+    light.bancada_oficina_bancada_oficina:
+      name: "Bancada Oficina"
+      description: "Luz da bancada"
+    fan.ventilador_oficina_ventilador:
+      name: "Ventilador Oficina"
+      description: "Ventilador da oficina"
+      display_categories: FAN
+    switch.oficina_regua_z2m:
+      name: "Régua Oficina"
+      description: "Régua de tomadas da bancada na oficina"
+    #binary_sensor.oficina_porta_z2m_contact:
+    #  name: "Porta Oficina"
+    #  description: "Porta da oficina"
+    #binary_sensor.oficina_janela_z2m_contact:
+    #  name: "Janela Oficina"
+    #  description: "Janela da oficina"
+
+    # --- Garagem ---
+    light.garagem_interruptor_cozinha_z2m_l2_garagen:
+      name: "Garagem"
+      description: "Luz da Garamge"
+    light.garagem_interruptor_cozinha_z2m_l3_jardim_garagem:
+      name: "Luz do Jardim da Garagem"
+      description: "Válvula de gás"
+    light.garagem_interruptor_escritorio_z2m_l2_varanda:
+      name: "Varanda"
+      description: "Luz da Varnda"      
+    light.garagem_interruptor_sala_de_tv_z2m_l1_alpendre:
+      name: "Alpendre"
+      description: "Luz do Alpendre"      
+
+    # --- Casa ---
+    valve.casa_valvula_gas_z2m:
+      name: "Válvula de gás"
+      description: "Válvula de gás"
+    valve.casa_valvula_agua_z2m:
+      name: "Válvula de água"
+      description: "Válvula de água"
+    switch.caixa_d_agua_agua_pressurizada:
+      name: "Pressurizador"
+      description: "Pressurizador de água"
+
+    # --- Scripts (nome curto para comando de voz) ---
+    script.contar_garrafa_de_agua_com_gas_e_anunciar:
+      name: "Contar garrafa de água"
+      description: "Anuncia quantidade de garrafas com gás"
+    script.armar_alarme:
+      name: "Armar alarme"
+      description: "Arma o sistema de alarme"
+    script.saida_casa_verificar_e_armar_alarme:
+      name: "Sair de casa"
+      description: "Verifica portas e arma o alarme"
+
+intents:
+  ComandoLivreIntent:
+    speech:
+      type: plain
+      text: "Conexão perfeita! O Home Assistant recebeu o seu comando."

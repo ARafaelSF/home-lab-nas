@@ -1,0 +1,152 @@
+{
+  "dashboard": {
+    "uid": "geladeira-midea-comparativo",
+    "title": "Geladeira Midea — Sonoff vs Z2M Consumo",
+    "tags": ["energia", "geladeira", "comparativo"],
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 4,
+    "refresh": "30s",
+    "time": {"from": "now-7d", "to": "now"},
+    "panels": [
+      {
+        "id": 1,
+        "type": "timeseries",
+        "title": "Potência — Sonoff vs Z2M Consumo (1x)",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "datasource": {"type": "influxdb", "uid": "energy-raw-30d"},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "watt",
+            "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 10}
+          },
+          "overrides": []
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "rawQuery": true,
+            "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_potencia_sonoff') AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "alias": "Sonoff — Potência"
+          },
+          {
+            "refId": "B",
+            "rawQuery": true,
+            "query": "SELECT mean(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_consumo_potencia_1x') AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "alias": "Z2M Consumo — Potência 1x"
+          }
+        ],
+        "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+      },
+      {
+        "id": 2,
+        "type": "timeseries",
+        "title": "Energia diária (kWh/dia) — Sonoff vs Z2M",
+        "gridPos": {"h": 9, "w": 24, "x": 0, "y": 8},
+        "datasource": {"type": "influxdb", "uid": "energy-raw-30d"},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "kwatth",
+            "custom": {"drawStyle": "bars", "lineWidth": 1, "fillOpacity": 80, "stacking": {"mode": "none"}}
+          },
+          "overrides": []
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "rawQuery": true,
+            "query": "SELECT max(\"value\") FROM \"raw_30d\".\"sensor__energy\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_energia_sonoff') AND $timeFilter GROUP BY time(1d) fill(null)",
+            "alias": "Sonoff — kWh/dia"
+          },
+          {
+            "refId": "B",
+            "rawQuery": true,
+            "query": "SELECT non_negative_difference(last(\"value\")) FROM \"raw_30d\".\"sensor__energy\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_consumo_energia_1x') AND $timeFilter GROUP BY time(1d) fill(null)",
+            "alias": "Z2M Consumo — kWh/dia"
+          }
+        ],
+        "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+      },
+      {
+        "id": 5,
+        "type": "timeseries",
+        "title": "kWh acumulados no dia (curva intradiária)",
+        "gridPos": {"h": 7, "w": 24, "x": 0, "y": 17},
+        "datasource": {"type": "influxdb", "uid": "energy-raw-30d"},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "kwatth",
+            "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 15}
+          },
+          "overrides": []
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "rawQuery": true,
+            "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__energy\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_energia_sonoff') AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "alias": "Sonoff — subindo no dia"
+          },
+          {
+            "refId": "B",
+            "rawQuery": true,
+            "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__energy\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_consumo_hoje') AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "alias": "Z2M — subindo no dia"
+          }
+        ],
+        "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Potência agora",
+        "gridPos": {"h": 4, "w": 8, "x": 0, "y": 24},
+        "datasource": {"type": "influxdb", "uid": "energy-raw-30d"},
+        "fieldConfig": {"defaults": {"unit": "watt"}, "overrides": []},
+        "targets": [
+          {
+            "refId": "A",
+            "rawQuery": true,
+            "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__power\" WHERE (\"entity_id\" = 'cozinha_geladeira_midea_potencia_sonoff' OR \"entity_id\" = 'cozinha_geladeira_midea_consumo_potencia_1x') AND time >= now() - 15m GROUP BY \"entity_id\"",
+            "alias": "$tag_entity_id"
+          }
+        ],
+        "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "horizontal", "textMode": "value_and_name"}
+      },
+      {
+        "id": 6,
+        "type": "stat",
+        "title": "kWh hoje",
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 24},
+        "datasource": {"type": "influxdb", "uid": "energy-raw-30d"},
+        "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 2}, "overrides": []},
+        "targets": [
+          {
+            "refId": "A",
+            "rawQuery": true,
+            "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__energy\" WHERE \"entity_id\" = 'cozinha_geladeira_midea_energia_sonoff' AND time >= now() - 1d",
+            "alias": "Sonoff hoje"
+          },
+          {
+            "refId": "B",
+            "rawQuery": true,
+            "query": "SELECT last(\"value\") FROM \"raw_30d\".\"sensor__energy\" WHERE \"entity_id\" = 'cozinha_geladeira_midea_consumo_hoje' AND time >= now() - 1d",
+            "alias": "Z2M hoje"
+          }
+        ],
+        "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "horizontal", "textMode": "value_and_name"}
+      },
+      {
+        "id": 4,
+        "type": "text",
+        "title": "Notas",
+        "gridPos": {"h": 4, "w": 8, "x": 16, "y": 24},
+        "options": {
+          "mode": "markdown",
+          "content": "**Comparar só kWh/dia** (painel 2). Sonoff = contador diário nativo; Z2M = incremento diário do acumulado 1x. Não comparar acumulado total com diário. Utility meters `*_hoje` para Painel Energia."
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

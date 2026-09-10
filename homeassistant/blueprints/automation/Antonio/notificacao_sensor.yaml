@@ -1,0 +1,628 @@
+blueprint:
+  name: "🔔 Notificação de Sensor (App, Alexa e Telegram)"
+  domain: automation
+  author: "Antonio Rafael"
+  description: >
+    Monitora um sensor (binary_sensor/switch/input_boolean/cover) e envia notificações 
+    quando ligar (ON) e/ou desligar (OFF) através de múltiplos canais: App, Alexa e Telegram.
+
+    Suporta lembretes periódicos enquanto o sensor permanecer ligado.
+
+    Scripts necessários:
+    • script.enviar_notificacao_app: envia para dispositivos (lista de nomes), com título e mensagem.
+    • script.enviar_notificacao_alexa: anuncia em dispositivos (lista de nomes), com tipo (tts/announce), volume opcional e mensagem.
+    • script.enviar_notificacao_telegram: envia para destinatários (lista) com mensagem, título opcional e câmeras.
+
+  input:
+    event_settings:
+      name: "📌 Identificação do evento"
+      collapsed: false
+      input:
+        notify_on_enabled:
+          name: "Notificar quando LIGAR (ON)?"
+          default: true
+          selector:
+            boolean: {}
+
+        notify_off_enabled:
+          name: "Notificar quando DESLIGAR (OFF)?"
+          default: false
+          selector:
+            boolean: {}
+
+    sensor_settings:
+      name: "🎯 Sensor monitorado"
+      collapsed: false
+      input:
+        monitored_sensor:
+          name: "Entidade"
+          selector:
+            entity:
+              domain:
+                - binary_sensor
+                - switch
+                - input_boolean
+                - cover
+
+        on_delay_seconds:
+          name: "⏳ Atraso antes de notificar ON (segundos)"
+          description: "Após detectar ON, aguarda este tempo e confirma se ainda está ON antes de enviar."
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 600
+              step: 1
+              mode: box
+
+    reminder_settings:
+      name: "🔁 Lembretes enquanto estiver ON"
+      collapsed: true
+      input:
+        tick_seconds:
+          name: "Resolução do loop (segundos)"
+          description: "Com que frequência o sistema verifica se já chegou a hora de enviar um lembrete. Não é o intervalo do lembrete — apenas a frequência de verificação. Recomenda-se 60 segundos."
+          default: 60
+          selector:
+            number:
+              min: 10
+              max: 300
+              step: 10
+              mode: box
+
+        add_elapsed_to_reminder:
+          name: "Se ativado, o lembrete incluirá automaticamente por quanto tempo o sensor está ligado (ex.: “há 12 minutos”)."
+          default: true
+          selector:
+            boolean: {}
+
+    notify_alexa_settings:
+      name: "🎙️ Alexa"
+      collapsed: true
+      input:
+        alexa_devices:
+          name: "Dispositivos Alexa (selector nativo)"
+          description: "Escolha os Echos via integração alexa_devices; o blueprint envia o NOME do device para seu script."
+          default: []
+          selector:
+            device:
+              multiple: true
+              integration: alexa_devices
+
+        alexa_type:
+          name: "Tipo"
+          description: "tts (fala) ou announce (anúncio)."
+          default: "tts"
+          selector:
+            select:
+              options:
+                - label: "tts"
+                  value: "tts"
+                - label: "announce"
+                  value: "announce"
+              multiple: false
+              sort: false
+              custom_value: false
+
+        alexa_set_volume:
+          name: "Definir volume?"
+          default: false
+          selector:
+            boolean: {}
+
+        alexa_volume:
+          name: "Volume (0.0–1.0)"
+          default: 0.6
+          selector:
+            number:
+              min: 0
+              max: 1
+              step: 0.05
+              mode: slider
+
+        quiet_start:
+          name: "🌙 Início do silêncio (Alexa)"
+          default: "22:00:00"
+          selector:
+            time: {}
+
+        quiet_end:
+          name: "☀️ Fim do silêncio (Alexa)"
+          default: "07:00:00"
+          selector:
+            time: {}
+
+        alexa_on_message:
+          name: "Mensagem ON (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}
+        alexa_off_message:
+          name: "Mensagem OFF (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}
+        alexa_reminder_message:
+          name: "Mensagem lembrete (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}
+
+        alexa_reminder_interval:
+          name: "Intervalo lembretes (min)"
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 1440
+              step: 1
+              mode: box
+
+    notify_app_settings:
+      name: "📱 Celular (App)"
+      collapsed: true
+      input:
+        app_devices:
+          name: "Dispositivos (selector nativo)"
+          description: "Escolha celulares via integração mobile_app; o blueprint envia o NOME do device para seu script."
+          default: []
+          selector:
+            device:
+              multiple: true
+              integration: mobile_app
+
+        mobile_on_title:
+          name: "Título ON (opcional)"
+          default: ""
+          selector:
+            text: {}
+        mobile_on_message:
+          name: "Mensagem ON (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}            
+
+        mobile_off_title:
+          name: "Título OFF (opcional)"
+          default: ""
+          selector:
+            text: {}
+        mobile_off_message:
+          name: "Mensagem OFF (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}            
+
+        mobile_reminder_title:
+          name: "Título lembrete (opcional)"
+          default: ""
+          selector:
+            text: {}
+        mobile_reminder_message:
+          name: "Mensagem lembrete (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}
+        mobile_reminder_interval:
+          name: "Intervalo lembretes (min)"
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 1440
+              step: 1
+              mode: box
+
+    notify_telegram_settings:
+      name: "💬 Telegram"
+      collapsed: true
+      input:
+        telegram_targets:
+          name: "Destinatários (por nome)"
+          description: >
+            Nomes esperados pelo seu script (ex.: antonio, renata).
+            Com 'valor personalizado' habilitado, você pode digitar nomes novos sem editar o blueprint.
+          default: []
+          selector:
+            select:
+              multiple: true
+              sort: false
+              custom_value: true
+              options:
+                - "Antonio"
+                - "Renata"
+
+        telegram_on_title:
+          name: "Título ON (opcional)"
+          default: ""
+          selector:
+            text: {}
+        telegram_on_message:
+          name: "Mensagem ON (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}            
+
+        telegram_off_title:
+          name: "Título OFF (opcional)"
+          default: ""
+          selector:
+            text: {}
+        telegram_off_message:
+          name: "Mensagem OFF (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}            
+
+        telegram_reminder_title:
+          name: "Título lembrete (opcional)"
+          default: ""
+          selector:
+            text: {}
+        telegram_reminder_message:
+          name: "Mensagem lembrete (vazio = não enviar mensagem)"
+          default: ""
+          selector:
+            text: {}
+        telegram_reminder_interval:
+          name: "Intervalo lembretes (min)"
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 1440
+              step: 1
+              mode: box
+
+        telegram_cameras:
+          name: "Câmeras (opcional)"
+          description: "Uma ou mais entidades camera.* para enviar imagem via seu script."
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain: camera
+
+trigger:
+  - platform: state
+    entity_id: !input monitored_sensor
+    to: "on"
+    id: ligado
+  - platform: state
+    entity_id: !input monitored_sensor
+    to: "off"
+    id: desligado
+
+variables:
+  # inputs
+  notify_on_enabled_v: !input notify_on_enabled
+  notify_off_enabled_v: !input notify_off_enabled
+  on_delay_s: !input on_delay_seconds
+
+  alexa_devices_v: !input alexa_devices
+  alexa_type_v: !input alexa_type
+  alexa_set_vol: !input alexa_set_volume
+  alexa_vol: !input alexa_volume
+  quiet_start_v: !input quiet_start
+  quiet_end_v: !input quiet_end
+  alexa_on_msg: !input alexa_on_message
+  alexa_off_msg: !input alexa_off_message
+  alexa_interval: !input alexa_reminder_interval
+  alexa_rem_msg: !input alexa_reminder_message
+
+  app_devices_v: !input app_devices
+  app_title_on_v: !input mobile_on_title
+  app_title_off_v: !input mobile_off_title
+  app_title_rem_v: !input mobile_reminder_title
+  app_on_msg: !input mobile_on_message
+  app_off_msg: !input mobile_off_message
+  app_interval: !input mobile_reminder_interval
+  app_rem_msg: !input mobile_reminder_message
+
+  telegram_targets_v: !input telegram_targets
+  tel_title_on_v: !input telegram_on_title
+  tel_title_off_v: !input telegram_off_title
+  tel_title_rem_v: !input telegram_reminder_title
+  tel_on_msg: !input telegram_on_message
+  tel_off_msg: !input telegram_off_message
+  tel_interval: !input telegram_reminder_interval
+  tel_rem_msg: !input telegram_reminder_message
+  telegram_cameras_v: !input telegram_cameras
+
+  tick_s: !input tick_seconds
+  add_elapsed: !input add_elapsed_to_reminder
+
+  # ========================= Computed helpers ================
+
+  # período silêncio Alexa
+  now_t: "{{ now().strftime('%H:%M:%S') }}"
+  is_alexa_quiet_time: >-
+    {% set s = quiet_start_v %}
+    {% set e = quiet_end_v %}
+    {% set t = now().strftime('%H:%M:%S') %}
+    {% if s <= e %}
+      {{ s <= t and t < e }}
+    {% else %}
+      {{ t >= s or t < e }}
+    {% endif %}
+
+  # device_id → nomes
+  alexa_targets_list: >-
+    {% set r = namespace(list=[]) %}
+    {% for d in (alexa_devices_v or []) %}
+      {% set nm = device_attr(d,'name') %}
+      {% if nm %}{% set r.list = r.list + [nm] %}{% endif %}
+    {% endfor %}
+    {{ r.list }}
+
+  app_targets_list: >-
+    {% set r = namespace(list=[]) %}
+    {% for d in (app_devices_v or []) %}
+      {% set nm = device_attr(d,'name') %}
+      {% if nm %}{% set r.list = r.list + [nm] %}{% endif %}
+    {% endfor %}
+    {{ r.list }}
+
+  telegram_targets_list: >-
+    {% set raw = telegram_targets_v or [] %}
+    {% if raw is string %}{{ [raw|lower] }}
+    {% else %}{{ raw|map('lower')|list }}
+    {% endif %}
+
+  telegram_cameras_list: >-
+    {% set c = telegram_cameras_v or [] %}
+    {% if c is string %}{{ [c] }}
+    {% else %}{{ c }}
+    {% endif %}
+
+action:
+  - choose:
+
+      # ======================== LIGOU =========================
+      - conditions:
+          - condition: trigger
+            id: ligado
+        sequence:
+
+          # 1) Delay opcional e revalidação
+          - if:
+              - condition: template
+                value_template: "{{ (on_delay_s|int) > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ on_delay_s|int }}"
+              - condition: state
+                entity_id: !input monitored_sensor
+                state: "on"
+
+          # 2) Dispara todas as notificações ON em paralelo
+          - parallel:
+              # =============== Alexa ON =====================
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ notify_on_enabled_v
+                         and not is_alexa_quiet_time
+                         and (alexa_on_msg|trim) != ''
+                         and (alexa_targets_list|count) > 0 }}
+                then:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ alexa_set_vol }}"
+                        sequence:
+                          - service: script.enviar_notificacao_alexa
+                            data:
+                              dispositivos: "{{ alexa_targets_list }}"
+                              mensagem: "{{ alexa_on_msg }}"
+                              tipo: "{{ alexa_type_v }}"
+                              volume: "{{ alexa_vol }}"
+                    default:
+                      - service: script.enviar_notificacao_alexa
+                        data:
+                          dispositivos: "{{ alexa_targets_list }}"
+                          mensagem: "{{ alexa_on_msg }}"
+                          tipo: "{{ alexa_type_v }}"
+
+              # =============== App ON ========================
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ notify_on_enabled_v
+                         and (app_on_msg|trim) != ''
+                         and (app_targets_list|count) > 0 }}
+                then:
+                  - service: script.enviar_notificacao_app
+                    data:
+                      destinatarios: "{{ app_targets_list }}"
+                      titulo: "{{ app_title_on_v }}"
+                      mensagem: "{{ app_on_msg }}"
+
+              # =============== Telegram ON ===================
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ notify_on_enabled_v
+                         and (tel_on_msg|trim) != ''
+                         and (telegram_targets_list|count) > 0 }}
+                then:
+                  - service: script.enviar_notificacao_telegram
+                    data:
+                      destinatarios: "{{ telegram_targets_list }}"
+                      cameras: "{{ telegram_cameras_list }}"
+                      titulo: "{{ tel_title_on_v }}"
+                      mensagem: "{{ tel_on_msg }}"
+
+          # =============== Lembretes LOOP ================
+          - variables:
+              started_ts: "{{ now().timestamp()|int }}"
+
+          - repeat:
+              while:
+                - condition: state
+                  entity_id: !input monitored_sensor
+                  state: "on"
+              sequence:
+
+                # espera tick OU OFF
+                - wait_for_trigger:
+                    - platform: state
+                      entity_id: !input monitored_sensor
+                      to: "off"
+                  timeout:
+                    seconds: "{{ tick_s|int }}"
+                  continue_on_timeout: true
+
+                # se desligou → encerra
+                - if:
+                    - condition: template
+                      value_template: "{{ wait.trigger is not none }}"
+                  then:
+                    - stop: "Sensor desligado – cancelando lembretes"
+
+                # calcula tempo ligado
+                - variables:
+                    elapsed_total: "{{ (now().timestamp()|int) - (started_ts|int) }}"
+                    elapsed_min: "{{ (elapsed_total/60)|int }}"
+
+                    elapsed_text: >-
+                      {% set total = elapsed_total|int %}
+                      {% set h = total//3600 %}
+                      {% set m = (total%3600)//60 %}
+                      {% if h>0 %}
+                        {{ h }} hora{% if h>1 %}s{% endif %} e {{ m }} minuto{% if m>1 %}s{% endif %}
+                      {% else %}
+                        {{ m }} minuto{% if m>1 %}s{% endif %}
+                      {% endif %}
+
+                    suffix: >-
+                      {% if add_elapsed %}
+                        {{ " (há " ~ elapsed_text ~ ")" }}
+                      {% else %}{{ "" }}{% endif %}
+
+                # 3) Dispara todas as notificações de LEMBRETE em paralelo
+                - parallel:
+                    # ========== Alexa REMINDER ==========
+                    - if:
+                        - condition: template
+                          value_template: >-
+                            {{ (alexa_rem_msg|trim) != ''
+                               and elapsed_min > 0
+                               and (elapsed_min % (alexa_interval|int) == 0)
+                               and not is_alexa_quiet_time
+                               and (alexa_targets_list|count) > 0 }}
+                      then:
+                        - choose:
+                            - conditions:
+                                - condition: template
+                                  value_template: "{{ alexa_set_vol }}"
+                              sequence:
+                                - service: script.enviar_notificacao_alexa
+                                  data:
+                                    dispositivos: "{{ alexa_targets_list }}"
+                                    mensagem: "{{ alexa_rem_msg ~ suffix }}"
+                                    tipo: "{{ alexa_type_v }}"
+                                    volume: "{{ alexa_vol }}"
+                          default:
+                            - service: script.enviar_notificacao_alexa
+                              data:
+                                dispositivos: "{{ alexa_targets_list }}"
+                                mensagem: "{{ alexa_rem_msg ~ suffix }}"
+                                tipo: "{{ alexa_type_v }}"
+
+                    # ========== App REMINDER =============
+                    - if:
+                        - condition: template
+                          value_template: >-
+                            {{ (app_rem_msg|trim) != ''
+                               and elapsed_min > 0
+                               and (elapsed_min % (app_interval|int) == 0)
+                               and (app_targets_list|count) > 0 }}
+                      then:
+                        - service: script.enviar_notificacao_app
+                          data:
+                            destinatarios: "{{ app_targets_list }}"
+                            titulo: "{{ app_title_rem_v }}"
+                            mensagem: "{{ app_rem_msg ~ suffix }}"
+
+                    # ========== Telegram REMINDER ========
+                    - if:
+                        - condition: template
+                          value_template: >-
+                            {{ (tel_rem_msg|trim) != ''
+                               and elapsed_min > 0
+                               and (elapsed_min % (tel_interval|int) == 0)
+                               and (telegram_targets_list|count) > 0 }}
+                      then:
+                        - service: script.enviar_notificacao_telegram
+                          data:
+                            destinatarios: "{{ telegram_targets_list }}"
+                            cameras: "{{ telegram_cameras_list }}"
+                            titulo: "{{ tel_title_rem_v }}"
+                            mensagem: "{{ tel_rem_msg ~ suffix }}"
+
+      # ======================== DESLIGOU =======================
+      - conditions:
+          - condition: trigger
+            id: desligado
+        sequence:
+
+          # 4) Dispara todas as notificações OFF em paralelo
+          - parallel:
+              # Alexa OFF
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ notify_off_enabled_v
+                         and not is_alexa_quiet_time
+                         and (alexa_off_msg|trim) != ''
+                         and (alexa_targets_list|count) > 0 }}
+                then:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ alexa_set_vol }}"
+                        sequence:
+                          - service: script.enviar_notificacao_alexa
+                            data:
+                              dispositivos: "{{ alexa_targets_list }}"
+                              mensagem: "{{ alexa_off_msg }}"
+                              tipo: "{{ alexa_type_v }}"
+                              volume: "{{ alexa_vol }}"
+                    default:
+                      - service: script.enviar_notificacao_alexa
+                        data:
+                          dispositivos: "{{ alexa_targets_list }}"
+                          mensagem: "{{ alexa_off_msg }}"
+                          tipo: "{{ alexa_type_v }}"
+
+              # App OFF
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ notify_off_enabled_v
+                         and (app_off_msg|trim) != ''
+                         and (app_targets_list|count) > 0 }}
+                then:
+                  - service: script.enviar_notificacao_app
+                    data:
+                      destinatarios: "{{ app_targets_list }}"
+                      titulo: "{{ app_title_off_v }}"
+                      mensagem: "{{ app_off_msg }}"
+
+              # Telegram OFF
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ notify_off_enabled_v
+                         and (tel_off_msg|trim) != ''
+                         and (telegram_targets_list|count) > 0 }}
+                then:
+                  - service: script.enviar_notificacao_telegram
+                    data:
+                      destinatarios: "{{ telegram_targets_list }}"
+                      cameras: "{{ telegram_cameras_list }}"
+                      titulo: "{{ tel_title_off_v }}"
+                      mensagem: "{{ tel_off_msg }}"
+
+mode: parallel

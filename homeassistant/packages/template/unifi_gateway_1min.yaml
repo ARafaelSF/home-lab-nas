@@ -1,0 +1,33 @@
+# Amostragem 1/min dos diagnósticos do gateway UniFi.
+# Os sensores originais actualizam ~1 Hz; ficam visíveis ao vivo mas fora do recorder.
+triggers:
+  - trigger: time_pattern
+    minutes: "*"
+sensor:
+  - name: "Escritório Gateway CPU (1 min)"
+    unique_id: escritorio_gateway_unifi_cpu_1min
+    unit_of_measurement: "%"
+    state_class: measurement
+    icon: mdi:cpu-64-bit
+    state: >
+      {% set v = states('sensor.escritorio_gateway_unifi_cpu') %}
+      {{ v | float | round(1) if is_number(v) else none }}
+
+  - name: "Escritório Gateway memória (1 min)"
+    unique_id: escritorio_gateway_unifi_memoria_1min
+    unit_of_measurement: "%"
+    state_class: measurement
+    icon: mdi:memory
+    state: >
+      {% set v = states('sensor.escritorio_gateway_unifi_memoria') %}
+      {{ v | float | round(1) if is_number(v) else none }}
+
+  - name: "Escritório Gateway temperatura (1 min)"
+    unique_id: escritorio_gateway_unifi_temperatura_1min
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    icon: mdi:thermometer
+    state: >
+      {% set v = states('sensor.escritorio_gateway_unifi_temperatura') %}
+      {{ v | float | round(1) if is_number(v) else none }}

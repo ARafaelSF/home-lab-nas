@@ -1,0 +1,1021 @@
+blueprint:
+  name: "🚶💡🤖 Controle Inteligente de Luz por Presença + Área + Retorno"
+  description: >
+    Automação inteligente baseada em presença/movimento.
+
+    Quando detectar presença, acende as entidades principais configuradas para o período
+    diurno ou noturno. Quando o sensor permanecer OFF pelo tempo configurado (dia ou noite),
+    lê quais luzes da área ainda estão acesas, desliga a área e abre uma janela de retorno
+    inteligente.
+
+    Isso cobre o fluxo normal e também casos em que não houve transição ON→OFF “vista”
+    pela automação (reinício do HA, restart do Zigbee2MQTT, sensor voltando de unavailable,
+    etc.): se o sensor está OFF há tempo suficiente e ainda há luzes/extras ativos, desliga
+    com memória/retorno.
+
+    Também cobre luz/extra ligado manualmente com o sensor já em OFF: inicia o mesmo
+    timer de ausência e desliga após o tempo configurado (dia/noite).
+
+    Se a presença voltar dentro da janela de retorno, religa somente o que estava aceso
+    no momento do desligamento. Se a janela expirar, a memória é descartada.
+
+    Recursos: • Boolean de não perturbe • Entidades principais dia/noite • Tempo de
+    desligamento separado dia/noite • Período noturno opcional • Brilho/cor opcionais
+    • Luminosidade opcional • Memória de área + extras • Safeguard sem waits longos
+    (reinício HA / Z2M / reload / ligar manual): conta o tempo normal e atua;
+    retorno via cena persistente (automação não fica em execução)
+  domain: automation
+  author: Antonio Rafael
+  homeassistant:
+    min_version: "2024.10.0"
+  input:
+    activation_settings:
+      name: "🚫 Desativação / Não Perturbe"
+      collapsed: false
+      input:
+        disable_automation_boolean:
+          name: Boolean de desativação / não perturbe
+          description: >
+            Input boolean que desativa a automação. Quando estiver ON,
+            a automação não acende, não apaga e interrompe esperas em andamento. Quando
+            estiver OFF, a automação funciona.
+          selector:
+            entity:
+              domain:
+                - input_boolean
+    presence_settings:
+      name: "🚶 Presença / Movimento"
+      collapsed: false
+      input:
+        motion_sensor:
+          name: Sensor de presença/movimento
+          description: Sensor que indica presença, ocupação ou movimento no ambiente.
+          selector:
+            entity:
+              domain:
+                - binary_sensor
+              device_class:
+                - motion
+                - occupancy
+    day_settings:
+      name: "☀️ Luz Principal — Dia"
+      collapsed: false
+      input:
+        target_entities_day:
+          name: Entidades principais diurnas
+          description: >
+            Entidades que serão ligadas quando houver presença fora do
+            período noturno. Pode deixar vazio.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - light
+                - switch
+        enable_day_light_options:
+          name: Aplicar brilho/cor nas luzes diurnas?
+          description: Aplica brilho e cor somente nas entidades do domínio light.
+          default: false
+          selector:
+            boolean: {}
+        day_brightness_pct:
+          name: Brilho diurno (%)
+          default: 100
+          selector:
+            number:
+              min: 1.0
+              max: 100.0
+              step: 1.0
+              unit_of_measurement: "%"
+              mode: slider
+        day_rgb_color:
+          name: Cor diurna
+          default:
+            - 255
+            - 255
+            - 255
+          selector:
+            color_rgb: {}
+    night_settings:
+      name: "🌙 Luz Principal — Noite"
+      collapsed: true
+      input:
+        enable_night_mode:
+          name: Habilitar período noturno?
+          default: false
+          selector:
+            boolean: {}
+        night_start_time:
+          name: Início do período noturno
+          default: "22:00:00"
+          selector:
+            time: {}
+        night_end_time:
+          name: Fim do período noturno
+          default: "06:00:00"
+          selector:
+            time: {}
+        target_entities_night:
+          name: Entidades principais noturnas
+          description: >
+            Entidades que serão ligadas durante o período noturno. Pode
+            deixar vazio para não acender nenhuma luz principal à noite.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - light
+                - switch
+        enable_night_light_options:
+          name: Aplicar brilho/cor nas luzes noturnas?
+          description: Aplica brilho e cor somente nas entidades do domínio light.
+          default: false
+          selector:
+            boolean: {}
+        night_brightness_pct:
+          name: Brilho noturno (%)
+          default: 30
+          selector:
+            number:
+              min: 1.0
+              max: 100.0
+              step: 1.0
+              unit_of_measurement: "%"
+              mode: slider
+        night_rgb_color:
+          name: Cor noturna
+          default:
+            - 255
+            - 0
+            - 0
+          selector:
+            color_rgb: {}
+    illuminance_settings:
+      name: "💡 Luminosidade"
+      collapsed: true
+      input:
+        enable_illuminance_check:
+          name: Usar sensor de luminosidade para acender?
+          description: >
+            Se habilitado, a luz principal só será acionada quando a luminosidade
+            estiver abaixo do limite configurado.
+          default: false
+          selector:
+            boolean: {}
+        illuminance_sensor:
+          name: Sensor de luminosidade
+          description: Opcional. Usado somente se a verificação estiver habilitada.
+          default: ""
+          selector:
+            entity:
+              domain:
+                - sensor
+              device_class:
+                - illuminance
+        illuminance_below:
+          name: Acender somente abaixo de
+          default: 30
+          selector:
+            number:
+              min: 0.0
+              max: 1000.0
+              step: 1.0
+              unit_of_measurement: lx
+              mode: slider
+    turn_on_protection_settings:
+      name: "🛡️ Proteção ao Ligar"
+      collapsed: true
+      input:
+        enable_turn_on_protection:
+          name: Ativar proteção ao ligar?
+          description: >
+            Evita o caso comum de entrar no ambiente e apertar o interruptor
+            instintivamente logo após a automação acender a luz. Durante a janela
+            configurada, a automação reaplica as entidades principais enquanto ainda
+            houver presença.
+          default: false
+          selector:
+            boolean: {}
+        turn_on_protection_duration:
+          name: Duração da proteção ao ligar (segundos)
+          description: >
+            Por quanto tempo, após detectar presença, a automação deve
+            manter as entidades principais ligadas.
+          default: 5
+          selector:
+            number:
+              min: 1.0
+              max: 60.0
+              step: 1.0
+              unit_of_measurement: s
+              mode: slider
+    area_memory_settings:
+      name: "🏠 Área, Desligamento e Retorno"
+      collapsed: false
+      input:
+        control_area:
+          name: Área controlada
+          description: >
+            Área cujas luzes serão lidas para memória e desligadas após
+            o tempo de ausência.
+          selector:
+            area: {}
+        extra_memory_entities:
+          name: Entidades extras para memória
+          description: >
+            Além das luzes da área, selecione entidades que também devem
+            seguir a regra de memória: se estiverem ativas quando o ambiente ficar
+            sem presença, serão desligadas e restauradas se houver retorno dentro
+            da janela configurada.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - switch
+                - fan
+                - climate
+                - media_player
+        off_delay:
+          name: Tempo para desligar após ausência — Dia (segundos)
+          description: >
+            Tempo contínuo com o sensor em OFF fora do período noturno antes de
+            desligar a área. Também usado no safeguard após reinício/Z2M/reload.
+            Em geral use um valor maior que o noturno.
+          default: 180
+          selector:
+            number:
+              min: 0.0
+              max: 7200.0
+              step: 1.0
+              unit_of_measurement: s
+              mode: slider
+        off_delay_night:
+          name: Tempo para desligar após ausência — Noite (segundos)
+          description: >
+            Tempo contínuo com o sensor em OFF no período noturno antes de desligar.
+            Se o período noturno estiver desabilitado, este valor não é usado.
+            Em geral use um valor menor que o diurno.
+          default: 60
+          selector:
+            number:
+              min: 0.0
+              max: 7200.0
+              step: 1.0
+              unit_of_measurement: s
+              mode: slider
+        return_delay:
+          name: Tempo de retorno inteligente (segundos)
+          description: >
+            Janela após o desligamento da área. Se houver presença novamente
+            dentro deste tempo, restaura as luzes que estavam acesas antes de desligar.
+          default: 300
+          selector:
+            number:
+              min: 0.0
+              max: 7200.0
+              step: 1.0
+              unit_of_measurement: s
+              mode: slider
+    debug_settings:
+      name: "📝 Logs"
+      collapsed: true
+      input:
+        enable_logs:
+          name: Habilitar logs no logbook?
+          default: false
+          selector:
+            boolean: {}
+
+mode: single
+max_exceeded: silent
+
+trigger_variables:
+  motion_sensor: !input motion_sensor
+  control_area: !input control_area
+  extra_memory_entities: !input extra_memory_entities
+  off_delay: !input off_delay
+  off_delay_night: !input off_delay_night
+  enable_night_mode: !input enable_night_mode
+  night_start_time: !input night_start_time
+  night_end_time: !input night_end_time
+  return_delay: !input return_delay
+
+triggers:
+  - trigger: state
+    entity_id: !input motion_sensor
+    to: "on"
+    id: motion_on
+
+  # Ausência sustentada — cobre fluxo normal, Z2M, unavailable→off, etc.
+  - trigger: state
+    entity_id: !input motion_sensor
+    to: "off"
+    for:
+      seconds: !input off_delay
+    id: motion_off_day
+
+  - trigger: state
+    entity_id: !input motion_sensor
+    to: "off"
+    for:
+      seconds: !input off_delay_night
+    id: motion_off_night
+
+  # Sensor OFF + luzes/extras ON pelo tempo configurado (dia/noite).
+  # Cobre reinício HA, Z2M e ligar manual. Não mantém a automação a correr.
+  - trigger: template
+    id: absent_with_lights
+    value_template: >
+      {% if not is_state(motion_sensor, 'off') %}
+        false
+      {% else %}
+        {% if enable_night_mode %}
+          {% set current = now().strftime('%H:%M:%S') %}
+          {% if night_start_time <= night_end_time %}
+            {% set night = night_start_time <= current < night_end_time %}
+          {% else %}
+            {% set night = current >= night_start_time or current < night_end_time %}
+          {% endif %}
+          {% set delay = (off_delay_night if night else off_delay) | int %}
+        {% else %}
+          {% set delay = off_delay | int %}
+        {% endif %}
+        {% set lights = area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list %}
+        {% set ns = namespace(extra_on=false, t_extra=0) %}
+        {% for entity_id in extra_memory_entities %}
+          {% set state_obj = states[entity_id] %}
+          {% if state_obj is not none and state_obj.state not in ['off', 'unavailable', 'unknown'] %}
+            {% set ns.extra_on = true %}
+            {% set t = as_timestamp(state_obj.last_changed) %}
+            {% if t > ns.t_extra %}{% set ns.t_extra = t %}{% endif %}
+          {% endif %}
+        {% endfor %}
+        {% if lights | count == 0 and not ns.extra_on %}
+          false
+        {% else %}
+          {% set t_sensor = as_timestamp(states[motion_sensor].last_changed) %}
+          {% set ns2 = namespace(t=t_sensor) %}
+          {% for entity_id in lights %}
+            {% set t = as_timestamp(states[entity_id].last_changed) %}
+            {% if t > ns2.t %}{% set ns2.t = t %}{% endif %}
+          {% endfor %}
+          {% if ns.t_extra > ns2.t %}{% set ns2.t = ns.t_extra %}{% endif %}
+          {{ (as_timestamp(now()) - ns2.t) >= delay }}
+        {% endif %}
+      {% endif %}
+
+  # Expira memória de retorno sem wait bloqueante
+  - trigger: template
+    id: return_expired
+    value_template: >
+      {% set sid = 'scene.cip_' ~ control_area %}
+      {% if states[sid] is none %}
+        false
+      {% else %}
+        {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) >= (return_delay | int) }}
+      {% endif %}
+
+  # HA start / reload — limpa memória expirada; se tempo normal já passou, desliga
+  - trigger: homeassistant
+    event: start
+    id: ha_start
+
+  - trigger: event
+    event_type: automation_reloaded
+    id: automation_reloaded
+
+conditions:
+  - condition: state
+    entity_id: !input disable_automation_boolean
+    state: "off"
+
+variables:
+  disable_automation_boolean: !input disable_automation_boolean
+  motion_sensor: !input motion_sensor
+  control_area: !input control_area
+  extra_memory_entities: !input extra_memory_entities
+  target_entities_day: !input target_entities_day
+  target_entities_night: !input target_entities_night
+  enable_night_mode: !input enable_night_mode
+  night_start_time: !input night_start_time
+  night_end_time: !input night_end_time
+  enable_day_light_options: !input enable_day_light_options
+  day_brightness_pct: !input day_brightness_pct
+  day_rgb_color: !input day_rgb_color
+  enable_night_light_options: !input enable_night_light_options
+  night_brightness_pct: !input night_brightness_pct
+  night_rgb_color: !input night_rgb_color
+  enable_illuminance_check: !input enable_illuminance_check
+  illuminance_sensor: !input illuminance_sensor
+  illuminance_below: !input illuminance_below
+  enable_turn_on_protection: !input enable_turn_on_protection
+  turn_on_protection_duration: !input turn_on_protection_duration
+  off_delay: !input off_delay
+  off_delay_night: !input off_delay_night
+  return_delay: !input return_delay
+  enable_logs: !input enable_logs
+  is_recovery_trigger: "{{ trigger.id in ['ha_start', 'automation_reloaded', 'absent_with_lights'] }}"
+  is_off_trigger: "{{ trigger.id in ['motion_off_day', 'motion_off_night'] }}"
+  is_night: >
+    {% if not enable_night_mode %}
+      false
+    {% else %}
+      {% set current = now().strftime('%H:%M:%S') %}
+      {% if night_start_time <= night_end_time %}
+        {{ night_start_time <= current < night_end_time }}
+      {% else %}
+        {{ current >= night_start_time or current < night_end_time }}
+      {% endif %}
+    {% endif %}
+  selected_off_delay: >
+    {% if not enable_night_mode %}
+      {{ off_delay | int }}
+    {% elif is_night | bool %}
+      {{ off_delay_night | int }}
+    {% else %}
+      {{ off_delay | int }}
+    {% endif %}
+  selected_entities: >
+    {% if is_night | bool %}
+      {{ target_entities_night }}
+    {% else %}
+      {{ target_entities_day }}
+    {% endif %}
+  selected_lights: "{{ selected_entities | select('match', '^light\\.') | list }}"
+  apply_light_options: "{{ (is_night | bool and enable_night_light_options) or ((not is_night | bool) and enable_day_light_options) }}"
+  selected_brightness_pct: "{{ night_brightness_pct if is_night | bool else day_brightness_pct }}"
+  selected_rgb_color: "{{ night_rgb_color if is_night | bool else day_rgb_color }}"
+
+actions:
+  - choose:
+      # ========== PRESENÇA: acender ==========
+      - conditions:
+          - condition: trigger
+            id: motion_on
+        sequence:
+          - variables:
+              memory_scene_entity_id: "scene.cip_{{ control_area }}"
+              has_return_memory: "{{ states[memory_scene_entity_id] is not none }}"
+              return_memory_age: >
+                {% if states[memory_scene_entity_id] is none %}
+                  999999
+                {% else %}
+                  {{ (as_timestamp(now()) - as_timestamp(states[memory_scene_entity_id].last_changed)) | int }}
+                {% endif %}
+              return_memory_valid: "{{ has_return_memory | bool and (return_memory_age | int) < (return_delay | int) }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ return_memory_valid | bool }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Retorno inteligente ({{ memory_scene_entity_id }}, idade={{ return_memory_age }}s)."
+              - action: scene.turn_on
+                target:
+                  entity_id: "{{ memory_scene_entity_id }}"
+              - action: scene.delete
+                target:
+                  entity_id: "{{ memory_scene_entity_id }}"
+                continue_on_error: true
+              - stop: Retorno inteligente restaurado.
+
+          - if:
+              - condition: template
+                value_template: "{{ has_return_memory | bool }}"
+            then:
+              - action: scene.delete
+                target:
+                  entity_id: "{{ memory_scene_entity_id }}"
+                continue_on_error: true
+
+          - if:
+              - condition: template
+                value_template: "{{ enable_illuminance_check and illuminance_sensor != '' and states(illuminance_sensor) | float(999999) > illuminance_below | float(0) }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Presença ignorada: luminosidade acima do limite configurado."
+              - stop: Luminosidade acima do limite configurado.
+
+          - if:
+              - condition: template
+                value_template: "{{ enable_logs }}"
+            then:
+              - action: logbook.log
+                data:
+                  name: Controle Inteligente de Presença
+                  message: "Presença detectada. Período noturno={{ is_night }}. Entidades principais={{ selected_entities }}."
+
+          - if:
+              - condition: template
+                value_template: "{{ selected_entities | count > 0 }}"
+            then:
+              - action: homeassistant.turn_on
+                target:
+                  entity_id: "{{ selected_entities }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ apply_light_options | bool and selected_lights | count > 0 }}"
+            then:
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ selected_lights }}"
+                data:
+                  brightness_pct: "{{ selected_brightness_pct | int }}"
+                  rgb_color: "{{ selected_rgb_color }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ enable_turn_on_protection and selected_entities | count > 0 }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Proteção ao ligar ativa por {{ turn_on_protection_duration }} segundos."
+              - variables:
+                  turn_on_protection_deadline: "{{ as_timestamp(now()) + turn_on_protection_duration | int }}"
+              - repeat:
+                  while:
+                    - condition: state
+                      entity_id: !input disable_automation_boolean
+                      state: "off"
+                    - condition: state
+                      entity_id: !input motion_sensor
+                      state: "on"
+                    - condition: template
+                      value_template: "{{ as_timestamp(now()) < turn_on_protection_deadline | float }}"
+                  sequence:
+                    - delay:
+                        seconds: 1
+                    - action: homeassistant.turn_on
+                      target:
+                        entity_id: "{{ selected_entities }}"
+                    - if:
+                        - condition: template
+                          value_template: "{{ apply_light_options | bool and selected_lights | count > 0 }}"
+                      then:
+                        - action: light.turn_on
+                          target:
+                            entity_id: "{{ selected_lights }}"
+                          data:
+                            brightness_pct: "{{ selected_brightness_pct | int }}"
+                            rgb_color: "{{ selected_rgb_color }}"
+
+      # ========== AUSÊNCIA SUSTENTADA (for:) ==========
+      - conditions:
+          - condition: trigger
+            id: motion_off_day
+          - condition: template
+            value_template: "{{ not (enable_night_mode and is_night | bool) }}"
+        sequence:
+          - variables:
+              off_reason: "sensor OFF contínuo (dia)"
+          - alias: "Desligar área com memória e retorno"
+            sequence:
+              - variables:
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  extras_on_now: >
+                    {% set ns = namespace(entities=[]) %}
+                    {% for entity_id in extra_memory_entities %}
+                      {% set state_obj = states[entity_id] %}
+                      {% if state_obj is not none and state_obj.state not in ['off', 'unavailable', 'unknown'] %}
+                        {% set ns.entities = ns.entities + [entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+                    {{ ns.entities }}
+                  needs_off: "{{ (area_lights_on_now | count > 0) or (extras_on_now | count > 0) }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ not needs_off | bool }}"
+                then:
+                  - if:
+                      - condition: template
+                        value_template: "{{ enable_logs }}"
+                    then:
+                      - action: logbook.log
+                        data:
+                          name: Controle Inteligente de Presença
+                          message: "Ausência sustentada ({{ off_reason }}), mas nada ativo na área. Nada a desligar."
+                  - stop: Nada ativo para desligar.
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Ausência sustentada ({{ off_reason }}). Desligando área {{ control_area }}. Luzes={{ area_lights_on_now }}. Extras={{ extras_on_now }}."
+
+              - variables:
+                  memory_scene_id: "cip_{{ control_area }}"
+                  memory_scene_entity_id: "scene.cip_{{ control_area }}"
+                  area_lights_snapshot: "{{ area_lights_on_now }}"
+                  extra_entities_snapshot: "{{ extras_on_now }}"
+                  snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - action: scene.create
+                    data:
+                      scene_id: "{{ memory_scene_id }}"
+                      snapshot_entities: "{{ snapshot_entities }}"
+
+              - action: light.turn_off
+                target:
+                  area_id: !input control_area
+
+              - if:
+                  - condition: template
+                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                then:
+                  - action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ extra_entities_snapshot }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+
+      - conditions:
+          - condition: trigger
+            id: motion_off_night
+          - condition: template
+            value_template: "{{ enable_night_mode and is_night | bool }}"
+        sequence:
+          - variables:
+              off_reason: "sensor OFF contínuo (noite)"
+          - alias: "Desligar área com memória e retorno"
+            sequence:
+              - variables:
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  extras_on_now: >
+                    {% set ns = namespace(entities=[]) %}
+                    {% for entity_id in extra_memory_entities %}
+                      {% set state_obj = states[entity_id] %}
+                      {% if state_obj is not none and state_obj.state not in ['off', 'unavailable', 'unknown'] %}
+                        {% set ns.entities = ns.entities + [entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+                    {{ ns.entities }}
+                  needs_off: "{{ (area_lights_on_now | count > 0) or (extras_on_now | count > 0) }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ not needs_off | bool }}"
+                then:
+                  - if:
+                      - condition: template
+                        value_template: "{{ enable_logs }}"
+                    then:
+                      - action: logbook.log
+                        data:
+                          name: Controle Inteligente de Presença
+                          message: "Ausência sustentada ({{ off_reason }}), mas nada ativo na área. Nada a desligar."
+                  - stop: Nada ativo para desligar.
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Ausência sustentada ({{ off_reason }}). Desligando área {{ control_area }}. Luzes={{ area_lights_on_now }}. Extras={{ extras_on_now }}."
+
+              - variables:
+                  memory_scene_id: "cip_{{ control_area }}"
+                  memory_scene_entity_id: "scene.cip_{{ control_area }}"
+                  area_lights_snapshot: "{{ area_lights_on_now }}"
+                  extra_entities_snapshot: "{{ extras_on_now }}"
+                  snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - action: scene.create
+                    data:
+                      scene_id: "{{ memory_scene_id }}"
+                      snapshot_entities: "{{ snapshot_entities }}"
+
+              - action: light.turn_off
+                target:
+                  area_id: !input control_area
+
+              - if:
+                  - condition: template
+                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                then:
+                  - action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ extra_entities_snapshot }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+
+
+      # ========== AUSÊNCIA COM LUZES (restart / manual / Z2M) ==========
+      - conditions:
+          - condition: trigger
+            id: absent_with_lights
+        sequence:
+          - variables:
+              off_reason: "sensor OFF + luzes/extras ON (tempo normal)"
+          - alias: "Desligar área com memória e retorno"
+            sequence:
+              - variables:
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  extras_on_now: >
+                    {% set ns = namespace(entities=[]) %}
+                    {% for entity_id in extra_memory_entities %}
+                      {% set state_obj = states[entity_id] %}
+                      {% if state_obj is not none and state_obj.state not in ['off', 'unavailable', 'unknown'] %}
+                        {% set ns.entities = ns.entities + [entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+                    {{ ns.entities }}
+                  needs_off: "{{ (area_lights_on_now | count > 0) or (extras_on_now | count > 0) }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ not needs_off | bool }}"
+                then:
+                  - stop: Nada ativo para desligar.
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Ausência sustentada ({{ off_reason }}). Desligando área {{ control_area }}. Luzes={{ area_lights_on_now }}. Extras={{ extras_on_now }}."
+
+              - variables:
+                  memory_scene_id: "cip_{{ control_area }}"
+                  memory_scene_entity_id: "scene.cip_{{ control_area }}"
+                  area_lights_snapshot: "{{ area_lights_on_now }}"
+                  extra_entities_snapshot: "{{ extras_on_now }}"
+                  snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - action: scene.create
+                    data:
+                      scene_id: "{{ memory_scene_id }}"
+                      snapshot_entities: "{{ snapshot_entities }}"
+
+              - action: light.turn_off
+                target:
+                  area_id: !input control_area
+
+              - if:
+                  - condition: template
+                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                then:
+                  - action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ extra_entities_snapshot }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+
+      # ========== EXPIRA MEMÓRIA DE RETORNO ==========
+      - conditions:
+          - condition: trigger
+            id: return_expired
+        sequence:
+          - variables:
+              memory_scene_entity_id: "scene.cip_{{ control_area }}"
+          - condition: template
+            value_template: "{{ states[memory_scene_entity_id] is not none }}"
+          - action: scene.delete
+            target:
+              entity_id: "{{ memory_scene_entity_id }}"
+            continue_on_error: true
+          - if:
+              - condition: template
+                value_template: "{{ enable_logs }}"
+            then:
+              - action: logbook.log
+                data:
+                  name: Controle Inteligente de Presença
+                  message: "Janela de retorno expirada. Memória descartada."
+
+      - conditions:
+          - condition: trigger
+            id:
+              - ha_start
+              - automation_reloaded
+        sequence:
+          - alias: "Aguardar sensor de presença disponível"
+            repeat:
+              while:
+                - condition: template
+                  value_template: "{{ states(motion_sensor) in ['unavailable', 'unknown'] }}"
+                - condition: template
+                  value_template: "{{ repeat.index < 36 }}"
+              sequence:
+                - delay:
+                    seconds: 5
+
+          - condition: state
+            entity_id: !input disable_automation_boolean
+            state: "off"
+
+          - variables:
+              memory_scene_entity_id: "scene.cip_{{ control_area }}"
+              has_return_memory: "{{ states[memory_scene_entity_id] is not none }}"
+              return_memory_age: >
+                {% if states[memory_scene_entity_id] is none %}
+                  999999
+                {% else %}
+                  {{ (as_timestamp(now()) - as_timestamp(states[memory_scene_entity_id].last_changed)) | int }}
+                {% endif %}
+
+          - if:
+              - condition: template
+                value_template: "{{ has_return_memory | bool and (return_memory_age | int) >= (return_delay | int) }}"
+            then:
+              - action: scene.delete
+                target:
+                  entity_id: "{{ memory_scene_entity_id }}"
+                continue_on_error: true
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Recovery: memória de retorno expirada removida."
+
+          - variables:
+              motion_is_on: "{{ is_state(motion_sensor, 'on') }}"
+              area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+              extras_on_now: >
+                {% set ns = namespace(entities=[]) %}
+                {% for entity_id in extra_memory_entities %}
+                  {% set state_obj = states[entity_id] %}
+                  {% if state_obj is not none and state_obj.state not in ['off', 'unavailable', 'unknown'] %}
+                    {% set ns.entities = ns.entities + [entity_id] %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.entities }}
+              needs_off: "{{ (area_lights_on_now | count > 0) or (extras_on_now | count > 0) }}"
+              seconds_already_off: >
+                {% if is_state(motion_sensor, 'off') %}
+                  {{ (as_timestamp(now()) - as_timestamp(states[motion_sensor].last_changed)) | int }}
+                {% else %}
+                  0
+                {% endif %}
+
+          - if:
+              - condition: template
+                value_template: "{{ enable_logs }}"
+            then:
+              - action: logbook.log
+                data:
+                  name: Controle Inteligente de Presença
+                  message: "Recovery start/reload. Sensor={{ states(motion_sensor) }} ({{ seconds_already_off }}s). Luzes={{ area_lights_on_now }}. Extras={{ extras_on_now }}. Delay={{ selected_off_delay }}s."
+
+          - if:
+              - condition: template
+                value_template: "{{ motion_is_on | bool }}"
+            then:
+              - stop: Sensor em ON após recovery — aguardando ausência.
+
+          - if:
+              - condition: template
+                value_template: "{{ not needs_off | bool }}"
+            then:
+              - stop: Recovery sem luzes/extras ativos.
+
+          - if:
+              - condition: template
+                value_template: "{{ (seconds_already_off | int) < (selected_off_delay | int) }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Recovery: dentro do tempo normal ({{ seconds_already_off }}/{{ selected_off_delay }}s). Segue via absent_with_lights."
+              - stop: Dentro do tempo normal — sem wait bloqueante.
+
+          - variables:
+              off_reason: "recovery start/reload (tempo normal já cumprido)"
+          - alias: "Desligar área com memória e retorno"
+            sequence:
+              - variables:
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  extras_on_now: >
+                    {% set ns = namespace(entities=[]) %}
+                    {% for entity_id in extra_memory_entities %}
+                      {% set state_obj = states[entity_id] %}
+                      {% if state_obj is not none and state_obj.state not in ['off', 'unavailable', 'unknown'] %}
+                        {% set ns.entities = ns.entities + [entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+                    {{ ns.entities }}
+                  needs_off: "{{ (area_lights_on_now | count > 0) or (extras_on_now | count > 0) }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ not needs_off | bool }}"
+                then:
+                  - stop: Nada ativo para desligar.
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Ausência sustentada ({{ off_reason }}). Desligando área {{ control_area }}. Luzes={{ area_lights_on_now }}. Extras={{ extras_on_now }}."
+
+              - variables:
+                  memory_scene_id: "cip_{{ control_area }}"
+                  memory_scene_entity_id: "scene.cip_{{ control_area }}"
+                  area_lights_snapshot: "{{ area_lights_on_now }}"
+                  extra_entities_snapshot: "{{ extras_on_now }}"
+                  snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - action: scene.create
+                    data:
+                      scene_id: "{{ memory_scene_id }}"
+                      snapshot_entities: "{{ snapshot_entities }}"
+
+              - action: light.turn_off
+                target:
+                  area_id: !input control_area
+
+              - if:
+                  - condition: template
+                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                then:
+                  - action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ extra_entities_snapshot }}"
+
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+
+
+    default:
+      - stop: Trigger ignorado.

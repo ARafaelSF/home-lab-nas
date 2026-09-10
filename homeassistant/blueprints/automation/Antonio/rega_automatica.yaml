@@ -1,0 +1,687 @@
+blueprint:
+  name: "🌿💧 Rega Automática - Manhã e Tarde"
+  description: >
+    Ativa a rega automaticamente em dois periodos configuraveis (manha e tarde).
+    Usa valve.open_valve/valve.close_valve para valvulas e switch.turn_on/turn_off para switches
+    (compativel com helpers switch_as_x). Inclui verificacao pos-fechamento e
+    protecao contra tempo maximo ligado (ex.: reinicio do HA durante a rega).
+
+    A protecao de tempo maximo desliga valvulas/switches que permanecerem abertos
+    por mais que max(duracao manha, duracao tarde) + margem — independente de quem ligou.
+
+    Notifica Telegram/app se a rega agendada nao conseguir ligar ou fechar (sem alerta de offline fora dos horarios de rega).
+  domain: automation
+  author: Antonio Rafael
+  input:
+    manha_settings:
+      name: Rega da Manha
+      collapsed: false
+      input:
+        ativar_manha:
+          name: Ativar rega da manha?
+          default: true
+          selector:
+            boolean: {}
+        horario_manha:
+          name: Horario da manha
+          default: "07:00:00"
+          selector:
+            time: {}
+        duracao_manha:
+          name: Duracao da manha (segundos)
+          default: 300
+          selector:
+            number:
+              min: 10
+              max: 7200
+              step: 10
+              unit_of_measurement: segundos
+              mode: slider
+    tarde_settings:
+      name: Rega da Tarde
+      collapsed: false
+      input:
+        ativar_tarde:
+          name: Ativar rega da tarde?
+          default: true
+          selector:
+            boolean: {}
+        horario_tarde:
+          name: Horario da tarde
+          default: "18:00:00"
+          selector:
+            time: {}
+        duracao_tarde:
+          name: Duracao da tarde (segundos)
+          default: 300
+          selector:
+            number:
+              min: 10
+              max: 7200
+              step: 10
+              unit_of_measurement: segundos
+              mode: slider
+    target_settings:
+      name: Entidades de Rega
+      collapsed: false
+      input:
+        entidades_rega:
+          name: Valvulas ou switches de rega
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - valve
+                - switch
+              reorder: false
+    safety_settings:
+      name: Verificacao de Seguranca
+      collapsed: false
+      input:
+        ativar_protecao_tempo_maximo:
+          name: Ativar protecao por tempo maximo ligado?
+          description: >
+            Vigia valvulas/switches abertos. Se permanecerem ligados por mais que
+            o maior tempo de rega configurado + margem, desliga automaticamente
+            (inclusive apos reinicio do Home Assistant).
+          default: true
+          selector:
+            boolean: {}
+        margem_protecao_segundos:
+          name: Margem extra apos duracao maxima (segundos)
+          description: >
+            Tempo adicional apos max(duracao manha, duracao tarde) antes de forcar o desligamento.
+            A vigilancia roda a cada 3 minutos e tambem ao iniciar o Home Assistant.
+          default: 90
+          selector:
+            number:
+              min: 0
+              max: 3600
+              step: 10
+              unit_of_measurement: segundos
+              mode: slider
+        enable_safety_check:
+          name: Ativar reforco apos rega agendada?
+          description: Tenta fechar novamente ao final de cada rega programada (manha/tarde).
+          default: true
+          selector:
+            boolean: {}
+        safety_retry_attempts:
+          name: Tentativas de reforco para fechar
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 10
+              step: 1
+              mode: slider
+        safety_retry_delay:
+          name: Intervalo entre tentativas (segundos)
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 30
+              step: 1
+              unit_of_measurement: segundos
+              mode: slider
+
+        verificacao_abertura_segundos:
+          name: Aguardar antes de verificar abertura (segundos)
+          description: >
+            Tempo apos o comando de ligar para confirmar que a valvula/switch abriu.
+            Nao gera alerta de offline durante o dia — apenas na rega agendada se nao ligar.
+          default: 15
+          selector:
+            number:
+              min: 5
+              max: 120
+              step: 5
+              unit_of_measurement: segundos
+              mode: slider
+    notification_settings:
+      name: Notificacoes
+      collapsed: true
+      input:
+        enable_notifications:
+          name: Ativar notificacoes?
+          default: true
+          selector:
+            boolean: {}
+        notify_destinatarios:
+          name: Destinatarios (Telegram)
+          default: Antonio
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        notify_canais:
+          name: Canais de envio
+          default:
+            - telegram
+            - app
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Telegram
+                  value: telegram
+                - label: App (Mobile)
+                  value: app
+              sort: false
+              custom_value: false
+
+mode: parallel
+max: 5
+
+trigger:
+  - platform: time
+    at: !input horario_manha
+    id: manha
+  - platform: time
+    at: !input horario_tarde
+    id: tarde
+  - platform: homeassistant
+    event: start
+    id: ha_inicio
+  - platform: time_pattern
+    minutes: "/3"
+    id: vigilancia
+  - platform: state
+    entity_id: !input entidades_rega
+    id: mudou_estado
+
+variables:
+  entidades_rega: !input entidades_rega
+  ativar_manha: !input ativar_manha
+  ativar_tarde: !input ativar_tarde
+  duracao_manha: !input duracao_manha
+  duracao_tarde: !input duracao_tarde
+  enable_notifications: !input enable_notifications
+  notify_destinatarios: !input notify_destinatarios
+  notify_canais: !input notify_canais
+  ativar_protecao_tempo_maximo: !input ativar_protecao_tempo_maximo
+  margem_protecao_segundos: !input margem_protecao_segundos
+  enable_safety_check: !input enable_safety_check
+  safety_retry_attempts: !input safety_retry_attempts
+  safety_retry_delay: !input safety_retry_delay
+  verificacao_abertura_segundos: !input verificacao_abertura_segundos
+  duracao_max: "{{ [duracao_manha | int, duracao_tarde | int] | max }}"
+  limite_protecao_segundos: "{{ (duracao_max | int) + (margem_protecao_segundos | int) }}"
+  entidades_valve: "{{ expand(entidades_rega) | selectattr('domain', 'eq', 'valve') | map(attribute='entity_id') | list }}"
+  entidades_switch: "{{ expand(entidades_rega) | selectattr('domain', 'eq', 'switch') | map(attribute='entity_id') | list }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ ativar_protecao_tempo_maximo }}"
+          - condition: template
+            value_template: "{{ trigger.id in ['ha_inicio', 'vigilancia', 'mudou_estado'] }}"
+        sequence:
+          - variables:
+              entidades_excesso_tempo: >-
+                {% set limite = limite_protecao_segundos | int %}
+                {% set ligado = ['open', 'on', 'opening'] %}
+                {% set ns = namespace(ids=[]) %}
+                {% for e in expand(entidades_rega) %}
+                  {% if e.state in ligado %}
+                    {% set segundos = (as_timestamp(now()) - as_timestamp(e.last_changed)) | int(0) %}
+                    {% if segundos > limite %}
+                      {% set ns.ids = ns.ids + [e.entity_id] %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.ids }}
+          - if:
+              - condition: template
+                value_template: "{{ entidades_excesso_tempo | length > 0 }}"
+            then:
+              - variables:
+                  excesso_valves: "{{ expand(entidades_excesso_tempo) | selectattr('domain', 'eq', 'valve') | map(attribute='entity_id') | list }}"
+                  excesso_switches: "{{ expand(entidades_excesso_tempo) | selectattr('domain', 'eq', 'switch') | map(attribute='entity_id') | list }}"
+              - if:
+                  - condition: template
+                    value_template: "{{ excesso_valves | length > 0 }}"
+                then:
+                  - action: valve.close_valve
+                    target:
+                      entity_id: "{{ excesso_valves }}"
+              - if:
+                  - condition: template
+                    value_template: "{{ excesso_switches | length > 0 }}"
+                then:
+                  - action: switch.turn_off
+                    target:
+                      entity_id: "{{ excesso_switches }}"
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_notifications }}"
+                then:
+                  - variables:
+                      nomes_entidades: >-
+                        {{ expand(entidades_excesso_tempo)
+                           | map(attribute='name')
+                           | list
+                           | join(', ') }}
+                      msg_protecao: >-
+                        Protecao de rega: {{ nomes_entidades }} estava(m) ligado(s)
+                        ha mais de {{ limite_protecao_segundos }} s (limite
+                        max({{ duracao_manha }}s, {{ duracao_tarde }}s) +
+                        {{ margem_protecao_segundos }}s). Desligado automaticamente.
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'telegram' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "🛑 Rega: protecao por tempo"
+                          mensagem: "{{ msg_protecao }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'app' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_app
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "🛑 Rega: protecao por tempo"
+                          mensagem: "{{ msg_protecao }}"
+      - conditions:
+          - condition: trigger
+            id: manha
+          - condition: template
+            value_template: "{{ ativar_manha }}"
+        sequence:
+          - variables:
+              duracao: !input duracao_manha
+              periodo: "Manha"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_valve | length > 0 }}"
+            then:
+              - action: valve.open_valve
+                target:
+                  entity_id: "{{ entidades_valve }}"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_switch | length > 0 }}"
+            then:
+              - action: switch.turn_on
+                target:
+                  entity_id: "{{ entidades_switch }}"
+          - delay:
+              seconds: "{{ verificacao_abertura_segundos }}"
+          - variables:
+              entidades_falha_abrir: >-
+                {% set ligado = ['open', 'on', 'opening'] %}
+                {% set ns = namespace(ids=[]) %}
+                {% for e in expand(entidades_rega) %}
+                  {% if e.state not in ligado %}
+                    {% set ns.ids = ns.ids + [e.entity_id] %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.ids }}
+          - if:
+              - condition: template
+                value_template: "{{ entidades_falha_abrir | length > 0 }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_notifications }}"
+                then:
+                  - variables:
+                      nomes_falha_abrir: >-
+                        {{ expand(entidades_falha_abrir) | map(attribute='name') | list | join(', ') }}
+                      estados_falha_abrir: >-
+                        {{ expand(entidades_falha_abrir) | map(attribute='state') | list | join(', ') }}
+                      msg_falha_abrir: >-
+                        Rega {{ periodo }}: nao foi possivel ligar {{ nomes_falha_abrir }}
+                        (estado: {{ estados_falha_abrir }}).
+                      rega_retry_payload: >-
+                        open|{{ duracao }}|{{ entidades_falha_abrir | join(',') }}
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.sistema_rega_retry_payload
+                    data:
+                      value: "{{ rega_retry_payload }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'telegram' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao ligar"
+                          mensagem: "{{ msg_falha_abrir }}"
+                          inline_keyboard:
+                            - "🔄 Tentar novamente:/rega_retry"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'app' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_app
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao ligar"
+                          mensagem: "{{ msg_falha_abrir }}"
+                          dados:
+                            actions:
+                              - action: REGA_RETRY
+                                title: "🔄 Tentar novamente"
+                            tag: rega_falha
+                            channel: Avisos
+          - delay:
+              seconds: "{{ duracao }}"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_valve | length > 0 }}"
+            then:
+              - action: valve.close_valve
+                target:
+                  entity_id: "{{ entidades_valve }}"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_switch | length > 0 }}"
+            then:
+              - action: switch.turn_off
+                target:
+                  entity_id: "{{ entidades_switch }}"
+          - if:
+              - condition: template
+                value_template: "{{ enable_safety_check }}"
+            then:
+              - repeat:
+                  count: "{{ safety_retry_attempts }}"
+                  sequence:
+                    - delay:
+                        seconds: "{{ safety_retry_delay }}"
+                    - variables:
+                        entidades_ainda_ligadas: >-
+                          {{ expand(entidades_rega)
+                             | selectattr('state', 'in', ['open', 'on', 'opening'])
+                             | map(attribute='entity_id')
+                             | list }}
+                    - if:
+                        - condition: template
+                          value_template: "{{ entidades_ainda_ligadas | length > 0 }}"
+                      then:
+                        - variables:
+                            ainda_valves: "{{ expand(entidades_ainda_ligadas) | selectattr('domain', 'eq', 'valve') | map(attribute='entity_id') | list }}"
+                            ainda_switches: "{{ expand(entidades_ainda_ligadas) | selectattr('domain', 'eq', 'switch') | map(attribute='entity_id') | list }}"
+                        - if:
+                            - condition: template
+                              value_template: "{{ ainda_valves | length > 0 }}"
+                          then:
+                            - action: valve.close_valve
+                              target:
+                                entity_id: "{{ ainda_valves }}"
+                        - if:
+                            - condition: template
+                              value_template: "{{ ainda_switches | length > 0 }}"
+                          then:
+                            - action: switch.turn_off
+                              target:
+                                entity_id: "{{ ainda_switches }}"
+                      else:
+                        - stop: "Rega desligada com sucesso."
+
+          - variables:
+              entidades_falha_fechar: >-
+                {{ expand(entidades_rega)
+                   | selectattr('state', 'in', ['open', 'on', 'opening'])
+                   | map(attribute='entity_id')
+                   | list }}
+          - if:
+              - condition: template
+                value_template: "{{ entidades_falha_fechar | length > 0 }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_notifications }}"
+                then:
+                  - variables:
+                      nomes_falha_fechar: >-
+                        {{ expand(entidades_falha_fechar) | map(attribute='name') | list | join(', ') }}
+                      estados_falha_fechar: >-
+                        {{ expand(entidades_falha_fechar) | map(attribute='state') | list | join(', ') }}
+                      msg_falha_fechar: >-
+                        Rega {{ periodo }}: nao foi possivel fechar {{ nomes_falha_fechar }}
+                        (estado: {{ estados_falha_fechar }}).
+                      rega_retry_payload: >-
+                        close|0|{{ entidades_falha_fechar | join(',') }}
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.sistema_rega_retry_payload
+                    data:
+                      value: "{{ rega_retry_payload }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'telegram' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao fechar"
+                          mensagem: "{{ msg_falha_fechar }}"
+                          inline_keyboard:
+                            - "🔄 Tentar novamente:/rega_retry"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'app' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_app
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao fechar"
+                          mensagem: "{{ msg_falha_fechar }}"
+                          dados:
+                            actions:
+                              - action: REGA_RETRY
+                                title: "🔄 Tentar novamente"
+                            tag: rega_falha
+                            channel: Avisos
+      - conditions:
+          - condition: trigger
+            id: tarde
+          - condition: template
+            value_template: "{{ ativar_tarde }}"
+        sequence:
+          - variables:
+              duracao: !input duracao_tarde
+              periodo: "Tarde"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_valve | length > 0 }}"
+            then:
+              - action: valve.open_valve
+                target:
+                  entity_id: "{{ entidades_valve }}"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_switch | length > 0 }}"
+            then:
+              - action: switch.turn_on
+                target:
+                  entity_id: "{{ entidades_switch }}"
+          - delay:
+              seconds: "{{ verificacao_abertura_segundos }}"
+          - variables:
+              entidades_falha_abrir: >-
+                {% set ligado = ['open', 'on', 'opening'] %}
+                {% set ns = namespace(ids=[]) %}
+                {% for e in expand(entidades_rega) %}
+                  {% if e.state not in ligado %}
+                    {% set ns.ids = ns.ids + [e.entity_id] %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.ids }}
+          - if:
+              - condition: template
+                value_template: "{{ entidades_falha_abrir | length > 0 }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_notifications }}"
+                then:
+                  - variables:
+                      nomes_falha_abrir: >-
+                        {{ expand(entidades_falha_abrir) | map(attribute='name') | list | join(', ') }}
+                      estados_falha_abrir: >-
+                        {{ expand(entidades_falha_abrir) | map(attribute='state') | list | join(', ') }}
+                      msg_falha_abrir: >-
+                        Rega {{ periodo }}: nao foi possivel ligar {{ nomes_falha_abrir }}
+                        (estado: {{ estados_falha_abrir }}).
+                      rega_retry_payload: >-
+                        open|{{ duracao }}|{{ entidades_falha_abrir | join(',') }}
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.sistema_rega_retry_payload
+                    data:
+                      value: "{{ rega_retry_payload }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'telegram' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao ligar"
+                          mensagem: "{{ msg_falha_abrir }}"
+                          inline_keyboard:
+                            - "🔄 Tentar novamente:/rega_retry"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'app' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_app
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao ligar"
+                          mensagem: "{{ msg_falha_abrir }}"
+                          dados:
+                            actions:
+                              - action: REGA_RETRY
+                                title: "🔄 Tentar novamente"
+                            tag: rega_falha
+                            channel: Avisos
+          - delay:
+              seconds: "{{ duracao }}"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_valve | length > 0 }}"
+            then:
+              - action: valve.close_valve
+                target:
+                  entity_id: "{{ entidades_valve }}"
+          - if:
+              - condition: template
+                value_template: "{{ entidades_switch | length > 0 }}"
+            then:
+              - action: switch.turn_off
+                target:
+                  entity_id: "{{ entidades_switch }}"
+          - if:
+              - condition: template
+                value_template: "{{ enable_safety_check }}"
+            then:
+              - repeat:
+                  count: "{{ safety_retry_attempts }}"
+                  sequence:
+                    - delay:
+                        seconds: "{{ safety_retry_delay }}"
+                    - variables:
+                        entidades_ainda_ligadas: >-
+                          {{ expand(entidades_rega)
+                             | selectattr('state', 'in', ['open', 'on', 'opening'])
+                             | map(attribute='entity_id')
+                             | list }}
+                    - if:
+                        - condition: template
+                          value_template: "{{ entidades_ainda_ligadas | length > 0 }}"
+                      then:
+                        - variables:
+                            ainda_valves: "{{ expand(entidades_ainda_ligadas) | selectattr('domain', 'eq', 'valve') | map(attribute='entity_id') | list }}"
+                            ainda_switches: "{{ expand(entidades_ainda_ligadas) | selectattr('domain', 'eq', 'switch') | map(attribute='entity_id') | list }}"
+                        - if:
+                            - condition: template
+                              value_template: "{{ ainda_valves | length > 0 }}"
+                          then:
+                            - action: valve.close_valve
+                              target:
+                                entity_id: "{{ ainda_valves }}"
+                        - if:
+                            - condition: template
+                              value_template: "{{ ainda_switches | length > 0 }}"
+                          then:
+                            - action: switch.turn_off
+                              target:
+                                entity_id: "{{ ainda_switches }}"
+                      else:
+                        - stop: "Rega desligada com sucesso."
+
+          - variables:
+              entidades_falha_fechar: >-
+                {{ expand(entidades_rega)
+                   | selectattr('state', 'in', ['open', 'on', 'opening'])
+                   | map(attribute='entity_id')
+                   | list }}
+          - if:
+              - condition: template
+                value_template: "{{ entidades_falha_fechar | length > 0 }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_notifications }}"
+                then:
+                  - variables:
+                      nomes_falha_fechar: >-
+                        {{ expand(entidades_falha_fechar) | map(attribute='name') | list | join(', ') }}
+                      estados_falha_fechar: >-
+                        {{ expand(entidades_falha_fechar) | map(attribute='state') | list | join(', ') }}
+                      msg_falha_fechar: >-
+                        Rega {{ periodo }}: nao foi possivel fechar {{ nomes_falha_fechar }}
+                        (estado: {{ estados_falha_fechar }}).
+                      rega_retry_payload: >-
+                        close|0|{{ entidades_falha_fechar | join(',') }}
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.sistema_rega_retry_payload
+                    data:
+                      value: "{{ rega_retry_payload }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'telegram' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_telegram
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao fechar"
+                          mensagem: "{{ msg_falha_fechar }}"
+                          inline_keyboard:
+                            - "🔄 Tentar novamente:/rega_retry"
+                  - if:
+                      - condition: template
+                        value_template: "{{ 'app' in notify_canais }}"
+                    then:
+                      - action: script.enviar_notificacao_app
+                        data:
+                          destinatarios:
+                            - "{{ notify_destinatarios }}"
+                          titulo: "⚠️ Rega: falha ao fechar"
+                          mensagem: "{{ msg_falha_fechar }}"
+                          dados:
+                            actions:
+                              - action: REGA_RETRY
+                                title: "🔄 Tentar novamente"
+                            tag: rega_falha
+                            channel: Avisos

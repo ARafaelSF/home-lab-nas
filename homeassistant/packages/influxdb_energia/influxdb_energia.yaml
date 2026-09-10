@@ -1,0 +1,73 @@
+max_retries: 3
+precision: ms
+measurement_attr: domain__device_class
+default_measurement: sensor__unknown
+tags_attributes:
+  - friendly_name
+include:
+  entities:
+    - sensor.casa_usina_fotovoltaica_producao
+    - sensor.casa_usina_fotovoltaica_producao_hoje
+    - sensor.casa_kron_usina_fotovoltaica_usina_fotovoltaica_potencia_fase_1
+    - sensor.casa_rede_eletrica_entrada
+    - sensor.casa_rede_eletrica_entrada_hoje
+    - sensor.casa_rede_eletrica_saida
+    - sensor.casa_rede_eletrica_saida_hoje
+    - sensor.casa_consumo_hoje
+    - sensor.saldo_energetico_hoje
+    - sensor.casa_kron_rede_eletrica_potencia_total
+    - sensor.potencia_fase_1
+    - sensor.potencia_fase_2
+    - sensor.potencia_fase_3
+    - sensor.tarifas_cemig_d_tarifa_vigente
+    - sensor.suite_ar_condicionado_energia_localthings
+    - sensor.suite_ar_condicionado_potencia_localthings
+    - sensor.sala_de_tv_ar_condicionado_energia_localthings
+    - sensor.sala_de_tv_ar_condicionado_potencia_localthings
+    - sensor.escritorio_ar_condicionado_energia_localthings
+    - sensor.escritorio_ar_condicionado_potencia_localthings
+    - sensor.quarto_cecilia_ar_condicionado_medidor_esphome
+    - sensor.ar_condicionado_quarto_cecilia_potencia
+    - sensor.cozinha_geladeira_energia_sonoff
+    - sensor.cozinha_geladeira_potencia_sonoff
+    - sensor.cozinha_geladeira_midea_energia_sonoff
+    - sensor.cozinha_geladeira_midea_potencia_sonoff
+    - sensor.cozinha_geladeira_midea_consumo_potencia_1x
+    - sensor.cozinha_geladeira_midea_consumo_energia_1x
+    - sensor.cozinha_geladeira_midea_consumo_medidor
+    - sensor.cozinha_geladeira_midea_consumo_hoje
+    - sensor.cozinha_geladeira_midea_sonoff_hoje
+    - sensor.lavanderia_lava_loucas
+    - sensor.lavanderia_lava_louca_potencia_1x
+    - sensor.lavanderia_lava_roupas
+    - sensor.lavanderia_lava_roupa_potencia_1x
+    - sensor.cozinha_externa_forno_convecao_energia
+    - sensor.cozinha_externa_forno_z2m_power
+    - sensor.sala_de_tv_multimidia_energia_sonoff
+    - sensor.sala_de_tv_multimidia_potencia_sonoff
+    - sensor.sistema_home_assistant_energia_sonoff
+    - sensor.sistema_home_assistant_potencia_sonoff
+    - sensor.escritorio_monitores_potencia_tasmota
+    - sensor.escritorio_monitores_energia_total_tasmota
+    - sensor.escritorio_servidor_minipc_potencia_tasmota
+    - sensor.escritorio_servidor_minipc_energia_total_tasmota
+    - sensor.chuveiro_suite_potencia
+    - sensor.chuveiro_suite_consumo_total
+    - sensor.caixa_d_agua_potencia
+    - sensor.caixa_d_agua_consumo_total
+    - sensor.oficina_regua_z2m_power
+    - sensor.oficina_regua_z2m_energy
+    # SLZB-06 / Zigbee2MQTT — monitor USB vs Ethernet
+    - sensor.slzb_06_core_chip_temp
+    - sensor.slzb_06_zigbee_chip_temp
+    - sensor.slzb_temp_maxima_chips
+    - sensor.sistema_slzb_06_slzb_media_core_24h
+    - sensor.sistema_slzb_06_slzb_media_zigbee_24h
+    - sensor.sistema_zigbee2mqtt_bridge_z2m_quedas_bridge_24h
+    - sensor.sistema_zigbee2mqtt_bridge_z2m_tempo_offline_24h
+    - binary_sensor.zigbee2mqtt_bridge_connection_state
+    - binary_sensor.sistema_slzb_06_slzb_core_temp_alta
+    - binary_sensor.sistema_slzb_06_slzb_zigbee_temp_alta
+    - binary_sensor.slzb_06_ethernet
+    - counter.z2m_srsp_falhas
+    - input_boolean.slzb_ja_mudou_para_ethernet

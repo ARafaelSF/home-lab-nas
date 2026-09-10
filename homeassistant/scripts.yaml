@@ -1,0 +1,2601 @@
+exportar_to_do_para_notificacao:
+  alias: "\U0001F4DD Exportar To-Do para Notificação"
+  description: 'Lê uma lista de tarefas do Home Assistant (`todo.*`) e gera um relatório
+    formatado nas Notificações Persistentes.
+
+    '
+  mode: single
+  fields:
+    lista:
+      name: Lista To-Do
+      description: Selecione a entidade da lista de tarefas.
+      selector:
+        entity:
+          domain: todo
+      default: todo.lista_principal
+  sequence:
+  - variables:
+      lista_entity: '{{ lista | default(''todo.lista_principal'') }}'
+  - action: todo.get_items
+    target:
+      entity_id: '{{ lista_entity }}'
+    data:
+      status: needs_action
+    response_variable: itens
+  - action: persistent_notification.create
+    data:
+      title: "\U0001F4CB {{ state_attr(lista_entity, 'friendly_name') }}"
+      message: "{%- set lista_obj = itens.get(lista_entity, {}) -%}\n{%- set arr =
+        lista_obj.get('items', []) -%}\n{%- set ns = namespace(lines=[]) -%}\n\n{%-
+        for item in arr -%}\n  {%- set summary = item.get('summary', 'Sem título')
+        -%}\n  {# Como filtramos por needs_action, o status será sempre pendente,
+        mas mantive a lógica caso mude o filtro #}\n  {%- set status = item.get('status',
+        '') -%}\n  {%- set ns.lines = ns.lines + [\n    '▫️ ' ~ summary\n  ] -%}\n{%-
+        endfor -%}\n\n{{ ns.lines | join('\\n') if ns.lines else '✅ Nenhuma tarefa
+        pendente!' }}"
+      notification_id: export_todo
+enviar_notificacao_alexa:
+  alias: "\U0001F5E3️ Enviar Notificação Alexa"
+  description: "# \U0001F5E3️ Central de Notificações Alexa\n\nTTS e anúncios nos
+    Echos.\n\n---\n\n### \U0001F9E0 Comportamento\n\n* **Padrão:** usa **Alexa Media
+    Player**; se o `media_player` estiver `unavailable` ou `unknown`, usa **Alexa
+    Devices** (nativo).\n* **`forcar_modo_nativo`:** opcional; se `true`, força só
+    a integração nativa (útil para testes).\n\n---\n\n### \U0001F4DD Campos\n\n####
+    \U0001F4CD dispositivos (opcional)\n* Nomes, lista ou `media_player.*` / `notify.*`.\n*
+    **Padrão:** `['sala']`.\n\n#### \U0001F4AC mensagem (obrigatório)\n* Texto ou
+    lista.\n\n#### ⚙️ tipo / volume\n* **tipo:** `tts` ou `announce`.\n* **volume:**
+    0.0–1.0 (só Alexa Media).\n\n#### \U0001F6E0 forcar_modo_nativo (opcional)\n*
+    `true` = só nativo.\n* omitido ou `false` = Media primeiro, nativo em fallback.\n\n---\n\n###
+    \U0001F4A1 Exemplos\n\n1) Padrão:\n   dispositivos: cozinha\n   mensagem: \"Olá.\"\n\n2)
+    Teste nativo:\n   dispositivos: cozinha\n   mensagem: \"Teste nativo.\"\n   forcar_modo_nativo:
+    true\n\n---\n"
+  icon: phu:alexa-logo
+  mode: parallel
+  max: 15
+  fields:
+    dispositivos:
+      name: Dispositivos
+      description: Nome(s) ('sala', 'cozinha', ...) ou entity_ids.
+      example: '[''sala'', ''cozinha'']'
+    mensagem:
+      name: Mensagem
+      description: String ou lista de strings a serem faladas/anunciadas.
+      example: A máquina de lavar terminou o ciclo.
+    tipo:
+      name: Tipo
+      description: '''tts'' (fala simples) ou ''announce'' (com som de notificação).'
+      example: announce
+    volume:
+      name: Volume
+      description: Só para Alexa Media (0.0–1.0). Ignorado na nativa.
+      example: 0.8
+    forcar_modo_nativo:
+      name: Forçar modo nativo (teste)
+      description: Se ligado, envia apenas pela integração nativa (Alexa Devices),
+        ignorando Alexa Media nesta execução. Por omissão usa Alexa Media e cai para
+        nativo se o media_player estiver indisponível.
+      default: false
+      selector:
+        boolean: {}
+  sequence:
+  - variables:
+      forcar_nativa: '{{ forcar_modo_nativo | default(false) | bool }}'
+      mapa_dispositivos:
+        escritorio: media_player.escritorio_echo_mediaplayer
+        banheiro_social: media_player.banheiro_social_echo_mediaplayer
+        sala: media_player.sala_de_tv_echo_mediaplayer
+        sala_de_tv: media_player.sala_de_tv_echo_mediaplayer
+        cozinha: media_player.cozinha_echo_mediaplayer
+        oficina: media_player.oficina_echo_mediaplayer
+        banheiro_suite: media_player.banheiro_suite_echo_mediaplayer
+        quarto_da_cecilia: media_player.quarto_cecilia_echo_mediaplayer
+        brinquedoteca: media_player.brinquedoteca_echo_mediaplayer
+        suite: media_player.suite_echo_mediaplayer
+        quarto_cecilia: media_player.quarto_cecilia_echo_mediaplayer
+        fire_tv_sala: media_player.sala_de_tv_fire_tv_stick_mediaplayer
+        fire_tv_suite_4k: media_player.suite_fire_tv_stick_4k_max_mediaplayer
+        fire_tv_suite_lite: media_player.suite_fire_tv_stick_4k_max_mediaplayer
+        media_player.echo_dot_sala_de_tv: media_player.sala_de_tv_echo_mediaplayer
+        media_player.echo_dot_cozinha: media_player.cozinha_echo_mediaplayer
+        media_player.echo_dot_escritorio: media_player.escritorio_echo_mediaplayer
+        media_player.echo_dot_oficina: media_player.oficina_echo_mediaplayer
+        media_player.echo_dot_banheiro_social: media_player.banheiro_social_echo_mediaplayer
+        media_player.echo_dot_banheiro_suite: media_player.banheiro_suite_echo_mediaplayer
+        media_player.echo_dot_cecilia: media_player.quarto_cecilia_echo_mediaplayer
+        media_player.echo_dot_brinquedoteca: media_player.brinquedoteca_echo_mediaplayer
+        media_player.echo_dot_suite: media_player.suite_echo_mediaplayer
+        media_player.firestick_sala_de_tv: media_player.sala_de_tv_fire_tv_stick_mediaplayer
+        media_player.antonio_s_fire_tv: media_player.suite_fire_tv_stick_4k_max_mediaplayer
+        media_player.firestick_suite: media_player.suite_fire_tv_stick_4k_max_mediaplayer
+        sala_de_jantar: media_player.sala_de_jantar_echo_mediaplayer
+        jantar: media_player.sala_de_jantar_echo_mediaplayer
+        media_player.echo_show_11_de_antonio: media_player.sala_de_jantar_echo_mediaplayer
+        media_player.sala_de_jantar_echo_mediaplayer: media_player.sala_de_jantar_echo_mediaplayer
+        media_player.sala_de_jantar_echo_devices: media_player.sala_de_jantar_echo_devices
+        notify.sala_de_jantar_echo_devices_falar: media_player.sala_de_jantar_echo_devices
+        notify.sala_de_jantar_echo_devices_anunciar: media_player.sala_de_jantar_echo_devices
+        media_player.echo_show_11: media_player.sala_de_jantar_echo_devices
+      sinonimos:
+        sala_tv: sala_de_tv
+        sala_da_tv: sala_de_tv
+        saladetv: sala_de_tv
+        salada_tv: sala_de_tv
+        sala_de_televisao: sala_de_tv
+        sala_televisao: sala_de_tv
+        sala_teve: sala_de_tv
+        quarto_cecilia: quarto_da_cecilia
+        echo_dot_cecilia: quarto_da_cecilia
+        sala_de_tv_echo: sala_de_tv
+        cozinha_echo: cozinha
+        escritorio_echo: escritorio
+        oficina_echo: oficina
+        banheiro_social_echo: banheiro_social
+        banheiro_suite_echo: banheiro_suite
+        quarto_cecilia_echo: quarto_da_cecilia
+        brinquedoteca_echo: brinquedoteca
+        suite_echo: suite
+        echo_dot_escritorio: escritorio
+        echo_dot_banheiro_social: banheiro_social
+        echo_dot_sala: sala
+        echo_dot_sala_de_tv: sala_de_tv
+        echo_dot_cozinha: cozinha
+        echo_dot_oficina: oficina
+        echo_dot_banheiro_suite: banheiro_suite
+        echo_dot_quarto_da_cecilia: quarto_da_cecilia
+        echo_dot_brinquedoteca: brinquedoteca
+        echo_dot_suite: suite
+        jantar: sala_de_jantar
+        sala_jantar: sala_de_jantar
+        echo_show_11_de_antonio: sala_de_jantar
+        echo_show_sala_de_jantar: sala_de_jantar
+        sala_de_jantar_echo_show_dispositivos: sala_de_jantar
+        sala_de_jantar_echo_show_media_player: sala_de_jantar
+        echo_show_11: sala_de_jantar
+        cozinha_echo_dot_dispositivos: cozinha
+        sala_de_tv_echo_dot_dispositivos: sala_de_tv
+        brinquedoteca_echo_dot_dispositivos: brinquedoteca
+        escritorio_echo_dot_dispositivos: escritorio
+        oficina_echo_dot_dispositivos: oficina
+        suite_echo_dot_dispositivos: suite
+        banheiro_suite_echo_dot_dispositivos: banheiro_suite
+        banheiro_social_echo_dot_dispositivos: banheiro_social
+        quarto_cecilia_echo_dot_dispositivos: quarto_cecilia
+        cozinha_echo_dot_media_player: cozinha
+        sala_de_tv_echo_dot_media_player: sala_de_tv
+        brinquedoteca_echo_dot_media_player: brinquedoteca
+        escritorio_echo_dot_media_player: escritorio
+        oficina_echo_dot_media_player: oficina
+        suite_echo_dot_media_player: suite
+        banheiro_suite_echo_dot_media_player: banheiro_suite
+        banheiro_social_echo_dot_media_player: banheiro_social
+        quarto_cecilia_echo_dot_media_player: quarto_cecilia
+      lista_dispositivos: "{% set raw = dispositivos | default(['sala']) %}\n{% if
+        raw is string %}\n  {{ [raw | trim] }}\n{% else %}\n  {{ raw | map('string')
+        | map('trim') | reject('equalto','') | list }}\n{% endif %}"
+      tipo_final: '{{ (tipo | default(''tts'')) | lower }}'
+      notify_suffix: '{{ ''_anunciar'' if tipo_final == ''announce'' else ''_falar''
+        }}'
+      vol_final: "{% set v = volume | default(none) %}  {% if v is number and 0 <=
+        v <= 1 %}\n  {{ v }}\n{% else %}\n  {{ none }}\n{% endif %}"
+      alvos_finais: "{% set ns = namespace(mp=[], notify=[]) %} {% for n in lista_dispositivos
+        %}\n  {% set s = (n | string | trim) %}\n  {% set s_l = s | lower %}\n\n  {%
+        if s_l | regex_match('^(media_player|notify)\\\\..+') %}\n    {% set k = s_l
+        %}\n  {% else %}\n    {% set k0 = s | slugify %}\n    {% set k = sinonimos[k0]
+        if k0 in sinonimos else k0 %}\n  {% endif %}\n\n  {% set m = mapa_dispositivos[k]
+        if k in mapa_dispositivos else none %}\n  {% set e_mp = m if m else (s_l if
+        s_l.startswith('media_player.') else none) %}\n  {% if not e_mp and s_l.startswith('notify.')
+        %}\n    {% set nslug = s_l | regex_replace('^notify\\\\.', '') | regex_replace('(?:_devices)?_(anunciar|falar|announce|speak)$',
+        '') %}\n    {% set mp_slug = nslug | regex_replace('_devices$', '_mediaplayer')
+        %}\n    {% set e_mp = 'media_player.' + mp_slug %}\n  {% endif %}\n  \n  {%
+        set base_notif = none %}\n  {% if m %}\n    {% set base_notif = 'notify.'
+        + (m.split('.',1)[1] | regex_replace('_mediaplayer$', '_devices')) %}\n  {%
+        elif s_l.startswith('media_player.') %}\n    {% set base_notif = 'notify.'
+        + (s_l.split('.',1)[1] | regex_replace('_mediaplayer$', '_devices')) %}\n
+        \ {% elif s_l.startswith('notify.') %}\n    {% set base_notif = (s_l | regex_replace('(?:_devices)?_(anunciar|falar|announce|speak)$',
+        '')) %}\n  {% endif %}\n  {% set e_notif = (base_notif ~ notify_suffix) if
+        base_notif else none %}\n\n  {% if forcar_nativa %}\n    {% if e_notif %}\n
+        \     {% set ns.notify = ns.notify + [e_notif] %}\n    {% endif %}\n  {% else
+        %}\n    {% if e_mp and states(e_mp) not in ['unavailable', 'unknown'] %}\n
+        \     {% set ns.mp = ns.mp + [e_mp] %}\n    {% elif e_notif %}\n      {% set
+        ns.notify = ns.notify + [e_notif] %}\n    {% endif %}\n  {% endif %}\n{% endfor
+        %} {{ {'mp': ns.mp | unique | list, 'notify': ns.notify | unique | list} }}"
+      final_mp: '{{ alvos_finais.mp }}'
+      final_notify: '{{ alvos_finais.notify }}'
+      lista_mensagens: "{% set raw = mensagem | default('') %}\n{% if raw is string
+        %}\n  {{ [raw] }}\n{% else %}\n  {{ raw | list }}\n{% endif %}"
+      prev_vols: "{% set ns = namespace(lst=[]) %}\n{% for e in final_mp %}\n  {%
+        set v = state_attr(e, 'volume_level') | default(none, true) %}\n  {% if v
+        is number and (vol_final is number) and (v != vol_final) %}\n    {% set ns.lst
+        = ns.lst + [ {'entity_id': e, 'vol': v} ] %}\n  {% endif %}\n{% endfor %}\n{{
+        ns.lst }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (final_mp | length == 0) and (final_notify | length ==
+          0) }}'
+      sequence:
+      - action: system_log.write
+        data:
+          level: warning
+          message: 'script.enviar_notificacao_alexa: nenhum destino válido resolvido
+            a partir de {{ dispositivos }}
+
+            '
+      - stop: Sem destinos válidos
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (final_mp | length > 0) and (vol_final is number) }}'
+      sequence:
+      - repeat:
+          for_each: '{{ final_mp }}'
+          sequence:
+          - action: media_player.volume_set
+            target:
+              entity_id: '{{ repeat.item }}'
+            data:
+              volume_level: '{{ vol_final }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ final_notify | length > 0 }}'
+      sequence:
+      - repeat:
+          for_each: '{{ final_notify }}'
+          sequence:
+          - action: notify.send_message
+            target:
+              entity_id: '{{ repeat.item }}'
+            data:
+              message: "{% if tipo_final == 'announce' %}\n  {{ lista_mensagens |
+                join('\\n') }}\n{% else %}\n  {{ lista_mensagens | join(' ') }}\n{%
+                endif %}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (final_mp | length > 0) and (tipo_final == ''announce'')
+          }}'
+      sequence:
+      - action: notify.alexa_media
+        data:
+          target: '{{ final_mp }}'
+          message: '{{ lista_mensagens | join(''
+
+            '') }}'
+          data:
+            type: announce
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (final_mp | length > 0) and (tipo_final == ''tts'') }}'
+      sequence:
+      - action: notify.alexa_media
+        data:
+          target: '{{ final_mp }}'
+          message: '{{ lista_mensagens | join('' '') }}'
+          data:
+            type: tts
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (prev_vols | length) > 0 }}'
+      sequence:
+      - delay:
+          seconds: '{% set texto_completo = lista_mensagens | join('' '') %} {% set
+            total_chars = texto_completo | length %} {% set tempo_estimado = (total_chars
+            / 10) | round(0, ''ceil'') | int %} {{ [ [ tempo_estimado, 5 ] | max,
+            30 ] | min }}
+
+            '
+      - repeat:
+          for_each: '{{ prev_vols }}'
+          sequence:
+          - action: media_player.volume_set
+            target:
+              entity_id: '{{ repeat.item.entity_id }}'
+            data:
+              volume_level: '{{ repeat.item.vol }}'
+enviar_notificacao_app:
+  alias: "\U0001F4F1 Enviar Notificação App"
+  description: "# \U0001F4F1 Central de Notificações Mobile (App)\n\nScript avançado
+    para enviar notificações nativas para os celulares com o App do Home Assistant.\n\n---\n\n###
+    ✨ DESTAQUES\n* \U0001F3AF **Envio Flexível:** Aceita nomes (`antonio`), listas,
+    CSV (`\"antonio, renata\"`) ou serviços diretos (`notify.mobile_app_...`).\n*
+    \U0001F4E2 **Broadcast:** Se não informar destinatário, envia para **TODOS** os
+    usuários cadastrados.\n* \U0001F680 **Poder Total:** Suporte completo a ações,
+    ícones, cores, tags e canais Android/iOS.\n\n---\n\n### \U0001F4DD CAMPOS\n\n####
+    \U0001F465 destinatarios (Opcional)\n* **Aceita:** Nome, Lista, CSV ou serviço
+    `notify.*`.\n* **Padrão:** Se omitido/vazio, envia para **TODOS** (Broadcast).\n\n####
+    \U0001F4AC Conteúdo\n* **mensagem:** Texto principal (aceita string ou lista de
+    frases).\n* **titulo:** Cabeçalho da notificação.\n* **dados:** (Avançado) Dicionário
+    para recursos extras (Ações, Ícones, Tags, Cores, TTL, Canais).\n\n---\n\n###
+    \U0001F4A1 EXEMPLOS\n\n1)  **Simples (Por Nome):**\n    destinatarios: antonio\n
+    \   mensagem: \"Teste\"\n   \n2) **Grupos (Por Nome):**\n    destinatarios: \"antonio,
+    renata\"\n    mensagem: \"Portão aberto\"\n    titulo: \"Alerta\"\n\n3)  **Broadcast
+    (Para Todos):**\n    mensagem: \"Tenha um bom dia\"\n    titulo: \"Bom dia!\"\n\n4)
+    \ **Avançado (Ações e Ícones):**\n   destinatarios: antonio\n   titulo: \"Alerta\"\n
+    \  mensagem: \"Portão aberto.\"\n   dados:\n     tag: \"portao\"\n     channel:
+    \"Alarme\"\n     importance: high\n     notification_icon: \"mdi:gate\"\n     color:
+    \"#FF0000\"\n     actions:\n       - action: \"FECHAR_PORTAO\"\n         title:
+    \"Fechar\"\n\n         \n---\n"
+  icon: mdi:cellphone-message
+  mode: parallel
+  max: 5
+  fields:
+    destinatarios:
+      description: 'Nome, lista de nomes, string CSV ("Antonio, Renata"), string lista
+        ("[''Antonio'',''Renata'']" ou ''["Antonio","Renata"]''), ou notify.* direto.
+        Vazio = todos do mapa.
+
+        '
+      example: Antonio, Renata
+    mensagem:
+      description: Mensagem a ser enviada (string ou lista).
+      example: A máquina de lavar terminou.
+    titulo:
+      description: (Opcional) Título da notificação.
+      example: Casa
+    dados:
+      description: (Opcional) Dicionário extra para o notify (data/push/actions etc).
+      example: '{ push: { sound: default } }'
+  sequence:
+  - variables:
+      mapa_destinatarios:
+        antonio: notify.edge_antonio
+        renata: notify.edge_renata
+      sinonimos:
+        antonio_motorola: antonio
+        antonio_celular: antonio
+        celular_antonio: antonio
+        edge_antonio: antonio
+        renata_motorola: renata
+        renata_celular: renata
+        celular_renata: renata
+        edge_renata: renata
+        mobile_app_edge_antonio: antonio
+        mobile_app_edge_renata: renata
+      itens_destinatarios: "{% set raw = destinatarios | default([]) %}\n\n{% if raw
+        is not string %}\n  {{ raw | map('string') | map('trim') | reject('equalto','')
+        | list }}\n{% else %}\n  {% set s = raw | trim %}\n\n  {% if s == '' %}\n
+        \   {{ [] }}\n\n  {# JSON: [\"Antonio\",\"Renata\"] #}\n  {% elif s | regex_match('^\\\\s*\\|$.*\\$|\\\\s*$')
+        and ('\"' in s) %}\n    {{ s | from_json | map('string') | map('trim') | reject('equalto','')
+        | list }}\n\n  {# \"Lista\" com aspas simples: ['Antonio','Renata'] (heurística)
+        #}\n  {% elif s | regex_match(\"^\\\\s*\\|$.*\\$|\\\\s*$\") and (\"'\" in
+        s) %}\n    {% set s_json = s | replace(\"'\", '\"') %}\n    {{ s_json | from_json
+        | map('string') | map('trim') | reject('equalto','') | list }}\n\n  {# Fallback
+        CSV: Antonio, Renata #}\n  {% else %}\n    {{ s.split(',') | map('trim') |
+        reject('equalto','') | list }}\n  {% endif %}\n{% endif %}"
+      alvos: "{% set base = itens_destinatarios %}\n{% set itens = (mapa_destinatarios.keys()
+        | list) if (base | length == 0) else base %}\n{% set ns = namespace(out=[])
+        %}\n\n{% for item in itens %}\n  {% set s = (item | string | trim) %}\n  {%
+        set s_l = s | lower %}\n\n  {% if s_l | regex_match('^notify\\\\..+') %}\n
+        \   {% set ns.out = ns.out + [s_l] %}\n  {% else %}\n    {% set k0 = s | slugify
+        %}\n    {% set k = sinonimos[k0] if k0 in sinonimos else k0 %}\n    {% if
+        k in mapa_destinatarios %}\n      {% set ns.out = ns.out + [ mapa_destinatarios[k]
+        ] %}\n    {% endif %}\n  {% endif %}\n{% endfor %}\n\n{{ ns.out | unique |
+        list }}"
+      msg: "{% if mensagem is string %}\n  {{ mensagem }}\n{% else %}\n  {{ mensagem
+        | list | join(' ') }}\n{% endif %}"
+      titulo_final: '{{ titulo | default('''') }}'
+      dados_final: '{{ dados if dados is mapping else omit }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (alvos | length) == 0 }}'
+      sequence:
+      - action: system_log.write
+        data:
+          level: warning
+          message: 'script.enviar_notificacao_app: nenhum destinatário válido resolvido
+            a partir de {{ destinatarios }}
+
+            '
+      - stop: Sem destinatários válidos
+    - conditions:
+      - condition: template
+        value_template: '{{ (msg | length) == 0 }}'
+      sequence:
+      - stop: Sem mensagem
+  - repeat:
+      for_each: '{{ alvos }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ repeat.item == ''notify.edge_antonio'' }}'
+          sequence:
+          - action: notify.mobile_app_edge_antonio
+            data:
+              message: '{{ msg }}'
+              title: '{{ titulo_final if (titulo_final | length > 0) else omit }}'
+              data: '{{ dados if dados is mapping else {} }}'
+        - conditions:
+          - condition: template
+            value_template: '{{ repeat.item == ''notify.edge_renata'' }}'
+          sequence:
+          - action: notify.mobile_app_edge_renata
+            data:
+              message: '{{ msg }}'
+              title: '{{ titulo_final if (titulo_final | length > 0) else omit }}'
+              data: '{{ dados if dados is mapping else {} }}'
+        default:
+        - action: system_log.write
+          data:
+            level: warning
+            message: 'script.enviar_notificacao_app: alvo desconhecido {{ repeat.item
+              }}'
+alarme_loop_de_alertas_telegram:
+  alias: "\U0001F6A8 Alarme — Loop de Alertas (Telegram + App)"
+  mode: restart
+  icon: mdi:alarm-light
+  description: "# \U0001F6A8 Loop de Alerta Crítico (Telegram & App)\n\nEnvia notificações
+    repetidas para Telegram e Celulares enquanto o alarme estiver disparado.\nPara
+    se o alarme for desarmado OU se o `input_boolean.casa_alarme_alerta_silenciado`
+    for ligado.\n"
+  sequence:
+  - variables:
+      alarme: alarm_control_panel.alarme_hikvision_axpro
+      intervalo_alerta_seg: 20
+      teclado_telegram: "\U0001F515 Silenciar Alertas:/alarme_silenciar, \U0001F513
+        Desativar Alarme:/alarme_desativar"
+      acoes_app:
+      - action: ALARME_SILENCIAR
+        title: "\U0001F515 Silenciar Alertas"
+      - action: ALARME_DESATIVAR
+        title: "\U0001F513 Desativar Alarme"
+  - repeat:
+      while:
+      - condition: template
+        value_template: '{{ is_state(alarme, ''triggered'') }}'
+      - condition: state
+        entity_id: input_boolean.casa_alarme_alerta_silenciado
+        state: 'off'
+      sequence:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios:
+          - antonio
+          - renata
+          parse_mode: MarkdownV2
+          titulo: "\U0001F6A8 Alarme Disparado!"
+          mensagem: "⚠️ **Atenção!** O sistema detectou uma intrusão.\n\n\U0001F552
+            **Hora:** {{ now().strftime('%H:%M:%S') }}\n\U0001F4C5 **Data:** {{ now().strftime('%d/%m/%Y')
+            }}\n\nVerifique as câmeras imediatamente.\n"
+          inline_keyboard: '{{ teclado_telegram }}'
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios:
+          - antonio
+          - renata
+          titulo: "\U0001F6A8 Alarme Disparado!"
+          mensagem: ⚠️ Intrusão detectada! Verifique as câmeras.
+          dados:
+            tag: alarme_disparado
+            importance: high
+            priority: high
+            ttl: 0
+            color: '#FF0000'
+            notification_icon: mdi:shield-alert
+            actions: '{{ acoes_app }}'
+      - delay:
+          seconds: '{{ intervalo_alerta_seg }}'
+enviar_notificacao_telegram:
+  alias: "\U0001F4E8 Enviar Notificação Telegram"
+  description: "# \U0001F4E8 Central de Notificações Telegram\n\n  Script universal
+    para envio de mensagens, fotos e vídeos com tratamento automático de caracteres
+    especiais.\n\n---\n\n### ✨ DESTAQUES\n* \U0001F6E1️ **Blindado:** Escape automático
+    de caracteres para MarkdownV2.\n* \U0001F4F8 **Câmeras:** Grava clipe, extrai
+    frame e envia foto automaticamente.\n* \U0001F465 **Multi-usuário:** Envia para
+    `antonio`, `renata` ou listas.\n\n---\n\n### \U0001F4DD CAMPOS E DETALHES TÉCNICOS\n\n####
+    \U0001F465 destinatarios (Opcional)\n* **Aceita:** Nome único (`antonio`) ou lista
+    (`['antonio', 'renata']`).\n* **Comportamento:** Normaliza para minúsculo. Se
+    um nome não existir no mapa, o script **LOGA ERRO e PARA** (segurança).\n* **Padrão:**
+    `['antonio']` (se omitido).\n\n#### \U0001F4AC Conteúdo\n* **titulo:** Cabeçalho
+    em destaque. (MarkdownV2: vira negrito `*...*`; HTML: vira `<b>...</b>`).\n* **mensagem:**
+    O texto principal. Se `parse_mode: MarkdownV2`, sofre escape automático.\n* **caption:**
+    Legenda da foto. Se omitido, usa a `mensagem`.\n\n#### ⚙️ Configurações\n* **cameras:**
+    ID da câmera (ex: `camera.camera_garagem_hd_stream`) ou lista. Gera clipe + foto.\n*
+    **parse_mode:** `MarkdownV2` (Recomendado/Padrão) ou `HTML`.\n\n---\n\n### \U0001F4A1
+    EXEMPLOS DE USO\n\n ---\n\n1) **Texto simples para Antonio:**\n   destinatarios:
+    antonio\n   mensagem: \"Movimento detectado na garagem.\"\n   parse_mode: MarkdownV2\n\n2)
+    **Texto com título para dois destinatários:**\n   destinatarios: [\"antonio\",\"renata\"]\n
+    \  titulo: \"\U0001F6A8 Alerta Crítico\"\n   mensagem: \"Portão aberto.\"\n   parse_mode:
+    MarkdownV2\n\n3) **Texto + foto (frame) de uma câmera:**\n   destinatarios: renata\n
+    \  mensagem: \"Alguém na entrada.\"\n   cameras: camera.camera_garagem_hd_stream\n
+    \  caption: \"Entrada agora\"\n   parse_mode: MarkdownV2\n\n---\n"
+  icon: phu:telegram
+  mode: queued
+  max: 10
+  fields:
+    destinatarios:
+      description: 'Nome ou lista de nomes para notificar (ex: ''antonio'' ou [''antonio'',''renata'']).'
+      example: '[''Antonio'', ''Renata'']'
+    titulo:
+      description: (Opcional) Título da notificação; se definido, vai acima da mensagem.
+      example: Alerta
+    mensagem:
+      description: Mensagem de texto a ser enviada.
+      example: Movimento detectado na garagem.
+    cameras:
+      description: (Opcional) ID de uma ou mais câmeras para capturar um frame de
+        clipe.
+      example: camera.camera_garagem_hd_stream
+    caption:
+      description: (Opcional) Legenda para a imagem. Se não definida, usa a mensagem
+        principal.
+      example: Olha o que eu vi!
+    parse_mode:
+      description: 'Formato da mensagem: ''MarkdownV2'' ou ''HTML''. Escape automático
+        para MarkdownV2.'
+      example: MarkdownV2
+    inline_keyboard:
+      description: "(Opcional) Teclado inline do Telegram (lista de linhas). Exemplo
+        de uso na automação: inline_keyboard:\n  - - \"Ativar dia de faxina:/faxina_on\""
+      example: Ativar dia de faxina:/faxina_on
+  sequence:
+  - variables:
+      mapa_destinatarios:
+        antonio: '664449565'
+        renata: '1071303595'
+      nomes: "{% set nomes_raw = destinatarios | default(['antonio']) %} {% if nomes_raw
+        is string %}\n  {{ [nomes_raw | lower] }}\n{% else %}\n  {{ nomes_raw | map('lower')
+        | list }}\n{% endif %}"
+      nomes_invalidos: "{% set ns = namespace(list=[]) %} {% for nome in nomes %}\n
+        \ {% if nome not in mapa_destinatarios %}\n    {% set ns.list = ns.list +
+        [nome] %}\n  {% endif %}\n{% endfor %} {{ ns.list }}"
+      alvos: "{% set ns = namespace(list=[]) %} {% for nome in nomes %}\n  {% if nome
+        in mapa_destinatarios %}\n    {% set ns.list = ns.list + [ mapa_destinatarios[nome]
+        ] %}\n  {% endif %}\n{% endfor %} {{ ns.list | unique | list }}"
+      lista_cameras: "{% if cameras is defined %}\n  {% if cameras is string %}\n
+        \   {{ [cameras] }}\n  {% else %}\n    {{ cameras }}\n  {% endif %}\n{% else
+        %}\n  {{ [] }}\n{% endif %}"
+      effective_parse_mode: "{% set pm = parse_mode | default('') | lower %}\n{% if
+        pm == 'markdownv2' %}\n  markdownv2\n{% elif pm == 'html' %}\n  html\n{% else
+        %}\n  {{ '' }}\n{% endif %}"
+      titulo_raw: '{{ titulo | default('''') }}'
+      mensagem_raw: '{{ mensagem | default('''') }}'
+      titulo_esc: "{% set t = titulo_raw %} {% if effective_parse_mode == 'markdownv2'
+        and t | length > 0 %}\n  {% set special_chars = ['\\\\', '_', '*', '[', ']',
+        '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'] %}\n
+        \ {% set ns = namespace(saida=[]) %}\n  {% for char in t %}\n    {% if char
+        in special_chars %}\n      {% set ns.saida = ns.saida + ['\\\\', char] %}\n
+        \   {% else %}\n      {% set ns.saida = ns.saida + [char] %}\n    {% endif
+        %}\n  {% endfor %}\n  {{ ns.saida | join('') }}\n{% else %}\n  {{ t }}\n{%
+        endif %}"
+      mensagem_esc: "{% set m = mensagem_raw %} {% if effective_parse_mode == 'markdownv2'
+        and m | length > 0 %}\n  {% set special_chars = ['\\\\', '_', '[', ']', '(',
+        ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'] %}\n  {%
+        set ns = namespace(saida=[]) %}\n  {% for char in m %}\n    {% if char in
+        special_chars %}\n      {% set ns.saida = ns.saida + ['\\\\', char] %}\n    {%
+        else %}\n      {% set ns.saida = ns.saida + [char] %}\n    {% endif %}\n  {%
+        endfor %}\n  {{ ns.saida | join('') }}\n{% else %}\n  {{ m }}\n{% endif %}"
+      mensagem_texto: "{% if titulo_esc | length > 0 %}\n  {% if effective_parse_mode
+        == 'html' %}\n    <b>{{ titulo_esc }}</b>\n    {{ '' }}\n    {{ mensagem_esc
+        }}\n  {% elif effective_parse_mode == 'markdownv2' %}\n    *{{ titulo_esc
+        }}*\n    {{ '' }}\n    {{ mensagem_esc }}\n  {% else %}\n    {{ titulo_esc
+        }}\n    {{ '' }}\n    {{ mensagem_esc }}\n  {% endif %}\n{% else %}\n  {{
+        mensagem_esc }}\n{% endif %}"
+      caption_texto: "{% if caption is defined and caption | length > 0 %}\n  {% set
+        c = caption %}\n  {% if effective_parse_mode == 'markdownv2' %}\n    {% set
+        special_chars = ['\\\\', '_', '[', ']', '(', ')', '~', '`', '>', '#', '+',
+        '-', '=', '|', '{', '}', '.', '!'] %}\n    {% set ns = namespace(saida=[])
+        %}\n    {% for char in c %}\n      {% if char in special_chars %}\n        {%
+        set ns.saida = ns.saida + ['\\\\', char] %}\n      {% else %}\n        {%
+        set ns.saida = ns.saida + [char] %}\n      {% endif %}\n    {% endfor %}\n
+        \   {{ ns.saida | join('') }}\n  {% else %}\n    {{ c }}\n  {% endif %}\n{%
+        else %}\n  {{ mensagem_esc }}\n{% endif %}"
+      inline_keyboard_eff: '{{ inline_keyboard if inline_keyboard is defined else
+        [] }}'
+  - if:
+    - condition: template
+      value_template: '{{ nomes_invalidos | count > 0 }}'
+    then:
+    - action: system_log.write
+      data:
+        level: error
+        message: 'Enviar Notificação Telegram: destinatario(s) invalido(s)={{ nomes_invalidos
+          }}; destinatarios={{ destinatarios }}; nomes={{ nomes }}; mapa={{ mapa_destinatarios
+          }}.'
+    - stop: 'Destinatário inválido: {{ nomes_invalidos }}'
+  - if:
+    - condition: template
+      value_template: '{{ alvos | count == 0 }}'
+    then:
+    - action: system_log.write
+      data:
+        level: error
+        message: 'Enviar Notificação Telegram: alvos vazios. destinatarios={{ destinatarios
+          }}; nomes={{ nomes }}; mapa={{ mapa_destinatarios }}; alvos={{ alvos }}.'
+    - stop: Alvos vazios (nenhum destinatário válido).
+  - if:
+    - condition: template
+      value_template: '{{ mensagem_texto | trim | length > 0 }}'
+    then:
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ effective_parse_mode != '''' }}'
+        sequence:
+        - action: telegram_bot.send_message
+          continue_on_error: true
+          data:
+            chat_id: '{{ alvos }}'
+            message: '{{ mensagem_texto }}'
+            parse_mode: '{{ effective_parse_mode }}'
+            inline_keyboard: '{{ inline_keyboard_eff }}'
+      default:
+      - action: telegram_bot.send_message
+        continue_on_error: true
+        data:
+          chat_id: '{{ alvos }}'
+          message: '{{ mensagem_texto }}'
+          inline_keyboard: '{{ inline_keyboard_eff }}'
+  - if:
+    - condition: template
+      value_template: '{{ lista_cameras | count > 0 }}'
+    then:
+    - repeat:
+        for_each: '{{ lista_cameras }}'
+        sequence:
+        - variables:
+            cam_id: '{{ repeat.item }}'
+            stamp: '{{ now().strftime(''%Y%m%d_%H%M%S_%f'') }}'
+            clip: /config/www/tmp/{{ cam_id.split('.')[-1] }}_{{ stamp }}.mp4
+            caminho_foto: /config/www/capturas/{{ cam_id.split('.')[-1] }}_{{ stamp
+              }}.jpg
+        - action: camera.record
+          data:
+            entity_id: '{{ cam_id }}'
+            filename: '{{ clip }}'
+            duration: 2
+        - action: shell_command.frame_from_clip
+          data:
+            src: '{{ clip }}'
+            dst: '{{ caminho_foto }}'
+        - choose:
+          - conditions:
+            - condition: template
+              value_template: '{{ effective_parse_mode != '''' }}'
+            sequence:
+            - action: telegram_bot.send_photo
+              continue_on_error: true
+              data:
+                chat_id: '{{ alvos }}'
+                file: '{{ caminho_foto }}'
+                caption: '{{ caption_texto }}'
+                parse_mode: '{{ effective_parse_mode }}'
+                inline_keyboard: '{{ inline_keyboard_eff }}'
+          default:
+          - action: telegram_bot.send_photo
+            continue_on_error: true
+            data:
+              chat_id: '{{ alvos }}'
+              file: '{{ caminho_foto }}'
+              caption: '{{ caption_texto }}'
+              inline_keyboard: '{{ inline_keyboard_eff }}'
+alarme_piscar_cabeceira_vermelho:
+  alias: "\U0001F6A8 Alarme — Piscar Cabeceiras (vermelho)"
+  description: 'Pisca as cabeceiras em vermelho enquanto a condição do loop for verdadeira,
+    e restaura o estado ao final.
+
+    '
+  mode: restart
+  sequence:
+  - action: scene.create
+    data:
+      scene_id: pre_alarme_cabeceiras
+      snapshot_entities:
+      - light.suite_cabeceira_antonio_localtuya
+      - light.suite_cabeceira_renata_localtuya
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.alarme_hikvision_axpro
+        state: triggered
+      - condition: state
+        entity_id: input_boolean.casa_alarme_alerta_silenciado
+        state: 'off'
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.suite_cabeceira_antonio_localtuya
+          - light.suite_cabeceira_renata_localtuya
+        data:
+          rgb_color:
+          - 255
+          - 0
+          - 0
+          brightness_pct: 100
+      - delay: 00:00:01
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.suite_cabeceira_antonio_localtuya
+          - light.suite_cabeceira_renata_localtuya
+      - delay: 00:00:02
+  - action: scene.turn_on
+    target:
+      entity_id: scene.pre_alarme_cabeceiras
+contar_garrafa_de_agua_com_gas_e_anunciar:
+  alias: "\U0001F37E Contar Garrafa de Gás e Anunciar"
+  sequence:
+  - target:
+      entity_id: counter.sistema_garrafas_de_agua_com_gas
+    action: counter.increment
+  - delay:
+      seconds: 5
+  - variables:
+      total_garrafas: '{{ states(''counter.sistema_garrafas_de_agua_com_gas'') | int
+        }}'
+  - data:
+      dispositivos: cozinha
+      mensagem: 'Mais uma garrafa de água com gás. Esse cilindro já fez {{ total_garrafas
+        }} garrafas.
+
+        '
+      tipo: announce
+    action: script.enviar_notificacao_alexa
+  - data:
+      destinatarios:
+      - antonio
+      parse_mode: MarkdownV2
+      titulo: "\U0001F4A7 Gás de Água"
+      mensagem: 'Mais uma garrafa de água com gás produzida!
+
+
+        Total atual: *{{ total_garrafas }}* garrafas.
+
+        '
+    action: script.enviar_notificacao_telegram
+armar_alarme:
+  alias: "\U0001F6A8 Armar Alarme"
+  sequence:
+  - action: alarm_control_panel.alarm_arm_away
+    metadata: {}
+    target:
+      entity_id: alarm_control_panel.alarme_hikvision_axpro
+    data: {}
+  description: ''
+  icon: mdi:shield-home
+alexa_actionable_notification:
+  alias: "\U0001F5E3️ Alexa Actionable Notification"
+  description: Activates an actionable notification on a specific echo device. Aceita
+    nome amigável (sala, cozinha, …), entity_id antigo ou media_player atual — resolvido
+    como script.enviar_notificacao_alexa.
+  icon: phu:alexa-logo
+  mode: single
+  fields:
+    text:
+      description: The text you would like alexa to speak.
+      example: What would you like the thermostat set to?
+    event_id:
+      description: Correlation ID for event responses
+      example: ask_for_temperature
+    alexa_device:
+      description: Nome amigável (sala, cozinha, …) ou media_player entity_id
+      example: sala
+    suppress_confirmation:
+      description: Set true if you want to suppress 'okay' confirmation
+      example: 'true'
+    alexa_devices:
+      name: Echos (lista)
+      description: Opcional. Vários nomes amigáveis; grava o input_text uma vez e
+        dispara a skill em todos.
+      example: '[''sala'', ''cozinha'', ''brinquedoteca'']'
+      selector:
+        object: {}
+  sequence:
+  - variables:
+      lista_dispositivos: "{% set raw = alexa_devices | default(none) %}\n{% if raw
+        is not none and raw != '' %}\n  {% if raw is string %}\n    {{ [raw | trim]
+        }}\n  {% else %}\n    {{ raw | map('string') | map('trim') | reject('equalto','')
+        | list }}\n  {% endif %}\n{% else %}\n  {{ [(alexa_device | default('sala')
+        | string | trim)] }}\n{% endif %}"
+      mps_disparo: "{% set mapa = {\n  'escritorio':'media_player.escritorio_echo_mediaplayer',\n
+        \ 'banheiro_social':'media_player.banheiro_social_echo_mediaplayer',\n  'sala':'media_player.sala_de_tv_echo_mediaplayer',\n
+        \ 'sala_de_tv':'media_player.sala_de_tv_echo_mediaplayer',\n  'cozinha':'media_player.cozinha_echo_mediaplayer',\n
+        \ 'oficina':'media_player.oficina_echo_mediaplayer',\n  'banheiro_suite':'media_player.banheiro_suite_echo_mediaplayer',\n
+        \ 'quarto_da_cecilia':'media_player.quarto_cecilia_echo_mediaplayer',\n  'brinquedoteca':'media_player.brinquedoteca_echo_mediaplayer',\n
+        \ 'suite':'media_player.suite_echo_mediaplayer',\n  'quarto_cecilia':'media_player.quarto_cecilia_echo_mediaplayer',\n
+        \ 'sala_de_jantar':'media_player.sala_de_jantar_echo_mediaplayer',\n  'jantar':'media_player.sala_de_jantar_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_sala_de_tv':'media_player.sala_de_tv_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_cozinha':'media_player.cozinha_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_escritorio':'media_player.escritorio_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_oficina':'media_player.oficina_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_banheiro_social':'media_player.banheiro_social_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_banheiro_suite':'media_player.banheiro_suite_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_cecilia':'media_player.quarto_cecilia_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_brinquedoteca':'media_player.brinquedoteca_echo_mediaplayer',\n
+        \ 'media_player.echo_dot_suite':'media_player.suite_echo_mediaplayer',\n  'media_player.echo_show_11_de_antonio':'media_player.sala_de_jantar_echo_mediaplayer',\n
+        \ 'media_player.sala_de_jantar_echo_mediaplayer':'media_player.sala_de_jantar_echo_mediaplayer',\n
+        \ 'media_player.sala_de_jantar_echo_devices':'media_player.sala_de_jantar_echo_devices',\n
+        \ 'media_player.echo_show_11':'media_player.sala_de_jantar_echo_devices'\n}
+        %}\n{% set ns = namespace(items=[]) %}\n{% for n in lista_dispositivos %}\n
+        \ {% set s = (n | string | trim) %}\n  {% set s_l = s | lower %}\n  {% if
+        s_l in mapa %}\n    {% set mp = mapa[s_l] %}\n  {% elif s_l.startswith('media_player.')
+        %}\n    {% set mp = mapa[s_l] if s_l in mapa else s_l %}\n  {% else %}\n    {%
+        set mp = mapa[s | slugify] | default('media_player.sala_de_tv_echo_mediaplayer')
+        %}\n  {% endif %}\n  {% if mp not in ns.items %}\n    {% set ns.items = ns.items
+        + [mp] %}\n  {% endif %}\n{% endfor %}\n{{ ns.items }}"
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.alexa_actionable_notification
+    data:
+      value: '{"text": "{{ text }}", "event": "{{ event_id }}", "suppress_confirmation":
+        "{{ suppress_confirmation }}"}'
+  - action: alexa_media.update_last_called
+    continue_on_error: true
+  - repeat:
+      for_each: '{{ mps_disparo }}'
+      sequence:
+      - action: media_player.media_stop
+        target:
+          entity_id: '{{ repeat.item }}'
+        continue_on_error: true
+  - delay:
+      seconds: 1
+  - action: media_player.play_media
+    target:
+      entity_id: '{{ mps_disparo }}'
+    data:
+      media_content_type: skill
+      media_content_id: amzn1.ask.skill.e347cb98-a5f7-436c-b345-7bf8af1efba9
+    continue_on_error: true
+saida_casa_verificar_e_armar_alarme:
+  alias: "\U0001F3E0 Saída - Apagar luzes e armar alarme"
+  description: 'Portas, janelas e Alexa (nomes amigáveis via script.enviar_notificacao_alexa).
+    Porta da sala: ritual abrir/fechar em silêncio. Ao sair, desliga luzes/ventiladores/media/umidificadores
+    (exceto garagem_luzes), ar-condicionados e switches do grupo saída; Telegram se
+    falhar; arma ausente.'
+  mode: single
+  icon: mdi:shield-lock-outline
+  fields:
+    alexa_dispositivo:
+      name: Echo (Alexa)
+      description: Nome amigável (sala, cozinha, …). Resolvido por script.enviar_notificacao_alexa.
+      default: sala
+      selector:
+        select:
+          options:
+          - sala
+          - cozinha
+          - escritorio
+          - oficina
+          - suite
+          - brinquedoteca
+          - banheiro_suite
+          - banheiro_social
+          - quarto_cecilia
+  sequence:
+  - variables:
+      garagem_luzes:
+      - light.garagem_interruptor_cozinha_z2m_l2_garagen
+      - light.garagem_interruptor_cozinha_z2m_l3_jardim_garagem
+      - light.garagem_interruptor_sala_de_tv_z2m_l1_alpendre
+      - light.garagem_interruptor_escritorio_z2m_l2_varanda
+      alexa: '{{ alexa_dispositivo | default(''sala'', true) }}'
+  - if:
+    - condition: template
+      value_template: '{% set C = [''binary_sensor.cozinha_porta_baixa_z2m_contact'',''binary_sensor.cozinha_porta_alta_z2m_contact'',''binary_sensor.cozinha_porta_terreiro_z2m_contact'',''binary_sensor.escritorio_porta_varanda_z2m_contact'']
+        %}{{ C | select(''is_state'', ''on'') | list | length > 0 }}'
+    then:
+    - variables:
+        msg_criticos: '{% set C = [''binary_sensor.cozinha_porta_baixa_z2m_contact'',''binary_sensor.cozinha_porta_alta_z2m_contact'',''binary_sensor.cozinha_porta_terreiro_z2m_contact'',''binary_sensor.escritorio_porta_varanda_z2m_contact'']
+          %}{% set ns = namespace(parts=[]) %}{% for e in C %}{% if is_state(e, ''on'')
+          %}{% set ns.parts = ns.parts + [state_attr(e, ''friendly_name'') | default(e)]
+          %}{% endif %}{% endfor %}Atenção: {{ ns.parts | join('', '') }} está aberto.
+          Não posso ligar o alarme.'
+    - action: script.enviar_notificacao_alexa
+      data:
+        dispositivos: '{{ alexa }}'
+        mensagem: '{{ msg_criticos }}'
+    - stop: portas_criticas_abertas
+  - if:
+    - condition: template
+      value_template: '{% set C = [''binary_sensor.sala_de_tv_janela_direita_z2m_contact'',''binary_sensor.sala_de_tv_janela_esquerda_z2m_contact'',''binary_sensor.oficina_janela_z2m_contact'',''binary_sensor.oficina_porta_z2m_contact'']
+        %}{{ C | select(''is_state'', ''on'') | list | length > 0 }}'
+    then:
+    - variables:
+        texto_inter: '{% set C = [''binary_sensor.sala_de_tv_janela_direita_z2m_contact'',''binary_sensor.sala_de_tv_janela_esquerda_z2m_contact'',''binary_sensor.oficina_janela_z2m_contact'',''binary_sensor.oficina_porta_z2m_contact'']
+          %}{% set ns = namespace(parts=[]) %}{% for e in C %}{% if is_state(e, ''on'')
+          %}{% set ns.parts = ns.parts + [state_attr(e, ''friendly_name'') | default(e)]
+          %}{% endif %}{% endfor %}Tem abertura em: {{ ns.parts | join('', '') }}.
+          Quer armar o alarme e sair assim mesmo? Diga sim para confirmar, ou não
+          para cancelar.'
+    - action: script.turn_on
+      target:
+        entity_id: script.alexa_actionable_notification
+      data:
+        variables:
+          text: '{{ texto_inter }}'
+          event_id: saida_casa_intermediarios
+          alexa_device: '{{ alexa }}'
+          suppress_confirmation: 'true'
+    - wait_for_trigger:
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: saida_casa_intermediarios
+      timeout:
+        seconds: 45
+      continue_on_timeout: true
+    - if:
+      - condition: template
+        value_template: "{{ not (\n  (wait is defined) and (wait.trigger is not none)\n
+          \ and (wait.trigger.event is defined)\n  and (wait.trigger.event.data.get('event_response_type',
+          '') == 'ResponseYes')\n) }}"
+      then:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ alexa }}'
+          mensagem: Beleza, cancelei. O alarme não foi armado.
+      - stop: usuario_cancelou_intermediarios
+  - if:
+    - condition: template
+      value_template: '{% set C = [''binary_sensor.brinquedoteca_janela_z2m_contact'',''binary_sensor.quarto_cecilia_janela_z2m_contact'',''binary_sensor.suite_janela_z2m_contact'']
+        %}{{ C | select(''is_state'', ''on'') | list | length > 0 }}'
+    then:
+    - variables:
+        msg_alertas: '{% set C = [''binary_sensor.brinquedoteca_janela_z2m_contact'',''binary_sensor.quarto_cecilia_janela_z2m_contact'',''binary_sensor.suite_janela_z2m_contact'']
+          %}{% set ns = namespace(parts=[]) %}{% for e in C %}{% if is_state(e, ''on'')
+          %}{% set ns.parts = ns.parts + [state_attr(e, ''friendly_name'') | default(e)]
+          %}{% endif %}{% endfor %}Atenção: {{ ns.parts | join('', '') }} vai ficar
+          aberto. Vou ligar o alarme e apagar as luzes para você.'
+    - action: script.enviar_notificacao_alexa
+      data:
+        dispositivos: '{{ alexa }}'
+        mensagem: '{{ msg_alertas }}'
+  - if:
+    - condition: state
+      entity_id: binary_sensor.sala_de_tv_porta_contato_hikvision_axpro
+      state: 'off'
+    then:
+    - wait_for_trigger:
+      - trigger: state
+        entity_id: binary_sensor.sala_de_tv_porta_contato_hikvision_axpro
+        to: 'on'
+        for:
+          seconds: 2
+      timeout:
+        minutes: 5
+      continue_on_timeout: true
+    - if:
+      - condition: template
+        value_template: '{{ (wait is defined) and (wait.trigger is none) }}'
+      then:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ alexa }}'
+          mensagem: Saída cancelada por tempo. Alarme não foi armado.
+          tipo: tts
+      - stop: timeout_porta_sala_saida_casa
+    - wait_for_trigger:
+      - trigger: state
+        entity_id: binary_sensor.sala_de_tv_porta_contato_hikvision_axpro
+        to: 'off'
+        for:
+          seconds: 3
+        from: 'on'
+      timeout:
+        minutes: 5
+      continue_on_timeout: true
+    - if:
+      - condition: template
+        value_template: '{{ (wait is defined) and (wait.trigger is none) }}'
+      then:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ alexa }}'
+          mensagem: Saída cancelada por tempo. Alarme não foi armado.
+          tipo: tts
+      - stop: timeout_porta_sala_saida_casa
+    else:
+    - wait_for_trigger:
+      - trigger: state
+        entity_id: binary_sensor.sala_de_tv_porta_contato_hikvision_axpro
+        to: 'off'
+        for:
+          seconds: 3
+        from: 'on'
+      timeout:
+        minutes: 5
+      continue_on_timeout: true
+    - if:
+      - condition: template
+        value_template: '{{ (wait is defined) and (wait.trigger is none) }}'
+      then:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ alexa }}'
+          mensagem: Saída cancelada por tempo. Alarme não foi armado.
+          tipo: tts
+      - stop: timeout_porta_sala_saida_casa
+  - variables:
+      tentativas_desligar: 4
+      intervalo_desligar_seg: 20
+      dominios_desligar_auto:
+      - light
+      - fan
+      - media_player
+      - humidifier
+      entidades_auto_desligar: "{% set excluir = garagem_luzes %}\n{% set ns = namespace(items=[])
+        %}\n{% for dominio in dominios_desligar_auto %}\n  {% for e in states[dominio]
+        | rejectattr('state', 'in', ['unavailable', 'unknown']) %}\n    {% if e.entity_id
+        not in excluir %}\n      {% set ns.items = ns.items + [e.entity_id] %}\n    {%
+        endif %}\n  {% endfor %}\n{% endfor %}\n{{ ns.items }}"
+      switches_desligar: '{{ expand(''switch.saida_desligar_switches'') | map(attribute=''entity_id'')
+        | list }}'
+      entidades_gerais_desligar: '{{ entidades_auto_desligar + switches_desligar }}'
+      climas_desligar: '{{ states.climate | rejectattr(''state'', ''in'', [''off'',
+        ''unavailable'', ''unknown'']) | map(attribute=''entity_id'') | list }}'
+      todos_desligar: '{{ entidades_gerais_desligar + climas_desligar }}'
+  - repeat:
+      count: '{{ tentativas_desligar }}'
+      sequence:
+      - variables:
+          pendentes_desligar: "{% set ns = namespace(items=[]) %}\n{% for e in todos_desligar
+            %}\n  {% if states(e) not in ['off', 'unavailable', 'unknown'] %}\n    {%
+            set ns.items = ns.items + [e] %}\n  {% endif %}\n{% endfor %}\n{{ ns.items
+            }}"
+          pendentes_gerais: '{{ pendentes_desligar | reject(''in'', climas_desligar)
+            | list }}'
+          pendentes_clima: '{{ pendentes_desligar | select(''in'', climas_desligar)
+            | list }}'
+      - if:
+        - condition: template
+          value_template: '{{ pendentes_gerais | count > 0 }}'
+        then:
+        - action: homeassistant.turn_off
+          target:
+            entity_id: '{{ pendentes_gerais }}'
+      - if:
+        - condition: template
+          value_template: '{{ pendentes_clima | count > 0 }}'
+        then:
+        - action: climate.turn_off
+          target:
+            entity_id: '{{ pendentes_clima }}'
+      - if:
+        - condition: template
+          value_template: '{{ repeat.index < (tentativas_desligar | int) }}'
+        then:
+        - delay:
+            seconds: '{{ intervalo_desligar_seg }}'
+  - variables:
+      falhas_desligar: "{% set ns = namespace(items=[]) %}\n{% for e in todos_desligar
+        %}\n  {% if states(e) not in ['off', 'unavailable', 'unknown'] %}\n    {%
+        set ns.items = ns.items + [e] %}\n  {% endif %}\n{% endfor %}\n{{ ns.items
+        }}"
+      falhas_desligar_nomes: "{% set ns = namespace(items=[]) %}\n{% for e in falhas_desligar
+        %}\n  {% set nome = state_attr(e, 'friendly_name') | default(e, true) %}\n
+        \ {% set ns.items = ns.items + [nome ~ ' (' ~ e ~ ') - estado: ' ~ states(e)]
+        %}\n{% endfor %}\n{{ ns.items }}"
+  - action: alarm_control_panel.alarm_arm_away
+    target:
+      entity_id: alarm_control_panel.alarme_hikvision_axpro
+    data: {}
+  - if:
+    - condition: template
+      value_template: '{{ falhas_desligar | count > 0 }}'
+    then:
+    - action: script.enviar_notificacao_telegram
+      data:
+        destinatarios:
+        - antonio
+        - renata
+        titulo: '⚠️ Saída: itens ainda ligados'
+        mensagem: 'Tentei desligar os itens da casa {{ tentativas_desligar }} vezes,
+          com intervalo de {{ intervalo_desligar_seg }} segundos.
+
+
+          Não consegui desligar:
+
+          - {{ falhas_desligar_nomes | join(''\n- '') }}'
+  - action: script.enviar_notificacao_alexa
+    data:
+      dispositivos: '{{ alexa }}'
+      mensagem: '{% if falhas_desligar | count > 0 %}Alarme armado. Tentei desligar
+        tudo, mas alguns itens continuaram ligados. Enviei os detalhes no Telegram.{%
+        else %}Alarme armado e itens da casa desligados.{% endif %}'
+homelab_teste_notificacao_backup:
+  alias: "\U0001F4BE Homelab: Teste notificações backup"
+  description: Simula alerta de backup Duplicati (warning/error) sem alterar sensores
+    SSD/OneDrive. Use para validar Telegram, app e notificação persistente.
+  icon: mdi:backup-restore-alert
+  mode: single
+  fields:
+    cenario:
+      name: Cenário
+      description: warning, error ou ambos (envia os dois alertas em sequência).
+      required: true
+      selector:
+        select:
+          options:
+          - warning
+          - error
+          - ambos
+      default: warning
+  sequence:
+  - variables:
+      destinatarios_homelab:
+      - antonio
+      agora: '{{ now().strftime(''%d/%m/%Y %H:%M'') }}'
+      job_teste: TESTE — Duplicati homelab
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ cenario in [''warning'', ''ambos''] }}'
+      sequence:
+      - action: persistent_notification.create
+        data:
+          title: '[TESTE] Backup com avisos — {{ job_teste }}'
+          message: Simulação de warning em {{ agora }}. Se recebeu isto, o canal persistente
+            funciona.
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: '{{ destinatarios_homelab }}'
+          titulo: '[TESTE] Homelab — backup com avisos'
+          mensagem: '{{ job_teste }}: simulação de warning em {{ agora }}.'
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: '{{ destinatarios_homelab }}'
+          titulo: '[TESTE] Homelab — backup com avisos'
+          mensagem: Simulação Duplicati — verifique se chegou no telemóvel.
+          dados:
+            tag: duplicati_backup_test_warning
+            channel: Homelab
+            importance: high
+            notification_icon: mdi:alert
+            color: '#FF9800'
+    - conditions:
+      - condition: template
+        value_template: '{{ cenario in [''error'', ''ambos''] }}'
+      sequence:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: '{{ destinatarios_homelab }}'
+          titulo: '[TESTE] Homelab — backup FALHOU'
+          mensagem: '{{ job_teste }}: simulação de erro em {{ agora }}.'
+      - action: script.enviar_notificacao_app
+        data:
+          destinatarios: '{{ destinatarios_homelab }}'
+          titulo: '[TESTE] Homelab — backup FALHOU'
+          mensagem: Simulação Duplicati — verifique se chegou no telemóvel.
+          dados:
+            tag: duplicati_backup_test_error
+            channel: Homelab
+            importance: high
+            notification_icon: mdi:backup-restore-alert
+            color: '#D32F2F'
+      - action: persistent_notification.create
+        data:
+          title: '[TESTE] Backup FALHOU — {{ job_teste }}'
+          message: Simulação de erro em {{ agora }}. Se recebeu isto, o canal persistente
+            funciona.
+pirata_cecilia:
+  alias: "\U0001F3F4‍☠️ Pirata Cecília"
+  description: Lembrete diário e consulta por voz do pirata, com pausa e retomada.
+    Responde no Echo que invocou. Prefere sensor.alexa_devices_last_called;
+    fallback AMP last_called se o evento ainda não chegou.
+  fields:
+    modo:
+      default: consultar
+      description: lembrete (cron) ou consultar (Alexa)
+      name: Modo
+      selector:
+        select:
+          options:
+          - consultar
+          - lembrete
+    alexa_dispositivo:
+      name: Echo (Alexa)
+      description: Nome amigável (sala, cozinha, …). Vazio = Echo que invocou por
+        voz.
+      default: ''
+      selector:
+        select:
+          options:
+          - ''
+          - sala
+          - cozinha
+          - brinquedoteca
+          - escritorio
+          - oficina
+          - suite
+          - banheiro_suite
+          - banheiro_social
+          - quarto_cecilia
+          - sala_de_jantar
+  icon: mdi:human-handsdown
+  mode: single
+  sequence:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (alexa_dispositivo | default('''') | string | trim) in
+          ['''', ''none'', ''None'', ''unknown'', ''unavailable''] }}'
+      sequence:
+      - variables:
+          t0_ms: '{{ (as_timestamp(now()) * 1000) | int }}'
+      - delay:
+          milliseconds: 800
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: >-
+              {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
+              {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+              {{ not (amig and age is not none and (age | int) < 60) }}
+          sequence:
+          - action: alexa_media.update_last_called
+            continue_on_error: true
+          - repeat:
+              count: 10
+              sequence:
+              - if:
+                - condition: template
+                  value_template: >-
+                    {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
+                    {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+                    {% if amig and age is not none and (age | int) < 60 %}
+                      false
+                    {% else %}
+                      {% set mapa = {
+                        'media_player.sala_de_tv_echo_mediaplayer': 'sala',
+                        'media_player.cozinha_echo_mediaplayer': 'cozinha',
+                        'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',
+                        'media_player.escritorio_echo_mediaplayer': 'escritorio',
+                        'media_player.oficina_echo_mediaplayer': 'oficina',
+                        'media_player.suite_echo_mediaplayer': 'suite',
+                        'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',
+                        'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',
+                        'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',
+                        'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',
+                        'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar',
+                      } %}
+                      {% set t0 = (t0_ms | default(0)) | int %}
+                      {% set ns = namespace(ok=false) %}
+                      {% for mp, nome in mapa.items() %}
+                        {% set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}
+                        {% set lc = state_attr(mp, 'last_called') %}
+                        {% if (lc is true or lc == true) and t >= (t0 - 8000) %}
+                          {% set ns.ok = true %}
+                        {% endif %}
+                      {% endfor %}
+                      {{ not ns.ok }}
+                    {% endif %}
+                then:
+                - delay:
+                    milliseconds: 400
+                - action: alexa_media.update_last_called
+                  continue_on_error: true
+  - variables:
+      minutos_restantes: "{% set t = 'timer.pirata_cecilia_sessao' %}\n{% set st =
+        states(t) %}\n{% if st == 'active' and state_attr(t, 'finishes_at') %}\n  {%
+        set secs = [(as_timestamp(state_attr(t, 'finishes_at')) - as_timestamp(now()))
+        | int, 0] | max %}\n{% elif state_attr(t, 'remaining') %}\n  {% set rem =
+        (state_attr(t, 'remaining') | string).split(':') %}\n  {% if rem | length
+        >= 3 %}\n    {% set secs = (rem[0] | int * 3600) + (rem[1] | int * 60) + (rem[2]
+        | int) %}\n  {% elif rem | length == 2 %}\n    {% set secs = (rem[0] | int
+        * 60) + (rem[1] | int) %}\n  {% else %}\n    {% set secs = 0 %}\n  {% endif
+        %}\n{% else %}\n  {% set secs = 0 %}\n{% endif %}\n{{ ((secs + 59) // 60)
+        if secs > 0 else 0 }}\n"
+      modo_final: '{{ modo | default(''consultar'') }}'
+      ecos_lembrete:
+      - sala
+      - cozinha
+      - brinquedoteca
+      echo_de_ecos: "{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+        'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer':
+        'brinquedoteca',\n  'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
+        \ 'media_player.oficina_echo_mediaplayer': 'oficina',\n  'media_player.suite_echo_mediaplayer':
+        'suite',\n  'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+        \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n  'media_player.quarto_cecilia_echo_mediaplayer':
+        'quarto_cecilia',\n  'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+        \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n} %}\n{% set
+        t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(dev='sala', ts=0,
+        flagged=none, fts=0) %}\n{% for mp, nome in mapa.items() %}\n  {% set t =
+        (state_attr(mp, 'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+        'last_called') %}\n  {% set fresco = (t0 == 0) or (t >= (t0 - 5000)) %}\n
+        \ {% if (lc is true or lc == true) and fresco and t >= ns.fts %}\n    {% set
+        ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif %}\n  {% if t >
+        ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome %}\n  {% endif
+        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{% endif %}"
+      mapa_echo:
+        media_player.sala_de_tv_echo_mediaplayer: sala
+        media_player.cozinha_echo_mediaplayer: cozinha
+        media_player.brinquedoteca_echo_mediaplayer: brinquedoteca
+        media_player.escritorio_echo_mediaplayer: escritorio
+        media_player.oficina_echo_mediaplayer: oficina
+        media_player.suite_echo_mediaplayer: suite
+        media_player.banheiro_suite_echo_mediaplayer: banheiro_suite
+        media_player.banheiro_social_echo_mediaplayer: banheiro_social
+        media_player.quarto_cecilia_echo_mediaplayer: quarto_cecilia
+        media_player.sala_de_jantar_echo_mediaplayer: sala_de_jantar
+        media_player.sala_de_jantar_echo_devices: sala_de_jantar
+      alexa_fixo: '{% set informado = alexa_dispositivo | default('''') | string |
+        trim %}
+
+        {{ informado not in ['''', ''none'', ''None'', ''unknown'', ''unavailable'']
+        }}
+
+        '
+      alexa: "{% set informado = alexa_dispositivo | default('') | string | trim %}\n{%
+        if informado not in ['', 'none', 'None', 'unknown', 'unavailable'] %}\n  {{
+        informado }}\n{% else %}\n{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+        'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer':
+        'brinquedoteca',\n  'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
+        \ 'media_player.oficina_echo_mediaplayer': 'oficina',\n  'media_player.suite_echo_mediaplayer':
+        'suite',\n  'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+        \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n  'media_player.quarto_cecilia_echo_mediaplayer':
+        'quarto_cecilia',\n  'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+        \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n} %}\n{% set
+        t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(dev='sala', ts=0,
+        flagged=none, fts=0) %}\n{% for mp, nome in mapa.items() %}\n  {% set t =
+        (state_attr(mp, 'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+        'last_called') %}\n  {% set fresco = (t0 == 0) or (t >= (t0 - 5000)) %}\n
+        \ {% if (lc is true or lc == true) and fresco and t >= ns.fts %}\n    {% set
+        ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif %}\n  {% if t >
+        ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome %}\n  {% endif
+        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{% endif %}\n{%
+        endif %}"
+      echo_tpl: "{% if alexa_informo %}\n  {{ alexa }}\n{% else %}\n{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else %}\n{% set mapa =
+        {\n  'media_player.sala_de_tv_echo_mediaplayer': 'sala',\n  'media_player.cozinha_echo_mediaplayer':
+        'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+        \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n  'media_player.oficina_echo_mediaplayer':
+        'oficina',\n  'media_player.suite_echo_mediaplayer': 'suite',\n  'media_player.banheiro_suite_echo_mediaplayer':
+        'banheiro_suite',\n  'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+        \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n  'media_player.sala_de_jantar_echo_mediaplayer':
+        'sala_de_jantar',\n  'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
+        %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(dev='sala',
+        ts=0, flagged=none, fts=0) %}\n{% for mp, nome in mapa.items() %}\n  {% set
+        t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}\n  {% set lc =
+        state_attr(mp, 'last_called') %}\n  {% set fresco = (t0 == 0) or (t >= (t0
+        - 5000)) %}\n  {% if (lc is true or lc == true) and fresco and t >= ns.fts
+        %}\n    {% set ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif
+        %}\n  {% if t > ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome
+        %}\n  {% endif %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else
+        ns.dev }}\n{% endif %}\n{% endif %}"
+  - variables:
+      tempo_falta: "{% set m = minutos_restantes | int %}\n{% if m <= 0 %}\n  menos
+        de um minuto\n{% elif m == 1 %}\n  1 minuto\n{% else %}\n  {{ m }} minutos\n{%
+        endif %}\n"
+  - if:
+    - condition: state
+      entity_id: input_boolean.pirata_cecilia_usou_hoje
+      state: 'on'
+    then:
+    - action: script.enviar_notificacao_alexa
+      data:
+        dispositivos: '{{ alexa }}'
+        mensagem: Cecília, você já usou o pirata hoje. Parabéns!
+    - stop: já usou hoje
+  - if:
+    - condition: state
+      entity_id: timer.pirata_cecilia_sessao
+      state: active
+    - condition: template
+      value_template: '{{ modo_final == ''consultar'' }}'
+    then:
+    - action: script.turn_on
+      target:
+        entity_id: script.alexa_actionable_notification
+      data:
+        variables:
+          text: Cecília, você está usando o pirata. Faltam {{ tempo_falta }}. Quer
+            pausar?
+          event_id: pirata_cecilia_pausar
+          alexa_device: '{{ alexa }}'
+          suppress_confirmation: 'true'
+    - wait_for_trigger:
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_pausar
+          event_response_type: ResponseYes
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_pausar
+          event_response_type: ResponseNo
+      timeout: 00:00:45
+      continue_on_timeout: true
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ not alexa_fixo }}'
+        sequence:
+        - variables:
+            t0_ms: '{{ (as_timestamp(now()) * 1000) | int }}'
+        - action: alexa_media.update_last_called
+          continue_on_error: true
+        - repeat:
+            count: 10
+            sequence:
+            - if:
+              - condition: template
+                value_template: "{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+                  'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n
+                  \ 'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+                  \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n  'media_player.oficina_echo_mediaplayer':
+                  'oficina',\n  'media_player.suite_echo_mediaplayer': 'suite',\n
+                  \ 'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+                  \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+                  \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n
+                  \ 'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+                  \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
+                  %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(ok=false)
+                  %}\n{% for mp, nome in mapa.items() %}\n  {% set t = (state_attr(mp,
+                  'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+                  'last_called') %}\n  {% if (lc is true or lc == true) and t >= (t0
+                  - 5000) %}\n    {% set ns.ok = true %}\n  {% endif %}\n{% endfor
+                  %}\n{{ not ns.ok }}"
+              then:
+              - delay:
+                  milliseconds: 500
+              - action: alexa_media.update_last_called
+                continue_on_error: true
+    - variables:
+        echo: '{{ echo_tpl }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) and
+            (wait.trigger.event.data.get(''event_response_type'', '''') == ''ResponseYes'')
+            }}'
+        sequence:
+        - action: timer.pause
+          target:
+            entity_id: timer.pirata_cecilia_sessao
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, ok, pausei o pirata.
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) }}'
+        sequence:
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, beleza, continua usando.
+      default:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ echo }}'
+          mensagem: Cecília, beleza, continua usando.
+    - stop: timer ativo
+  - if:
+    - condition: state
+      entity_id: timer.pirata_cecilia_sessao
+      state: paused
+    - condition: template
+      value_template: '{{ modo_final == ''consultar'' }}'
+    then:
+    - variables:
+        texto_continuar: Cecília, o pirata foi pausado. Faltam {{ tempo_falta }}.
+          Quer continuar?
+    - action: script.turn_on
+      target:
+        entity_id: script.alexa_actionable_notification
+      data:
+        variables:
+          text: '{{ texto_continuar }}'
+          event_id: pirata_cecilia_continuar
+          alexa_device: '{{ alexa }}'
+          suppress_confirmation: 'true'
+    - wait_for_trigger:
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_continuar
+          event_response_type: ResponseYes
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_continuar
+          event_response_type: ResponseNo
+      timeout: 00:00:45
+      continue_on_timeout: true
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ not alexa_fixo }}'
+        sequence:
+        - variables:
+            t0_ms: '{{ (as_timestamp(now()) * 1000) | int }}'
+        - action: alexa_media.update_last_called
+          continue_on_error: true
+        - repeat:
+            count: 10
+            sequence:
+            - if:
+              - condition: template
+                value_template: "{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+                  'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n
+                  \ 'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+                  \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n  'media_player.oficina_echo_mediaplayer':
+                  'oficina',\n  'media_player.suite_echo_mediaplayer': 'suite',\n
+                  \ 'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+                  \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+                  \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n
+                  \ 'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+                  \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
+                  %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(ok=false)
+                  %}\n{% for mp, nome in mapa.items() %}\n  {% set t = (state_attr(mp,
+                  'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+                  'last_called') %}\n  {% if (lc is true or lc == true) and t >= (t0
+                  - 5000) %}\n    {% set ns.ok = true %}\n  {% endif %}\n{% endfor
+                  %}\n{{ not ns.ok }}"
+              then:
+              - delay:
+                  milliseconds: 500
+              - action: alexa_media.update_last_called
+                continue_on_error: true
+    - variables:
+        echo: '{{ echo_tpl }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) and
+            (wait.trigger.event.data.get(''event_response_type'', '''') == ''ResponseYes'')
+            }}'
+        sequence:
+        - action: timer.start
+          target:
+            entity_id: timer.pirata_cecilia_sessao
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, beleza, continue usando o pirata.
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) }}'
+        sequence:
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, ok, continua pausado.
+      default:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ echo }}'
+          mensagem: Cecília, ok, continua pausado.
+    - stop: timer pausado consultar
+  - if:
+    - condition: state
+      entity_id: timer.pirata_cecilia_sessao
+      state: paused
+    - condition: template
+      value_template: '{{ modo_final == ''lembrete'' }}'
+    then:
+    - variables:
+        texto_continuar: Cecília, o pirata foi pausado durante o uso. Faltam {{ tempo_falta
+          }}. Quer continuar?
+    - action: script.turn_on
+      target:
+        entity_id: script.alexa_actionable_notification
+      data:
+        variables:
+          text: '{{ texto_continuar }}'
+          event_id: pirata_cecilia_continuar
+          alexa_devices: '{{ ecos_lembrete }}'
+          suppress_confirmation: 'true'
+    - wait_for_trigger:
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_continuar
+          event_response_type: ResponseYes
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_continuar
+          event_response_type: ResponseNo
+      timeout: 00:00:45
+      continue_on_timeout: true
+    - action: media_player.media_stop
+      target:
+        entity_id:
+        - media_player.sala_de_tv_echo_mediaplayer
+        - media_player.cozinha_echo_mediaplayer
+        - media_player.brinquedoteca_echo_mediaplayer
+      continue_on_error: true
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ not alexa_fixo }}'
+        sequence:
+        - variables:
+            t0_ms: '{{ (as_timestamp(now()) * 1000) | int }}'
+        - action: alexa_media.update_last_called
+          continue_on_error: true
+        - repeat:
+            count: 10
+            sequence:
+            - if:
+              - condition: template
+                value_template: "{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+                  'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n
+                  \ 'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+                  \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n  'media_player.oficina_echo_mediaplayer':
+                  'oficina',\n  'media_player.suite_echo_mediaplayer': 'suite',\n
+                  \ 'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+                  \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+                  \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n
+                  \ 'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+                  \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
+                  %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(ok=false)
+                  %}\n{% for mp, nome in mapa.items() %}\n  {% set t = (state_attr(mp,
+                  'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+                  'last_called') %}\n  {% if (lc is true or lc == true) and t >= (t0
+                  - 5000) %}\n    {% set ns.ok = true %}\n  {% endif %}\n{% endfor
+                  %}\n{{ not ns.ok }}"
+              then:
+              - delay:
+                  milliseconds: 500
+              - action: alexa_media.update_last_called
+                continue_on_error: true
+    - delay:
+        seconds: 1
+    - variables:
+        echo: '{{ echo_de_ecos }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) and
+            (wait.trigger.event.data.get(''event_response_type'', '''') == ''ResponseYes'')
+            }}'
+        sequence:
+        - action: timer.start
+          target:
+            entity_id: timer.pirata_cecilia_sessao
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, beleza, continue usando o pirata.
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) }}'
+        sequence:
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, ok, continua pausado.
+    - stop: timer pausado lembrete
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ modo_final == ''lembrete'' }}'
+      sequence:
+      - variables:
+          texto_lembrete: Cecília, você ainda não usou o pirata hoje. Quer usar agora?
+      - action: script.turn_on
+        target:
+          entity_id: script.alexa_actionable_notification
+        data:
+          variables:
+            text: '{{ texto_lembrete }}'
+            event_id: pirata_cecilia_lembrete
+            alexa_devices: '{{ ecos_lembrete }}'
+            suppress_confirmation: 'true'
+      - wait_for_trigger:
+        - trigger: event
+          event_type: alexa_actionable_notification
+          event_data:
+            event_id: pirata_cecilia_lembrete
+            event_response_type: ResponseYes
+        - trigger: event
+          event_type: alexa_actionable_notification
+          event_data:
+            event_id: pirata_cecilia_lembrete
+            event_response_type: ResponseNo
+        timeout: 00:00:45
+        continue_on_timeout: true
+      - action: media_player.media_stop
+        target:
+          entity_id:
+          - media_player.sala_de_tv_echo_mediaplayer
+          - media_player.cozinha_echo_mediaplayer
+          - media_player.brinquedoteca_echo_mediaplayer
+        continue_on_error: true
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ not alexa_fixo }}'
+          sequence:
+          - variables:
+              t0_ms: '{{ (as_timestamp(now()) * 1000) | int }}'
+          - action: alexa_media.update_last_called
+            continue_on_error: true
+          - repeat:
+              count: 10
+              sequence:
+              - if:
+                - condition: template
+                  value_template: "{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+                    'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n
+                    \ 'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+                    \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
+                    \ 'media_player.oficina_echo_mediaplayer': 'oficina',\n  'media_player.suite_echo_mediaplayer':
+                    'suite',\n  'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+                    \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+                    \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n
+                    \ 'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+                    \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
+                    %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(ok=false)
+                    %}\n{% for mp, nome in mapa.items() %}\n  {% set t = (state_attr(mp,
+                    'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+                    'last_called') %}\n  {% if (lc is true or lc == true) and t >=
+                    (t0 - 5000) %}\n    {% set ns.ok = true %}\n  {% endif %}\n{%
+                    endfor %}\n{{ not ns.ok }}"
+                then:
+                - delay:
+                    milliseconds: 500
+                - action: alexa_media.update_last_called
+                  continue_on_error: true
+      - delay:
+          seconds: 1
+      - variables:
+          resp: '{{ wait.trigger.event.data if (wait is defined and wait.trigger is
+            not none) else {} }}'
+          resp_type: '{{ resp.get(''event_response_type'', '''') }}'
+          resp_text: '{{ (resp.get(''event_response'', '''') | string | lower | trim)
+            }}'
+          ja_usou_resp: '{{ ''usei'' in resp_text or ''usou'' in resp_text }}'
+          quer_usar: '{{ resp_type == ''ResponseYes'' or resp_text in [''sim'', ''yes'']
+            }}'
+          nao_quer: '{{ resp_type == ''ResponseNo'' or resp_text in [''não'', ''nao'',
+            ''no''] }}'
+          echo: '{{ echo_de_ecos }}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ ja_usou_resp }}'
+          sequence:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.pirata_cecilia_usou_hoje
+          - action: script.enviar_notificacao_alexa
+            data:
+              dispositivos: '{{ echo }}'
+              mensagem: Cecília, ótimo, marquei que você já usou o pirata hoje.
+        - conditions:
+          - condition: template
+            value_template: '{{ quer_usar and not ja_usou_resp }}'
+          sequence:
+          - action: timer.start
+            target:
+              entity_id: timer.pirata_cecilia_sessao
+            data:
+              duration: 01:00:00
+          - action: script.enviar_notificacao_alexa
+            data:
+              dispositivos: '{{ echo }}'
+              mensagem: Cecília, beleza, vou iniciar o timer de uma hora e avisar
+                quando acabar.
+        - conditions:
+          - condition: template
+            value_template: '{{ nao_quer }}'
+          sequence:
+          - action: script.enviar_notificacao_alexa
+            data:
+              dispositivos: '{{ echo }}'
+              mensagem: Cecília, ok, te lembro de novo em breve.
+    default:
+    - action: script.turn_on
+      target:
+        entity_id: script.alexa_actionable_notification
+      data:
+        variables:
+          text: Cecília, você ainda não usou o pirata hoje. Quer usar agora?
+          event_id: pirata_cecilia_consultar
+          alexa_device: '{{ alexa }}'
+          suppress_confirmation: 'true'
+    - wait_for_trigger:
+      - trigger: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: pirata_cecilia_consultar
+      timeout: 00:00:45
+      continue_on_timeout: true
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ not alexa_fixo }}'
+        sequence:
+        - variables:
+            t0_ms: '{{ (as_timestamp(now()) * 1000) | int }}'
+        - action: alexa_media.update_last_called
+          continue_on_error: true
+        - repeat:
+            count: 10
+            sequence:
+            - if:
+              - condition: template
+                value_template: "{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+                  'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n
+                  \ 'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+                  \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n  'media_player.oficina_echo_mediaplayer':
+                  'oficina',\n  'media_player.suite_echo_mediaplayer': 'suite',\n
+                  \ 'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+                  \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+                  \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n
+                  \ 'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+                  \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
+                  %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(ok=false)
+                  %}\n{% for mp, nome in mapa.items() %}\n  {% set t = (state_attr(mp,
+                  'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+                  'last_called') %}\n  {% if (lc is true or lc == true) and t >= (t0
+                  - 5000) %}\n    {% set ns.ok = true %}\n  {% endif %}\n{% endfor
+                  %}\n{{ not ns.ok }}"
+              then:
+              - delay:
+                  milliseconds: 500
+              - action: alexa_media.update_last_called
+                continue_on_error: true
+    - variables:
+        echo: '{{ echo_tpl }}'
+        resp: '{{ wait.trigger.event.data if (wait is defined and wait.trigger is
+          not none) else {} }}'
+        resp_type: '{{ resp.get(''event_response_type'', '''') if resp is mapping
+          else '''' }}'
+        resp_text: '{{ (resp.get(''event_response'', '''') | string | lower | trim)
+          if resp is mapping else '''' }}'
+        ja_usou_resp: '{{ ''usei'' in resp_text or ''usou'' in resp_text or ''já usei''
+          in resp_text or ''ja usei'' in resp_text }}'
+        quer_usar: '{{ resp_type == ''ResponseYes'' or resp_text in [''sim'', ''yes'']
+          }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ ja_usou_resp }}'
+        sequence:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.pirata_cecilia_usou_hoje
+        - action: timer.cancel
+          target:
+            entity_id: timer.pirata_cecilia_sessao
+          continue_on_error: true
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, ótimo, marquei que você já usou o pirata hoje.
+      - conditions:
+        - condition: template
+          value_template: '{{ quer_usar and not ja_usou_resp }}'
+        sequence:
+        - action: timer.start
+          target:
+            entity_id: timer.pirata_cecilia_sessao
+          data:
+            duration: 01:00:00
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, beleza, vou iniciar o timer de uma hora e avisar quando
+              acabar.
+      - conditions:
+        - condition: template
+          value_template: '{{ (wait is defined) and (wait.trigger is not none) }}'
+        sequence:
+        - action: script.enviar_notificacao_alexa
+          data:
+            dispositivos: '{{ echo }}'
+            mensagem: Cecília, ok, quando quiser é só me falar.
+      default:
+      - action: script.enviar_notificacao_alexa
+        data:
+          dispositivos: '{{ echo }}'
+          mensagem: Cecília, ok, quando quiser é só me falar.
+cozinha_termocirculador_iniciar:
+  alias: "\U0001F372 Cozinha — Termocirculador Iniciar"
+  description: 'Inicia sessão: configura temp/tempo no aparelho, dá play e guarda
+    mins restantes. Ignora play/pause/stop do aparelho enquanto o comando HA está
+    em andamento.'
+  icon: mdi:pot-steam
+  mode: single
+  sequence:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_comando_ha
+  - action: input_boolean.turn_off
+    target:
+      entity_id:
+      - input_boolean.cozinha_termocirculador_pausado
+      - input_boolean.cozinha_termocirculador_falta_agua
+  - variables:
+      temp: '{{ states(''input_number.cozinha_termocirculador_temperatura'') | float(55)
+        }}'
+      mins: '{{ states(''input_number.cozinha_termocirculador_duracao'') | int(60)
+        }}'
+      horas_txt: '{% set m = states(''input_number.cozinha_termocirculador_duracao'')
+        | int(60) %}{% if m >= 60 %}{{ m // 60 }}h {{ m % 60 }}min{% else %}{{ m }}
+        min{% endif %}'
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.cozinha_termocirculador_temp_sessao
+    data:
+      value: '{{ temp }}'
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.cozinha_termocirculador_mins_restantes
+    data:
+      value: '{{ mins }}'
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_sessao_ativa
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_em_queda
+  - action: timer.cancel
+    target:
+      entity_id: timer.cozinha_termocirculador_sessao
+    continue_on_error: true
+  - action: number.set_value
+    target:
+      entity_id: number.cozinha_termocirculador_tempo_configurado_localtuya
+    data:
+      value: '{{ mins }}'
+  - delay:
+      seconds: 2
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+    data:
+      temperature: '{{ temp }}'
+  - delay:
+      seconds: 1
+  - action: climate.set_hvac_mode
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+    data:
+      hvac_mode: heat
+  - action: climate.turn_on
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+  - delay:
+      seconds: 3
+  - if:
+    - condition: state
+      entity_id: sensor.cozinha_termocirculador_status_localtuya
+      state: stop
+    then:
+    - action: climate.turn_on
+      target:
+        entity_id: climate.cozinha_termocirculador_localtuya
+    - action: climate.set_hvac_mode
+      target:
+        entity_id: climate.cozinha_termocirculador_localtuya
+      data:
+        hvac_mode: heat
+  - action: script.enviar_notificacao_telegram
+    data:
+      destinatarios: antonio
+      titulo: "\U0001F372 Termocirculador iniciado"
+      mensagem: 'Temperatura: {{ temp }}°C
+
+        Duração: {{ horas_txt }}
+
+        O tempo do aparelho só começa a contar depois de atingir a temperatura alvo.'
+      parse_mode: MarkdownV2
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_comando_ha
+cozinha_termocirculador_parar:
+  alias: "\U0001F372 Cozinha — Termocirculador Parar"
+  description: 'Encerra a sessão: limpa flags (incluindo pausa/falta de água) e desliga
+    o aparelho.'
+  fields:
+    motivo:
+      description: 'Motivo do encerramento: concluido | manual | aparelho | recuperacao_falhou'
+      example: manual
+      required: false
+      selector:
+        select:
+          options:
+          - concluido
+          - manual
+          - aparelho
+          - recuperacao_falhou
+  icon: mdi:pot-steam-off
+  mode: single
+  sequence:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_comando_ha
+  - variables:
+      motivo_eff: '{{ motivo | default(''manual'') }}'
+      temp_alvo: '{{ states(''input_number.cozinha_termocirculador_temp_sessao'')
+        | float(0) }}'
+      temp_atual: '{{ states(''input_number.cozinha_termocirculador_temp_ultima'')
+        | float(0) }}'
+      titulo_msg: "{% if motivo_eff == 'concluido' %}\U0001F372 Termocirculador concluído{%
+        elif motivo_eff == 'recuperacao_falhou' %}⚠️ Termocirculador — falha na recuperação{%
+        elif motivo_eff == 'aparelho' %}\U0001F372 Termocirculador parado no aparelho{%
+        else %}\U0001F372 Termocirculador parado{% endif %}"
+      corpo_msg: '{% if motivo_eff == ''concluido'' %}Ciclo finalizado.
+
+        Alvo: {{ temp_alvo }}°C
+
+        Temperatura final: {{ temp_atual }}°C{% elif motivo_eff == ''recuperacao_falhou''
+        %}Não foi possível retomar o ciclo após a queda.
+
+        Verifique o aparelho manualmente.{% elif motivo_eff == ''aparelho'' %}Ciclo
+        interrompido no aparelho.
+
+        Alvo: {{ temp_alvo }}°C
+
+        Temperatura: {{ temp_atual }}°C{% else %}Ciclo interrompido manualmente.
+
+        Alvo: {{ temp_alvo }}°C
+
+        Temperatura atual: {{ temp_atual }}°C{% endif %}'
+  - action: input_boolean.turn_off
+    target:
+      entity_id:
+      - input_boolean.cozinha_termocirculador_sessao_ativa
+      - input_boolean.cozinha_termocirculador_em_queda
+      - input_boolean.cozinha_termocirculador_pausado
+      - input_boolean.cozinha_termocirculador_falta_agua
+  - action: timer.cancel
+    continue_on_error: true
+    target:
+      entity_id: timer.cozinha_termocirculador_sessao
+  - action: climate.turn_off
+    continue_on_error: true
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+  - action: climate.set_hvac_mode
+    continue_on_error: true
+    data:
+      hvac_mode: 'off'
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+  - action: script.enviar_notificacao_telegram
+    data:
+      destinatarios: antonio
+      mensagem: '{{ corpo_msg }}'
+      parse_mode: MarkdownV2
+      titulo: '{{ titulo_msg }}'
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_comando_ha
+cozinha_termocirculador_retomar:
+  alias: "\U0001F372 Cozinha — Termocirculador Continuar"
+  description: 'Retoma sessão pausada (pause no termo, falta de água ou botão Continue):
+    reaplica tempo restante e temperatura e dá play.'
+  icon: mdi:play-pause
+  mode: single
+  sequence:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_comando_ha
+  - variables:
+      mins: '{{ [states(''input_number.cozinha_termocirculador_mins_restantes'') |
+        int(1), 1] | max }}'
+      temp: '{{ states(''input_number.cozinha_termocirculador_temp_sessao'') | float(55)
+        }}'
+      temp_atual: '{{ states(''input_number.cozinha_termocirculador_temp_ultima'')
+        | float(0) }}'
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_sessao_ativa
+  - action: input_boolean.turn_off
+    target:
+      entity_id:
+      - input_boolean.cozinha_termocirculador_pausado
+      - input_boolean.cozinha_termocirculador_falta_agua
+      - input_boolean.cozinha_termocirculador_em_queda
+  - action: number.set_value
+    data:
+      value: '{{ mins }}'
+    target:
+      entity_id: number.cozinha_termocirculador_tempo_configurado_localtuya
+  - delay:
+      seconds: 2
+  - action: climate.set_temperature
+    data:
+      temperature: '{{ temp }}'
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+  - delay:
+      seconds: 1
+  - action: climate.set_hvac_mode
+    data:
+      hvac_mode: heat
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+  - action: climate.turn_on
+    target:
+      entity_id: climate.cozinha_termocirculador_localtuya
+  - delay:
+      seconds: 3
+  - if:
+    - condition: state
+      entity_id: sensor.cozinha_termocirculador_status_localtuya
+      state: stop
+    then:
+    - action: climate.turn_on
+      target:
+        entity_id: climate.cozinha_termocirculador_localtuya
+    - action: climate.set_hvac_mode
+      data:
+        hvac_mode: heat
+      target:
+        entity_id: climate.cozinha_termocirculador_localtuya
+  - delay:
+      seconds: 4
+  - if:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: sensor.cozinha_termocirculador_status_localtuya
+        state: stop
+      - condition: state
+        entity_id: climate.cozinha_termocirculador_localtuya
+        state: 'off'
+    then:
+    - action: input_boolean.turn_on
+      target:
+        entity_id:
+        - input_boolean.cozinha_termocirculador_pausado
+        - input_boolean.cozinha_termocirculador_falta_agua
+    - action: script.enviar_notificacao_telegram
+      data:
+        destinatarios: antonio
+        parse_mode: MarkdownV2
+        titulo: Termocirculador — falta de água
+        mensagem: 'O aparelho não ficou ligado após o play. Provável falta de água.
+
+          A sessão ficou pausada.
+
+
+          Reponha a água e dê play no termo ou Continue no HA.
+
+          Para encerrar: Parar no HA.
+
+
+          Temp: {{ temp_atual }}°C
+
+          Alvo: {{ temp }}°C
+
+          Mins restantes: {{ mins }} min'
+    else:
+    - action: script.enviar_notificacao_telegram
+      data:
+        destinatarios: antonio
+        mensagem: 'Sessão retomada pelo HA.
+
+
+          Temp atual: {{ temp_atual }}°C
+
+          Alvo: {{ temp }}°C
+
+          Mins restantes: {{ mins }} min'
+        parse_mode: MarkdownV2
+        titulo: ▶️ Termocirculador retomado
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.cozinha_termocirculador_comando_ha
+rega_executar_retry:
+  alias: "\U0001F4A7 Rega — executar retry"
+  description: Lê input_text.sistema_rega_retry_payload (action|duracao|entities)
+    e tenta abrir+regar ou fechar.
+  icon: mdi:sprinkler-variant
+  mode: queued
+  sequence:
+  - variables:
+      payload: '{{ states(''input_text.sistema_rega_retry_payload'') }}'
+      acao: '{{ payload.split(''|'')[0] if payload and ''|'' in payload else ''''
+        }}'
+      duracao: '{{ payload.split(''|'')[1] | int(0) if payload and ''|'' in payload
+        else 0 }}'
+      entidades: '{% if payload and ''|'' in payload %}{{ payload.split(''|'')[2].split('','')
+        | reject(''eq'','''') | list }}{% else %}[]{% endif %}'
+  - variables:
+      valves: '{{ expand(entidades) | selectattr(''domain'',''eq'',''valve'') | map(attribute=''entity_id'')
+        | list if entidades else [] }}'
+      switches: '{{ expand(entidades) | selectattr(''domain'',''eq'',''switch'') |
+        map(attribute=''entity_id'') | list if entidades else [] }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ acao == '''' or entidades | length == 0 }}'
+      sequence:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: antonio
+          titulo: ⚠️ Rega retry
+          mensagem: Não há pedido de retry guardado. Aguarde a próxima falha de rega.
+    - conditions:
+      - condition: template
+        value_template: '{{ acao == ''open'' }}'
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{{ valves | length > 0 }}'
+        then:
+        - action: valve.open_valve
+          target:
+            entity_id: '{{ valves }}'
+      - if:
+        - condition: template
+          value_template: '{{ switches | length > 0 }}'
+        then:
+        - action: switch.turn_on
+          target:
+            entity_id: '{{ switches }}'
+      - delay:
+          seconds: 15
+      - variables:
+          ainda_fechadas: '{% set ligado = [''open'',''on'',''opening''] %}{% set
+            ns = namespace(ids=[]) %}{% for e in expand(entidades) %}{% if e.state
+            not in ligado %}{% set ns.ids = ns.ids + [e.entity_id] %}{% endif %}{%
+            endfor %}{{ ns.ids }}'
+      - if:
+        - condition: template
+          value_template: '{{ ainda_fechadas | length > 0 }}'
+        then:
+        - action: script.enviar_notificacao_telegram
+          data:
+            destinatarios: antonio
+            titulo: ⚠️ Rega retry falhou
+            mensagem: 'Ainda não abriu: {{ ainda_fechadas | join('', '') }}.'
+            inline_keyboard:
+            - "\U0001F504 Tentar novamente:/rega_retry"
+        else:
+        - action: script.enviar_notificacao_telegram
+          data:
+            destinatarios: antonio
+            titulo: ✅ Rega retry
+            mensagem: Abriu com sucesso. Vai regar {{ duracao }} s e fechar.
+        - delay:
+            seconds: '{{ duracao | int(0) }}'
+        - if:
+          - condition: template
+            value_template: '{{ valves | length > 0 }}'
+          then:
+          - action: valve.close_valve
+            target:
+              entity_id: '{{ valves }}'
+        - if:
+          - condition: template
+            value_template: '{{ switches | length > 0 }}'
+          then:
+          - action: switch.turn_off
+            target:
+              entity_id: '{{ switches }}'
+        - action: script.enviar_notificacao_telegram
+          data:
+            destinatarios: antonio
+            titulo: ✅ Rega retry
+            mensagem: Ciclo de retry concluído (fecho enviado).
+    - conditions:
+      - condition: template
+        value_template: '{{ acao == ''close'' }}'
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{{ valves | length > 0 }}'
+        then:
+        - action: valve.close_valve
+          target:
+            entity_id: '{{ valves }}'
+      - if:
+        - condition: template
+          value_template: '{{ switches | length > 0 }}'
+        then:
+        - action: switch.turn_off
+          target:
+            entity_id: '{{ switches }}'
+      - delay:
+          seconds: 5
+      - variables:
+          ainda_abertas: '{{ expand(entidades) | selectattr(''state'',''in'',[''open'',''on'',''opening''])
+            | map(attribute=''entity_id'') | list }}'
+      - if:
+        - condition: template
+          value_template: '{{ ainda_abertas | length > 0 }}'
+        then:
+        - action: script.enviar_notificacao_telegram
+          data:
+            destinatarios: antonio
+            titulo: ⚠️ Rega retry falhou
+            mensagem: 'Ainda abertas: {{ ainda_abertas | join('', '') }}.'
+            inline_keyboard:
+            - "\U0001F504 Tentar novamente:/rega_retry"
+        else:
+        - action: script.enviar_notificacao_telegram
+          data:
+            destinatarios: antonio
+            titulo: ✅ Rega retry
+            mensagem: Fechou com sucesso.
+
+teste_last_alexa:
+  alias: "🧪 Teste Last Alexa"
+  description: >
+    Teste do Last Called via Alexa Devices (sensor.alexa_devices_last_called),
+    com fallback para Alexa Media Player se o evento ainda não chegou.
+  icon: mdi:microphone-message
+  mode: single
+  sequence:
+  - variables:
+      t0: "{{ as_timestamp(now()) }}"
+  - delay:
+      milliseconds: 800
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: >-
+          {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
+          {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+          {{ not (amig and age is not none and (age | int) < 60) }}
+      sequence:
+      - action: alexa_media.update_last_called
+        continue_on_error: true
+      - repeat:
+          count: 10
+          sequence:
+          - if:
+            - condition: template
+              value_template: >-
+                {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
+                {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+                {% if amig and age is not none and (age | int) < 60 %}
+                  false
+                {% else %}
+                  {% set mapa = [
+                    'media_player.sala_de_tv_echo_mediaplayer',
+                    'media_player.cozinha_echo_mediaplayer',
+                    'media_player.brinquedoteca_echo_mediaplayer',
+                    'media_player.escritorio_echo_mediaplayer',
+                    'media_player.oficina_echo_mediaplayer',
+                    'media_player.suite_echo_mediaplayer',
+                    'media_player.banheiro_suite_echo_mediaplayer',
+                    'media_player.banheiro_social_echo_mediaplayer',
+                    'media_player.quarto_cecilia_echo_mediaplayer',
+                    'media_player.sala_de_jantar_echo_mediaplayer',
+                    'media_player.sala_de_jantar_echo_devices',
+                  ] %}
+                  {% set t0ms = (t0 | float * 1000) | int %}
+                  {% set ns = namespace(ok=false) %}
+                  {% for mp in mapa %}
+                    {% set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}
+                    {% set lc = state_attr(mp, 'last_called') %}
+                    {% if (lc is true or lc == true) and t >= (t0ms - 8000) %}
+                      {% set ns.ok = true %}
+                    {% endif %}
+                  {% endfor %}
+                  {{ not ns.ok }}
+                {% endif %}
+            then:
+            - delay:
+                milliseconds: 400
+            - action: alexa_media.update_last_called
+              continue_on_error: true
+  - variables:
+      echo_mp: >-
+        {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+        {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
+        {% if amig and age is not none and (age | int) < 90 %}
+          {{ amig }}
+        {% else %}
+          {% set mapa = {
+            'media_player.sala_de_tv_echo_mediaplayer': 'sala',
+            'media_player.cozinha_echo_mediaplayer': 'cozinha',
+            'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',
+            'media_player.escritorio_echo_mediaplayer': 'escritorio',
+            'media_player.oficina_echo_mediaplayer': 'oficina',
+            'media_player.suite_echo_mediaplayer': 'suite',
+            'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',
+            'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',
+            'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',
+            'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',
+            'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar',
+          } %}
+          {% set t0ms = (t0 | float * 1000) | int %}
+          {% set ns = namespace(dev='sala', ts=0, flagged=none, fts=0) %}
+          {% for mp, nome in mapa.items() %}
+            {% set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}
+            {% set lc = state_attr(mp, 'last_called') %}
+            {% set fresco = t >= (t0ms - 8000) %}
+            {% if (lc is true or lc == true) and fresco and t >= ns.fts %}
+              {% set ns.flagged = nome %}
+              {% set ns.fts = t %}
+            {% endif %}
+            {% if t > ns.ts %}
+              {% set ns.ts = t %}
+              {% set ns.dev = nome %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.flagged if ns.flagged is not none else ns.dev }}
+        {% endif %}
+      echo_nome: >-
+        {% set n = state_attr('sensor.alexa_devices_last_called', 'echo_nome') %}
+        {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+        {% if n and amig == echo_mp %}
+          {{ n }}
+        {% else %}
+          {% set nomes = {
+            'sala': 'Echo da Sala de TV',
+            'cozinha': 'Echo da Cozinha',
+            'brinquedoteca': 'Echo da Brinquedoteca',
+            'escritorio': 'Echo do Escritório',
+            'oficina': 'Echo da Oficina',
+            'suite': 'Echo da Suíte',
+            'banheiro_suite': 'Echo do Banheiro da Suíte',
+            'banheiro_social': 'Echo do Banheiro Social',
+            'quarto_cecilia': 'Echo do Quarto da Cecília',
+            'sala_de_jantar': 'Echo da Sala de Jantar',
+          } %}
+          {{ nomes.get(echo_mp, echo_mp) }}
+        {% endif %}
+      fonte: >-
+        {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
+        {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
+        {{ 'alexa_devices' if (amig and age is not none and (age | int) < 90) else 'alexa_media' }}
+  - action: script.enviar_notificacao_alexa
+    data:
+      dispositivos: "{{ echo_mp }}"
+      mensagem: "Teste Last Alexa via {{ fonte }}. Você falou comigo no {{ echo_nome }}."
+      tipo: tts
+sistema_docker_atualizar:
+  alias: Docker — atualizar um container
+  description: 'Pede ao host Docker (ops.sh) para atualizar o container da entidade WUD.
+    Só apps cadastradas em apps.conf. Enquanto corre, bloqueia outros pedidos.'
+  icon: mdi:docker
+  mode: single
+  fields:
+    entity_id:
+      name: Entidade de update
+      description: Ex. update.sistema_docker_hermes
+      selector:
+        entity:
+          domain: update
+    app:
+      name: App ops.sh
+      description: Opcional. Se vazio, deriva da entidade.
+      selector:
+        text:
+  sequence:
+  - variables:
+      eid: "{{ entity_id if entity_id is string else (entity_id[0] if entity_id else '') }}"
+      app_ops: >-
+        {% set given = app | default('') | string | trim %}
+        {% if given %}{{ given }}
+        {% else %}
+          {% set m = {
+            'update.sistema_docker_adguard': 'adguard',
+            'update.wud_container_local_adguardhome': 'adguard',
+            'update.sistema_docker_cadvisor': 'cadvisor',
+            'update.wud_container_local_cadvisor': 'cadvisor',
+            'update.sistema_docker_cloudflare': 'cloudflare',
+            'update.wud_container_local_cloudflared': 'cloudflare',
+            'update.sistema_docker_dozzle': 'dozzle',
+            'update.wud_container_local_dozzle': 'dozzle',
+            'update.sistema_docker_duplicati': 'duplicati',
+            'update.wud_container_local_duplicati': 'duplicati',
+            'update.sistema_docker_filebrowser': 'filebrowser',
+            'update.wud_container_local_filebrowser': 'filebrowser',
+            'update.sistema_docker_firefly': 'firefly',
+            'update.wud_container_local_firefly_iii': 'firefly',
+            'update.sistema_docker_grafana': 'grafana',
+            'update.wud_container_local_grafana': 'grafana',
+            'update.sistema_docker_hermes': 'hermes',
+            'update.wud_container_local_hermes_agent': 'hermes',
+            'update.sistema_docker_homepage': 'homepage',
+            'update.wud_container_local_homepage': 'homepage',
+            'update.sistema_docker_immich': 'immich',
+            'update.wud_container_local_immich_server': 'immich',
+            'update.sistema_docker_immich_ml': 'immich-ml',
+            'update.wud_container_local_immich_machine_learning': 'immich-ml',
+            'update.sistema_docker_influx': 'influx',
+            'update.wud_container_local_influxdb': 'influx',
+            'update.sistema_docker_jellyfin': 'jellyfin',
+            'update.wud_container_local_jellyfin': 'jellyfin',
+            'update.sistema_docker_mealie': 'mealie',
+            'update.wud_container_local_mealie': 'mealie',
+            'update.sistema_docker_npm': 'npm',
+            'update.wud_container_local_nginx_proxy_manager': 'npm',
+            'update.sistema_docker_node_exporter': 'node-exporter',
+            'update.wud_container_local_node_exporter': 'node-exporter',
+            'update.sistema_docker_prometheus': 'prometheus',
+            'update.wud_container_local_prometheus': 'prometheus',
+            'update.sistema_docker_uptime_kuma': 'uptime-kuma',
+            'update.wud_container_local_uptime_kuma': 'uptime-kuma',
+            'update.sistema_docker_vaultwarden': 'vaultwarden',
+            'update.wud_container_local_vaultwarden': 'vaultwarden',
+            'update.sistema_docker_wud': 'wud',
+            'update.wud_container_local_wud': 'wud',
+            'update.sistema_docker_ping_exporter': 'ping-exporter',
+            'update.wud_container_local_ping_exporter': 'ping-exporter',
+            'update.sistema_docker_blackbox_exporter': 'blackbox-exporter',
+            'update.wud_container_local_blackbox_exporter': 'blackbox-exporter',
+            'update.sistema_docker_speedtest_exporter': 'speedtest-exporter',
+            'update.wud_container_local_speedtest_exporter': 'speedtest-exporter',
+            'update.sistema_docker_unifi_mcp': 'unifi-mcp',
+            'update.wud_container_local_unifi_network_mcp': 'unifi-mcp'
+          } %}
+          {{ m.get(eid, '') }}
+        {% endif %}
+      nome: "{{ state_attr(eid, 'friendly_name') or app_ops or eid }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ app_ops | trim == '' }}"
+      sequence:
+      - action: persistent_notification.create
+        data:
+          title: Docker — atualização
+          message: "{{ nome }} não está no ops.sh (Portainer e Glances ficam de fora)."
+          notification_id: docker_ops_update
+      - stop: app não cadastrada
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.sistema_docker_atualizacao_em_curso
+        state: "on"
+      sequence:
+      - action: persistent_notification.create
+        data:
+          title: Docker — atualização
+          message: Já há uma atualização em curso. Espera terminar.
+          notification_id: docker_ops_update
+      - stop: ocupado
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.sistema_docker_atualizacao_em_curso
+  - action: persistent_notification.create
+    data:
+      title: Docker — atualização
+      message: "A atualizar {{ nome }}…"
+      notification_id: docker_ops_update
+  - action: shell_command.docker_ops_update
+    continue_on_error: true
+    response_variable: docker_ops
+    data:
+      app: "{{ app_ops }}"
+  - if:
+    - condition: template
+      value_template: "{{ docker_ops is not defined or docker_ops['returncode'] | default(1) | int != 0 }}"
+    then:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.sistema_docker_atualizacao_em_curso
+    - action: persistent_notification.create
+      data:
+        title: Docker — falhou a iniciar
+        message: "O host Docker não aceitou a atualização de {{ nome }}."
+        notification_id: docker_ops_update
+    - action: script.enviar_notificacao_telegram
+      continue_on_error: true
+      data:
+        destinatarios: antonio
+        titulo: "🐳 Docker: problema"
+        mensagem: "Não consegui iniciar a atualização de {{ nome }}."
+        parse_mode: html
+    - stop: docker ops recusou
+  - action: script.enviar_notificacao_telegram
+    continue_on_error: true
+    data:
+      destinatarios: antonio
+      titulo: "🐳 Docker"
+      mensagem: >-
+        {% if app_ops == 'all' %}
+        A atualizar os containers com update pendente. Aviso quando terminar.
+        {% else %}
+        A atualizar o {{ nome }}. Aviso quando terminar.
+        {% endif %}
+      parse_mode: html
+sistema_docker_atualizar_tudo:
+  alias: Docker — atualizar todos
+  description: Corre ops.sh update all no host Docker. Pode demorar bastante.
+  icon: mdi:update
+  mode: single
+  sequence:
+  - action: script.sistema_docker_atualizar
+    data:
+      app: all
+

@@ -1,0 +1,11 @@
+# Devices para agrupar sensores
+sensor:
+    - name: "Contadores da Casa"
+      state_topic: "homeassistant/contadores/status" # Tópico dummy, não precisa existir
+      unique_id: "contadores_da_casa_dummy_sensor"
+      device:
+        identifiers:
+          - "meus_contadores_virtuais_ui" # ID único para o seu dispositivo virtual
+        name: "Contadores da Casa" # Nome que aparecerá na interface
+        model: "Virtual Counter UI"
+        manufacturer: "Home Assistant"

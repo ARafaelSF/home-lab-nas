@@ -1,0 +1,333 @@
+blueprint:
+  name: "🔄 Auto-Recarregar Integrações"
+  domain: automation
+  author: "Antonio"
+  description: >
+    Monitora múltiplas entidades da mesma integração. Se uma ou várias
+    ficarem 'unavailable'/'unknown', inicia UM único ciclo de recuperação:
+    um reload da config entry, uma notificação (se Telegram estiver ativo).
+
+    Também verifica no start do Home Assistant (após o tempo de tolerância):
+    se alguma entidade monitorada já estiver caída, inicia a recuperação.
+
+    Notificações Telegram: só a primeira (saiu do ar / vai tentar) e a
+    última (recuperado, cancelado ou falha definitiva). Sem spam entre tentativas.
+
+    Placeholders na mensagem inicial (NÃO use {{ ... }} — o HA consome isso):
+    - __DISPOSITIVOS__ — nome amigável (ou "listas Alexa" / "N dispositivos")
+    - __INTEGRACAO__ — nome da integração (derivado do título)
+
+    Script necessário:
+    - script.enviar_notificacao_telegram
+  input:
+    target_settings:
+      name: "🎯 Entidades Monitoradas"
+      collapsed: false
+      input:
+        target_entities:
+          name: "Entidades"
+          description: "Selecione os aparelhos que deseja monitorar (mesma integração)."
+          selector:
+            entity:
+              multiple: true
+
+    trigger_settings:
+      name: "⏱️ Configurações de Gatilho"
+      collapsed: false
+      input:
+        tempo_espera:
+          name: "Tempo de Tolerância"
+          description: >
+            Tempo que a entidade deve permanecer caída antes de iniciar o
+            processo. No start do HA, também é o tempo de espera antes de
+            verificar entidades já indisponíveis.
+          default: 60
+          selector:
+            number:
+              min: 0
+              max: 3600
+              unit_of_measurement: segundos
+              mode: slider
+
+    retry_settings:
+      name: "🔁 Garantia de Execução"
+      collapsed: true
+      input:
+        max_tentativas:
+          name: "Máximo de Tentativas"
+          description: "Quantas vezes tentar recarregar se a integração continuar fora do ar."
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 100
+              mode: slider
+        tempo_entre_tentativas:
+          name: "Intervalo entre Tentativas"
+          description: "Tempo de espera (em segundos) entre cada tentativa de recarregamento."
+          default: 120
+          selector:
+            number:
+              min: 30
+              max: 600
+              unit_of_measurement: segundos
+              mode: slider
+
+    notify_telegram_settings:
+      name: "📱 Notificações - Telegram"
+      collapsed: true
+      input:
+        telegram_destinatarios:
+          name: "Destinatários"
+          default: []
+          selector:
+            select:
+              multiple: true
+              custom_value: true
+              options:
+                - "Antonio"
+                - "Renata"
+        telegram_titulo:
+          name: "Título da Notificação (início)"
+          default: "⚠️ Integração fora do ar"
+          selector:
+            text: {}
+        telegram_mensagem:
+          name: "Mensagem (início)"
+          description: >
+            Use __DISPOSITIVOS__ e __INTEGRACAO__ (com underscores).
+            Não use {{ ... }} — o Home Assistant apaga esses placeholders.
+            Enviada só uma vez, ao iniciar a recuperação.
+          default: >-
+            ⚠️ Atenção: __DISPOSITIVOS__ ficou indisponível.
+
+            🔄 A tentar recarregar a integração __INTEGRACAO__.
+          selector:
+            text:
+              multiline: true
+        telegram_texto_botao:
+          name: "Texto do Botão de Cancelar"
+          description: "Deixe em branco se não quiser exibir o botão. Aparece só na mensagem inicial."
+          default: "🛑 Cancelar Tentativas"
+          selector:
+            text: {}
+
+mode: single
+max_exceeded: silent
+
+trigger_variables:
+  monitored_entities: !input target_entities
+
+trigger:
+  - id: entity_unavailable
+    platform: state
+    entity_id: !input target_entities
+    to: "unavailable"
+    for:
+      seconds: !input tempo_espera
+  - id: entity_unknown
+    platform: state
+    entity_id: !input target_entities
+    to: "unknown"
+    for:
+      seconds: !input tempo_espera
+  - id: ha_start
+    platform: homeassistant
+    event: start
+
+variables:
+  tel_raw_dest_v: !input telegram_destinatarios
+  tel_dest_v: "{{ (tel_raw_dest_v | list) | map('trim') | select('ne','') | list }}"
+  tel_title_v: !input telegram_titulo
+  tel_msg_raw: !input telegram_mensagem
+  tel_btn_v: !input telegram_texto_botao
+  max_tentativas_v: !input max_tentativas
+  tempo_espera_v: !input tempo_espera
+  tempo_entre_tentativas_v: !input tempo_entre_tentativas
+
+action:
+  - if:
+      - condition: trigger
+        id: ha_start
+    then:
+      - delay:
+          seconds: "{{ tempo_espera_v | int }}"
+    else:
+      - delay:
+          seconds: 5
+
+  - variables:
+      entities_to_recover: >-
+        {% set mon = monitored_entities if monitored_entities is list else [monitored_entities] %}
+        {{ ((mon | select('is_state', 'unavailable') | list)
+            + (mon | select('is_state', 'unknown') | list)) | unique | list }}
+
+  - if:
+      - condition: template
+        value_template: "{{ (entities_to_recover | count) == 0 }}"
+    then:
+      - stop: "Nenhuma entidade indisponível para recuperar."
+
+  - variables:
+      recover_entity: "{{ entities_to_recover[0] }}"
+      dispositivos_txt: >-
+        {% set mon = entities_to_recover %}
+        {% set ns = namespace(names=[], listas=true) %}
+        {% for e in mon %}
+          {% set ns.names = ns.names + [state_attr(e, 'friendly_name') or e] %}
+          {% if not (e | string).startswith('todo.lista_') %}
+            {% set ns.listas = false %}
+          {% endif %}
+        {% endfor %}
+        {% set n = ns.names | count %}
+        {% if ns.listas and n > 1 %}
+          listas Alexa
+        {% elif n <= 1 %}
+          {{ ns.names[0] if n == 1 else 'dispositivo' }}
+        {% elif n <= 3 %}
+          {{ ns.names | join(', ') }}
+        {% else %}
+          {{ n }} dispositivos
+        {% endif %}
+      integracao_txt: >-
+        {% set t = tel_title_v | string %}
+        {% set t = t | regex_replace('^[^\wÀ-ÿ]+', '') %}
+        {% set t = t | regex_replace('(?i)\s*reiniciad[oa]s?\b.*$', '') %}
+        {% set t = t | regex_replace('(?i)\s*fora do ar\b.*$', '') %}
+        {{ t | trim if (t | trim | length) > 0 else 'integração' }}
+      tel_msg_v: >-
+        {% set raw = tel_msg_raw | string %}
+        {% if '__DISPOSITIVOS__' in raw or '__INTEGRACAO__' in raw %}
+          {{ raw
+             | replace('__DISPOSITIVOS__', dispositivos_txt)
+             | replace('__INTEGRACAO__', integracao_txt)
+             | replace('__ENTITY_NAME__', dispositivos_txt) }}
+        {% else %}
+          ⚠️ Atenção: {{ dispositivos_txt }} ficou indisponível.
+
+          🔄 A tentar recarregar a integração {{ integracao_txt }}.
+        {% endif %}
+      msg_recuperado: >-
+        {{ dispositivos_txt }} voltou a ficar online.
+      msg_cancelado: >-
+        As tentativas de reconexão para {{ dispositivos_txt }} foram canceladas.
+      msg_falha: >-
+        O sistema tentou recarregar a integração {{ integracao_txt }}
+        ({{ dispositivos_txt }}) por {{ max_tentativas_v }} vezes, mas continua offline.
+
+        As tentativas automáticas foram encerradas.
+      device_id_short: "{{ recover_entity.split('.')[1] | truncate(40, True, '') }}"
+      callback_data: "/cancel_{{ device_id_short }}"
+      recovered: false
+      cancelled: false
+
+  - if:
+      - condition: template
+        value_template: "{{ (tel_dest_v | count) > 0 and tel_msg_v | trim != '' }}"
+    then:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: "{{ tel_dest_v }}"
+          titulo: "{{ tel_title_v }}"
+          mensagem: "{{ tel_msg_v }}"
+          parse_mode: "MarkdownV2"
+          inline_keyboard: >-
+            {{ [ tel_btn_v ~ ':' ~ callback_data ] if tel_btn_v | trim != '' else [] }}
+
+  - repeat:
+      count: "{{ max_tentativas_v | int }}"
+      sequence:
+        - if:
+            - condition: template
+              value_template: >-
+                {{ not recovered and not cancelled
+                   and (entities_to_recover | select('is_state', 'unavailable') | list
+                        + entities_to_recover | select('is_state', 'unknown') | list) | count > 0 }}
+          then:
+            - action: homeassistant.reload_config_entry
+              target:
+                entity_id: "{{ recover_entity }}"
+
+            - delay:
+                seconds: 5
+
+            - if:
+                - condition: template
+                  value_template: >-
+                    {{ (entities_to_recover | select('is_state', 'unavailable') | list
+                        + entities_to_recover | select('is_state', 'unknown') | list) | count == 0 }}
+              then:
+                - variables:
+                    recovered: true
+              else:
+                - wait_for_trigger:
+                    - platform: template
+                      value_template: >-
+                        {{ (entities_to_recover | select('is_state', 'unavailable') | list
+                            + entities_to_recover | select('is_state', 'unknown') | list) | count == 0 }}
+                    - platform: event
+                      event_type: telegram_callback
+                      event_data:
+                        data: "{{ callback_data }}"
+                  timeout:
+                    seconds: "{{ tempo_entre_tentativas_v | int }}"
+                  continue_on_timeout: true
+
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ wait.trigger is not none and wait.trigger.platform == 'event' }}"
+                      sequence:
+                        - variables:
+                            cancelled: true
+                        - action: telegram_bot.answer_callback_query
+                          data:
+                            callback_query_id: "{{ wait.trigger.event.data.id }}"
+                            message: "Tentativas canceladas!"
+
+                    - conditions:
+                        - condition: template
+                          value_template: >-
+                            {{ (entities_to_recover | select('is_state', 'unavailable') | list
+                                + entities_to_recover | select('is_state', 'unknown') | list) | count == 0 }}
+                      sequence:
+                        - variables:
+                            recovered: true
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ recovered and (tel_dest_v | count) > 0 }}"
+        sequence:
+          - action: script.enviar_notificacao_telegram
+            data:
+              destinatarios: "{{ tel_dest_v }}"
+              titulo: "✅ Recuperado"
+              mensagem: "{{ msg_recuperado }}"
+              parse_mode: "MarkdownV2"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ cancelled and (tel_dest_v | count) > 0 }}"
+        sequence:
+          - action: script.enviar_notificacao_telegram
+            data:
+              destinatarios: "{{ tel_dest_v }}"
+              titulo: "🛑 Cancelado"
+              mensagem: "{{ msg_cancelado }}"
+              parse_mode: "MarkdownV2"
+
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ not recovered and not cancelled
+                 and (entities_to_recover | select('is_state', 'unavailable') | list
+                      + entities_to_recover | select('is_state', 'unknown') | list) | count > 0
+                 and (tel_dest_v | count) > 0 }}
+        sequence:
+          - action: script.enviar_notificacao_telegram
+            data:
+              destinatarios: "{{ tel_dest_v }}"
+              titulo: "❌ Falha Definitiva"
+              mensagem: "{{ msg_falha }}"
+              parse_mode: "MarkdownV2"

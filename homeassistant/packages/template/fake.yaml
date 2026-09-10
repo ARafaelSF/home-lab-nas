@@ -1,0 +1,141 @@
+# yaml/fake/template.yaml
+binary_sensor:
+  - name: "Sensor de Porta Fake"
+    unique_id: fake_door_sensor
+    device_class: door
+    state: "{{ is_state('input_boolean.fake_door','on') }}"
+
+  - name: "Sensor de Janela Fake"
+    unique_id: fake_window_sensor
+    device_class: opening
+    state: "{{ is_state('input_boolean.fake_window','on') }}"
+
+  - name: "Sensor de Vazamento de Água Fake"
+    unique_id: fake_leak_sensor
+    device_class: moisture
+    state: "{{ is_state('input_boolean.fake_leak','on') }}"
+
+  - name: "Sensor de Ocupação Fake"
+    unique_id: fake_occupancy_sensor
+    device_class: occupancy
+    state: "{{ is_state('input_boolean.fake_occupancy','on') }}"
+
+sensor:
+  - name: "Sensor de Temperatura Fake"
+    unique_id: fake_temperature_sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state: >
+      {% set v = states('input_number.fake_temperature') %}
+      {{ v | float if is_number(v) else none }}
+
+  - name: "Sensor de Umidade Fake"
+    unique_id: fake_humidity_sensor
+    device_class: humidity
+    unit_of_measurement: "%"
+    state: >
+      {% set v = states('input_number.fake_humidity') %}
+      {{ v | float if is_number(v) else none }}
+
+  - name: "Sensação Térmica Fake"
+    unique_id: fake_feels_like_sensor
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state: >
+      {% set t_raw = states('input_number.fake_temperature') %}
+      {% set rh_raw = states('input_number.fake_humidity') %}
+      {% if is_number(t_raw) and is_number(rh_raw) %}
+        {% set T = t_raw | float %}
+        {% set RH = rh_raw | float %}
+        {% if T >= 27 and RH >= 40 %}
+          {{ (
+            -8.784695 +
+            1.61139411 * T +
+            2.338549 * RH +
+            -0.14611605 * T * RH +
+            -0.012308094 * (T**2) +
+            -0.016424828 * (RH**2) +
+            0.002211732 * (T**2) * RH +
+            0.00072546 * T * (RH**2) +
+            -0.000003582 * (T**2) * (RH**2)
+          ) | round(1) }}
+        {% else %}
+          {{ T | round(1) }}
+        {% endif %}
+      {% else %}
+        {{ none }}
+      {% endif %}
+light:
+  - name: "Luz Fake 1"
+    unique_id: fake_light_1_light
+    state: "{{ is_state('input_boolean.fake_light_1','on') }}"
+    turn_on:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.fake_light_1
+    turn_off:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.fake_light_1
+
+  - name: "Luz Fake 2"
+    unique_id: fake_light_2_light
+    state: "{{ is_state('input_boolean.fake_light_2','on') }}"
+    turn_on:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.fake_light_2
+    turn_off:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.fake_light_2
+
+  - name: "Luz Fake 3"
+    unique_id: fake_light_3_light
+    state: "{{ is_state('input_boolean.fake_light_3','on') }}"
+    turn_on:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.fake_light_3
+    turn_off:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.fake_light_3
+
+switch:
+  - name: "Tomada Fake 1"
+    unique_id: fake_outlet_1_switch
+    state: "{{ is_state('input_boolean.fake_outlet_1','on') }}"
+    turn_on:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.fake_outlet_1
+    turn_off:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.fake_outlet_1
+
+  - name: "Tomada Fake 2"
+    unique_id: fake_outlet_2_switch
+    state: "{{ is_state('input_boolean.fake_outlet_2','on') }}"
+    turn_on:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.fake_outlet_2
+    turn_off:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.fake_outlet_2
+
+fan:
+  - name: "Ventilador Fake"
+    unique_id: fake_fan
+    state: "{{ is_state('input_boolean.fake_fan_power','on') }}"
+    turn_on:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.fake_fan_power
+    turn_off:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.fake_fan_power

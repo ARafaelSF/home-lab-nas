@@ -4,7 +4,9 @@ blueprint:
   author: "Antonio Rafael (Modificado)"
   description: >
     Liga/abre no Evento 1 e desliga/fecha no Evento 2.
-    Também reconcilia no start do HA e a cada 15 min se o estado esperado não bater (sem spam de notificação).
+    Opcionalmente reconcilia no start do HA e a cada 15 min se o estado esperado não bater
+    (sem spam de notificação) — desligue em entidades com proteção própria (ex.: fonte com
+    falta de água) ou toldos que não devem ser forçados de novo.
     DIFERENCIAL: Verifica se a ação é necessária. Se a luz já estiver acesa no horário programado,
     envia uma mensagem diferente (opcional) ou não envia nada.
 
@@ -98,6 +100,16 @@ blueprint:
       name: "🔁 Garantia de execução"
       collapsed: true
       input:
+        reconcile_enabled:
+          name: "Reconciliar estado (boot + a cada 15 min)"
+          description: >
+            Se ligado: após restart do HA e a cada 15 min, força o estado esperado
+            da janela atual (liga/abre ou desliga/fecha). Desligue quando outra
+            lógica (segurança, chuva, manual) puder manter o dispositivo off/fechado
+            de propósito dentro do horário.
+          default: true
+          selector:
+            boolean: {}
         retry_max_attempts:
           name: "Tentativas de reenvio"
           default: 5
@@ -333,7 +345,8 @@ variables:
   stop_sun_event_v: !input stop_sun_event
   start_time_v: !input start_time
   stop_time_v: !input stop_time
-  is_reconcile: "{{ trigger.id in ['reconcile_boot_trigger', 'reconcile_periodic_trigger'] }}"
+  reconcile_enabled_v: !input reconcile_enabled
+  is_reconcile: "{{ reconcile_enabled_v and trigger.id in ['reconcile_boot_trigger', 'reconcile_periodic_trigger'] }}"
   block_on_entities: !input block_on_when
   # Bloqueia abertura/ligar (Evento 1 + reconcile "on") se alguma entidade listada estiver on.
   block_on_active: >-

@@ -1,0 +1,6 @@
+shell_command:
+  grafana_import_geladeira_comparativo: >
+    curl -fsS -X POST http://a0d7b954-grafana:3000/api/dashboards/db
+    -H "Authorization: Basic YWRtaW46aGFzc2lv"
+    -H "Content-Type: application/json"
+    --data-binary @/config/packages/influxdb_energia/grafana_geladeira_midea_comparativo.json

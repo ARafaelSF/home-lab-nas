@@ -36,3 +36,8 @@ compose/unifi-mcp/.env
 # Estudo RF UniFi (amostras com MAC/IP)
 scripts/unifi-rf-study/data/
 scripts/**/__pycache__/
+
+# Immich DB dumps / HA secrets (nunca no Git público)
+backups/immich/
+**/secrets.yaml
+homeassistant/secrets.yaml

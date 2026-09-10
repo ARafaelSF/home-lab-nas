@@ -1,0 +1,8 @@
+- platform: smartir
+  name: Ar-Condicionado Cecília
+  unique_id: climate_ar_condicionado_cecilia
+  device_code: 2704
+  controller_data: remote.quarto_cecilia_remote_broadlink
+  temperature_sensor: sensor.termo_higrometro_cecilia_temperature
+  humidity_sensor: sensor.termo_higrometro_cecilia_humidity
+  power_sensor: binary_sensor.ar_condicionado_quarto_cecilia_ventilador_ligado

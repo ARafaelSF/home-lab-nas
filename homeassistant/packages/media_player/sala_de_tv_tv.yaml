@@ -1,0 +1,7 @@
+- platform: smartir
+  name: Sala de TV - TV
+  unique_id: sala_de_tv_tv
+  device_code: 9901
+  controller_data: remote.sala_de_tv_remote_broadlink
+  power_sensor: binary_sensor.sala_de_tv_sensor_tv_ligada_z2m_contact
+  device_class: tv

@@ -1,0 +1,150 @@
+# Sensores MQTT do medidor Kron - Rede Elétrica
+# Tópico: kron/rede_eletrica
+
+sensor:
+
+    # Tensão Fase 1
+    - name: "Tensão Fase 1"
+      unique_id: kron_tensao_fase_1
+      state_topic: &kron_rede_eletrica_topic "kron/rede_eletrica"  # Âncora do tópico
+      unit_of_measurement: "V"
+      device_class: voltage
+      value_template: "{{ value_json[0].metadata.U1 }}"
+      icon: mdi:lightning-bolt
+      device: &kron_rede_eletrica_device  # Âncora do dispositivo (para agrupar entidades em 1 dispositivo)
+        identifiers:
+          - "kron_rede_eletrica"          # ID estável (pode ser serial/MAC/ID do seu firmware)
+        name: "Medidor Kron - Rede Elétrica"
+        manufacturer: "Kron"
+        model: "Medidor (MQTT)"
+        # sw_version: "1.0.0"             # opcional (se não tiver, pode remover)
+
+    # Tensão Fase 3
+    - name: "Tensão Fase 3"
+      unique_id: kron_tensao_fase_3
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "V"
+      device_class: voltage
+      value_template: "{{ value_json[0].metadata.U3 }}"
+      icon: mdi:lightning-bolt
+      device: *kron_rede_eletrica_device
+
+    # Corrente Fase 1
+    - name: "Corrente Fase 1"
+      unique_id: kron_corrente_fase_1
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "A"
+      device_class: current
+      value_template: "{{ value_json[0].metadata.I1 }}"
+      icon: mdi:current-ac
+      device: *kron_rede_eletrica_device
+
+    # Corrente Fase 2
+    - name: "Corrente Fase 2"
+      unique_id: kron_corrente_fase_2
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "A"
+      device_class: current
+      value_template: "{{ value_json[0].metadata.I2 }}"
+      icon: mdi:current-ac
+      device: *kron_rede_eletrica_device
+
+    # Corrente Fase 3
+    - name: "Corrente Fase 3"
+      unique_id: kron_corrente_fase_3
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "A"
+      device_class: current
+      value_template: "{{ value_json[0].metadata.I3 }}"
+      icon: mdi:current-ac
+      device: *kron_rede_eletrica_device
+
+    # Potência Fase 1
+    - name: "Potência Fase 1"
+      unique_id: kron_potencia_fase_1
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "W"
+      device_class: power
+      value_template: "{{ value_json[0].metadata.P1 }}"
+      icon: mdi:flash
+      device: *kron_rede_eletrica_device
+
+    # Potência Fase 2
+    - name: "Potência Fase 2"
+      unique_id: kron_potencia_fase_2
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "W"
+      device_class: power
+      value_template: "{{ value_json[0].metadata.P2 }}"
+      icon: mdi:flash
+      device: *kron_rede_eletrica_device
+
+    # Potência Fase 3
+    - name: "Potência Fase 3"
+      unique_id: kron_potencia_fase_3
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "W"
+      device_class: power
+      value_template: "{{ value_json[0].metadata.P3 }}"
+      icon: mdi:flash
+      device: *kron_rede_eletrica_device
+
+    # Energia Ativa Total (kWh)
+    - name: "Energia Ativa Total"
+      unique_id: kron_energia_ativa_total
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      value_template: "{{ value_json[0].metadata.EA }}"
+      icon: mdi:counter
+      device: *kron_rede_eletrica_device
+
+    # Energia Ativa Negativa (kWh) - geração/retorno
+    - name: "Energia Ativa Negativa"
+      unique_id: kron_energia_ativa_negativa
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      value_template: "{{ value_json[0].metadata.EAN | abs }}"
+      icon: mdi:solar-power
+      device: *kron_rede_eletrica_device
+
+    # Código de Erro do Medidor
+    - name: "Código de Erro Medidor"
+      unique_id: kron_codigo_erro
+      state_topic: *kron_rede_eletrica_topic
+      value_template: "{{ value_json[0].metadata.CE }}"
+      icon: mdi:alert-circle
+      device: *kron_rede_eletrica_device
+
+    # Potência Total (soma das 3 fases)
+    - name: "Potência Total"
+      unique_id: kron_potencia_total
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      icon: mdi:flash
+      value_template: >
+        {% set p1 = value_json[0].metadata.P1 | float(0) %}
+        {% set p2 = value_json[0].metadata.P2 | float(0) %}
+        {% set p3 = value_json[0].metadata.P3 | float(0) %}
+        {{ (p1 + p2 + p3) | round(2) }}
+      device: *kron_rede_eletrica_device
+
+    # Corrente Total (soma das 3 fases)
+    - name: "Corrente Total"
+      unique_id: kron_corrente_total
+      state_topic: *kron_rede_eletrica_topic
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      icon: mdi:current-ac
+      value_template: >
+        {% set i1 = value_json[0].metadata.I1 | float(0) %}
+        {% set i2 = value_json[0].metadata.I2 | float(0) %}
+        {% set i3 = value_json[0].metadata.I3 | float(0) %}
+        {{ (i1 + i2 + i3) | round(2) }}
+      device: *kron_rede_eletrica_device
