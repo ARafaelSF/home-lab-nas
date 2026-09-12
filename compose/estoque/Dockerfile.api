@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1.4
+FROM node:20-bookworm-slim AS build
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci
+COPY tsconfig.json ./
+COPY src ./src
+RUN npx prisma generate && npx tsc -p tsconfig.json
+
+FROM node:20-bookworm-slim
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl libvips42 wget ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3333
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci --omit=dev && npx prisma generate
+COPY --from=build /app/dist ./dist
+COPY --from=homelab seed-admin.cjs /app/seed-admin.cjs
+COPY --from=homelab entrypoint-api.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && mkdir -p /app/uploads
+EXPOSE 3333
+ENTRYPOINT ["/entrypoint.sh"]
