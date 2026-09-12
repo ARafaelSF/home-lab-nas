@@ -41,3 +41,4 @@ scripts/**/__pycache__/
 backups/immich/
 **/secrets.yaml
 homeassistant/secrets.yaml
+compose/monitoring/.grafana-admin

@@ -40,7 +40,7 @@ smart_home:
       - cover.escritorio_cortina_z2m                                      # Escritório - Cortina
       - climate.escritorio_ar_condicionado_localthings                    # Ar condicionado
       - switch.escritorio_desktop_sonoff                                  # Desktop
-      - switch.escritorio_repelente_z2m                                   # Escritório - Repelente
+      - switch.escritorio_repelente_sonoff                                   # Escritório - Repelente
       - switch.escritorio_monitores_tasmota                               # Monitores
       - binary_sensor.escritorio_porta_varanda_contato_hikvision_axpro      # Escritório - Porta Varanda
       - sensor.escritorio_termo_temperatura                               # Temperatura
@@ -240,7 +240,7 @@ smart_home:
     switch.escritorio_desktop_sonoff:
       name: "Desktop"
       description: "Tomada do desktop"
-    switch.escritorio_repelente_z2m:
+    switch.escritorio_repelente_sonoff:
       name: "Repelente Escritório"
       description: "Repelente elétrico do escritório"
     switch.escritorio_monitores_tasmota:

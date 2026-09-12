@@ -2,6 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: HomeAssistant
+    uid: PBB7EDB19FB19A0A4
     type: influxdb
     access: proxy
     url: http://influxdb:8086

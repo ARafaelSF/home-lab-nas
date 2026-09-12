@@ -14,11 +14,18 @@ from pathlib import Path
 
 _REPO = Path(__file__).resolve().parent
 OPS_SH = os.environ.get("CONTAINER_OPS_SH", str(_REPO / "ops.sh"))
+SHUTDOWN_SH = os.environ.get(
+    "CONTAINER_OPS_SHUTDOWN_SH", str(_REPO / "safe-shutdown.sh")
+)
 APPS_CONF = os.environ.get("CONTAINER_OPS_APPS", str(_REPO / "apps.conf"))
 TOKEN = os.environ.get("DOCKER_OPS_TOKEN", "")
 HA_WEBHOOK = os.environ.get(
     "HA_WEBHOOK_URL",
     "http://192.168.3.10:8123/api/webhook/docker_ops_update_result",
+)
+HA_SHUTDOWN_WEBHOOK = os.environ.get(
+    "HA_SHUTDOWN_WEBHOOK_URL",
+    "http://192.168.3.10:8123/api/webhook/homelab_safe_shutdown_result",
 )
 LISTEN_HOST = os.environ.get("LISTEN_HOST", "192.168.3.21")
 LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "8787"))
@@ -29,9 +36,11 @@ ALLOWED_PREFIXES = tuple(
 )
 LOG_DIR = Path(os.environ.get("CONTAINER_OPS_LOG_DIR", "/opt/container-ops/logs"))
 APP_RE = re.compile(r"^(all|pending|catalog|everything|[a-z0-9]+(?:-[a-z0-9]+)*)$")
+SHUTDOWN_CONFIRM = "DESLIGAR"
 
 _lock = threading.Lock()
 _busy_app: str | None = None
+_shutdown_pending = False
 
 
 def log(msg: str) -> None:
@@ -225,7 +234,13 @@ def friendly_summary(
 
 
 
-def notify_ha(ok: bool, app: str, message: str, summary: str | None = None) -> None:
+def notify_ha(
+    ok: bool,
+    app: str,
+    message: str,
+    summary: str | None = None,
+    webhook: str | None = None,
+) -> None:
     data = json.dumps(
         {
             "ok": ok,
@@ -236,7 +251,7 @@ def notify_ha(ok: bool, app: str, message: str, summary: str | None = None) -> N
         }
     ).encode()
     req = urllib.request.Request(
-        HA_WEBHOOK,
+        webhook or HA_WEBHOOK,
         data=data,
         headers={"Content-Type": "application/json"},
         method="POST",
@@ -246,6 +261,56 @@ def notify_ha(ok: bool, app: str, message: str, summary: str | None = None) -> N
             log(f"webhook HA {resp.status} app={app} ok={ok}")
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         log(f"webhook HA falhou: {exc}")
+
+
+def notify_shutdown(ok: bool, message: str) -> None:
+    data = json.dumps({"ok": ok, "message": message[:3500]}).encode()
+    req = urllib.request.Request(
+        HA_SHUTDOWN_WEBHOOK,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            log(f"webhook shutdown HA {resp.status} ok={ok}")
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        log(f"webhook shutdown HA falhou (esperado se HA já estiver a desligar): {exc}")
+
+
+def run_shutdown() -> None:
+    global _shutdown_pending
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOG_DIR / "ha-shutdown-last.log"
+    cmd = [SHUTDOWN_SH]
+    log(f"a correr: {' '.join(cmd)}")
+    try:
+        with log_path.open("w") as fh:
+            proc = subprocess.run(
+                cmd,
+                stdout=fh,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=120,
+                check=False,
+            )
+        text = log_path.read_text(errors="replace")
+        ok = proc.returncode == 0
+        msg = (
+            "Desligamento seguro aceite: Home Assistant → Docker → Proxmox."
+            if ok
+            else f"Falha ao iniciar desligamento (código {proc.returncode})."
+        )
+        log(msg)
+        notify_shutdown(ok, msg + ("\n" + text[-1500:] if text else ""))
+    except subprocess.TimeoutExpired:
+        notify_shutdown(False, "O script de desligamento demorou demais a responder.")
+    except OSError as exc:
+        notify_shutdown(False, f"Falha ao iniciar o script: {exc}")
+    finally:
+        with _lock:
+            _shutdown_pending = False
+        log("shutdown: livre (se o host continuar online)")
 
 
 def run_update(app: str) -> None:
@@ -294,11 +359,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.rstrip("/") != "/health":
             json_bytes({"error": "not found"}, 404, self)
             return
-        json_bytes({"ok": True, "busy": _busy_app}, 200, self)
+        json_bytes(
+            {"ok": True, "busy": _busy_app, "shutdown_pending": _shutdown_pending},
+            200,
+            self,
+        )
 
     def do_POST(self) -> None:  # noqa: N802
-        global _busy_app
-        if self.path.rstrip("/") != "/update":
+        global _busy_app, _shutdown_pending
+        path = self.path.rstrip("/")
+        if path not in {"/update", "/shutdown"}:
             json_bytes({"error": "not found"}, 404, self)
             return
         if not authorized(self):
@@ -313,13 +383,51 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             json_bytes({"error": "invalid json"}, 400, self)
             return
+
+        if path == "/shutdown":
+            confirm = str(payload.get("confirm") or "").strip()
+            if confirm != SHUTDOWN_CONFIRM:
+                json_bytes(
+                    {
+                        "error": "confirmacao invalida",
+                        "hint": f'envie {{"confirm":"{SHUTDOWN_CONFIRM}"}}',
+                    },
+                    400,
+                    self,
+                )
+                return
+            with _lock:
+                if _shutdown_pending or _busy_app:
+                    json_bytes(
+                        {
+                            "error": "busy",
+                            "app": _busy_app,
+                            "shutdown_pending": _shutdown_pending,
+                        },
+                        409,
+                        self,
+                    )
+                    return
+                _shutdown_pending = True
+            threading.Thread(target=run_shutdown, daemon=True).start()
+            json_bytes({"accepted": True, "action": "safe-shutdown"}, 202, self)
+            return
+
         app = str(payload.get("app") or "").strip()
         if not APP_RE.match(app) or app not in known_apps():
             json_bytes({"error": "app desconhecida", "app": app}, 400, self)
             return
         with _lock:
-            if _busy_app:
-                json_bytes({"error": "busy", "app": _busy_app}, 409, self)
+            if _busy_app or _shutdown_pending:
+                json_bytes(
+                    {
+                        "error": "busy",
+                        "app": _busy_app,
+                        "shutdown_pending": _shutdown_pending,
+                    },
+                    409,
+                    self,
+                )
                 return
             _busy_app = app
         threading.Thread(target=run_update, args=(app,), daemon=True).start()

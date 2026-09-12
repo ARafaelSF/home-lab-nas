@@ -54,6 +54,28 @@
           }
         },
         {
+          "type": "custom:mushroom-template-card",
+          "primary": "Desligar com segurança",
+          "secondary": "Segure ~2 s · depois confirme",
+          "icon": "mdi:power",
+          "icon_color": "red",
+          "multiline_secondary": true,
+          "grid_options": {
+            "columns": 12,
+            "rows": 1
+          },
+          "tap_action": {
+            "action": "none"
+          },
+          "hold_action": {
+            "action": "call-service",
+            "service": "script.sistema_homelab_desligar_seguro",
+            "confirmation": {
+              "text": "Isto vai desligar Home Assistant, a VM Docker e o Proxmox. Tem a certeza?"
+            }
+          }
+        },
+        {
           "show_name": true,
           "show_icon": true,
           "type": "button",
@@ -69,7 +91,7 @@
           "show_icon": true,
           "type": "button",
           "entity": "switch.escritorio_estacao_trabalho_sonoff",
-          "name": "Esta\u00e7\u00e3o de Trabalho",
+          "name": "Estação de Trabalho",
           "icon": "mdi:desk",
           "grid_options": {
             "columns": 6,
@@ -78,7 +100,7 @@
         },
         {
           "type": "entities",
-          "title": "Resumo r\u00e1pido",
+          "title": "Resumo rápido",
           "show_header_toggle": false,
           "entities": [
             {
@@ -88,7 +110,7 @@
             },
             {
               "entity": "sensor.escritorio_homelab_nas_memoria",
-              "name": "Mem\u00f3ria em uso",
+              "name": "Memória em uso",
               "icon": "mdi:memory"
             },
             {
@@ -110,7 +132,7 @@
         },
         {
           "type": "custom:mushroom-title-card",
-          "title": "Gr\u00e1ficos !",
+          "title": "Gráficos !",
           "title_tap_action": {
             "action": "navigate",
             "navigation_path": "/dashboard-casa/graficos_servidor"
@@ -123,7 +145,7 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Atualiza\u00e7\u00f5es",
+          "heading": "Atualizações",
           "heading_style": "title",
           "icon": "mdi:update",
           "grid_options": {
@@ -148,7 +170,7 @@
         },
         {
           "type": "markdown",
-          "content": "SSD = **docker-local** (di\u00e1rio, alerta ap\u00f3s 36h). OneDrive = **homelab-onedrive** (semanal, alerta ap\u00f3s 9 dias)."
+          "content": "SSD = **docker-local** (diário, alerta após 36h). OneDrive = **homelab-onedrive** (semanal, alerta após 9 dias)."
         },
         {
           "type": "entities",
@@ -187,7 +209,7 @@
             {
               "type": "tile",
               "entity": "input_datetime.sistema_docker_backup_ssd_ultimo",
-              "name": "\u00daltimo SSD",
+              "name": "Último SSD",
               "icon": "mdi:clock-outline"
             },
             {
@@ -199,7 +221,7 @@
             {
               "type": "tile",
               "entity": "input_datetime.sistema_docker_backup_onedrive_ultimo",
-              "name": "\u00daltimo OneDrive",
+              "name": "Último OneDrive",
               "icon": "mdi:clock-outline"
             }
           ]
@@ -211,7 +233,7 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Servidor \u2014 uso agora",
+          "heading": "Servidor — uso agora",
           "heading_style": "subtitle",
           "icon": "mdi:gauge",
           "grid_options": {
@@ -282,12 +304,12 @@
             },
             {
               "entity": "sensor.escritorio_homelab_nas_memoria_usada_gib",
-              "name": "Mem\u00f3ria usada",
+              "name": "Memória usada",
               "icon": "mdi:memory"
             },
             {
               "entity": "sensor.escritorio_homelab_nas_memoria_livre_gib",
-              "name": "Mem\u00f3ria livre",
+              "name": "Memória livre",
               "icon": "mdi:memory"
             }
           ]
@@ -299,7 +321,7 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Servidor \u2014 temperatura",
+          "heading": "Servidor — temperatura",
           "heading_style": "subtitle",
           "icon": "mdi:thermometer",
           "grid_options": {
@@ -366,12 +388,12 @@
             },
             {
               "entity": "sensor.escritorio_ap_unifi_clientes",
-              "name": "U7 Pro Escrit\u00f3rio",
+              "name": "U7 Pro Escritório",
               "icon": "mdi:wifi"
             },
             {
               "entity": "sensor.suite_ap_unifi_clientes",
-              "name": "U7 Pro Su\u00edte",
+              "name": "U7 Pro Suíte",
               "icon": "mdi:wifi"
             },
             {
@@ -385,7 +407,7 @@
             },
             {
               "entity": "sensor.casa_wifi_multimedia_unifi_clientes",
-              "name": "Hangar Multim\u00eddia",
+              "name": "Hangar Multimídia",
               "icon": "mdi:wifi"
             },
             {
@@ -420,13 +442,13 @@
             {
               "type": "tile",
               "entity": "sensor.escritorio_ap_unifi_uptime",
-              "name": "Uptime AP Escrit\u00f3rio",
+              "name": "Uptime AP Escritório",
               "icon": "mdi:clock-outline"
             },
             {
               "type": "tile",
               "entity": "sensor.suite_ap_unifi_uptime",
-              "name": "Uptime AP Su\u00edte",
+              "name": "Uptime AP Suíte",
               "icon": "mdi:clock-outline"
             }
           ]
@@ -438,7 +460,7 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Ubiquiti \u2014 CPU e mem\u00f3ria",
+          "heading": "Ubiquiti — CPU e memória",
           "heading_style": "title",
           "icon": "mdi:chart-donut",
           "grid_options": {
@@ -547,7 +569,7 @@
         },
         {
           "type": "heading",
-          "heading": "U7 Pro Escrit\u00f3rio",
+          "heading": "U7 Pro Escritório",
           "heading_style": "subtitle",
           "icon": "mdi:wifi",
           "grid_options": {
@@ -590,7 +612,7 @@
         },
         {
           "type": "heading",
-          "heading": "U7 Pro Su\u00edte",
+          "heading": "U7 Pro Suíte",
           "heading_style": "subtitle",
           "icon": "mdi:wifi",
           "grid_options": {

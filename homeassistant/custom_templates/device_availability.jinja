@@ -1,0 +1,80 @@
+{# Line protocol device_availability — mesma regra do sensor.dispositivos_offline #}
+{% macro device_availability_lines() -%}
+{%- set domains = ['light', 'switch', 'climate', 'cover', 'fan', 'lock', 'vacuum', 'media_player', 'binary_sensor', 'sensor'] -%}
+{%- set ns = namespace(seen=[], lines=[]) -%}
+{%- for d in domains -%}
+{%- for e in states[d] -%}
+{%- set eid = e.entity_id -%}
+{%- if 'ap_unifi_led' not in eid
+     and 'alarme_indicacao' not in eid
+     and 'termocirculador' not in eid
+     and 'embaralhar' not in eid
+     and 'repita' not in eid
+     and 'firestick' not in eid
+     and 'fire_tv' not in eid
+     and 'camera' not in eid
+     and 'choro' not in eid
+     and 'alexa_app_for_pc' not in eid
+     and 'usina_' not in eid
+     and 'inkbird' not in eid
+     and 'umidificador' not in eid
+     and 'unifi_network' not in eid
+     and 'grupo_de_som' not in eid
+     and '_dispositivos' not in eid
+     and 'announcements' not in eid
+     and 'communications' not in eid
+     and 'linkquality' not in eid
+     and 'last_seen' not in eid
+     and '_action' not in eid
+     and 'dispositivos_offline' not in eid
+     and 'amazfit' not in eid
+     and 'system_monitor' not in eid
+     and 'tarifas_cemig' not in eid
+     and 'this_device_' not in eid
+     and 'energy_production' not in eid
+     and 'energy_current' not in eid
+     and 'energy_next' not in eid
+     and 'power_production' not in eid
+     and 'power_highest' not in eid
+     and 'wifi_visitantes' not in eid
+     and 'contadores_da_casa' not in eid
+     and 'time_remaining' not in eid
+     and 'total_duration' not in eid
+     and 'time_format' not in eid
+     and '_voltage' not in eid
+     and '_bateria_' not in eid
+     and 'battery' not in eid -%}
+{%- set incluir = true -%}
+{%- if d == 'media_player' -%}
+{%- set incluir = ('echo' in eid) -%}
+{%- elif 'echo' in eid or 'alexa' in eid or 'mediaplayer' in eid -%}
+{%- set incluir = false -%}
+{%- elif d == 'sensor' -%}
+{%- set incluir = ('_z2m_' in eid or '_tuya_' in eid or 'localtuya' in eid or 'presenca' in eid or 'occupancy' in eid) -%}
+{%- elif d == 'binary_sensor' -%}
+{%- set incluir = (
+  'presenca' in eid or 'occupancy' in eid or 'motion' in eid or 'movimento' in eid
+  or 'door' in eid or 'porta' in eid or 'window' in eid or 'janela' in eid
+  or 'moisture' in eid or 'smoke' in eid or 'leak' in eid
+  or '_z2m_' in eid or '_tuya_' in eid or 'localtuya' in eid
+) -%}
+{%- endif -%}
+{%- if incluir -%}
+{%- set did = device_id(eid) -%}
+{%- set key = ('echo:' ~ (area_id(eid) or eid)) if (d == 'media_player' and 'echo' in eid) else (did if did else eid) -%}
+{%- if key not in ns.seen -%}
+{%- set ns.seen = ns.seen + [key] -%}
+{%- set area = area_name(eid) or 'Sem área' -%}
+{%- set nm = (device_attr(did, 'name_by_user') if did else none) or (device_attr(did, 'name') if did else none) or state_attr(eid, 'friendly_name') or eid -%}
+{%- set label = area ~ ' — ' ~ nm -%}
+{%- set esc = label | replace('\\', '\\\\') | replace(' ', '\\ ') | replace(',', '\\,') | replace('=', '\\=') -%}
+{%- set off = 1 if e.state in ['unavailable', 'unknown'] else 0 -%}
+{%- set on = 0 if off == 1 else 1 -%}
+{%- set ns.lines = ns.lines + ['device_availability,device=' ~ esc ~ ' online=' ~ on ~ 'i,offline=' ~ off ~ 'i'] -%}
+{%- endif -%}
+{%- endif -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endfor -%}
+{{- ns.lines | join('\n') -}}
+{%- endmacro %}

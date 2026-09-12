@@ -1451,7 +1451,7 @@
   actions:
   - variables:
       target_entities:
-      - switch.escritorio_repelente_z2m
+      - switch.escritorio_repelente_sonoff
       - switch.sala_de_tv_repelente_sonoff
       - switch.sala_de_jantar_repelente_sonoff
       - switch.brinquedoteca_repelente_sonoff

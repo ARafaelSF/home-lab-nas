@@ -41,6 +41,7 @@ shell_command:
   cameras_internas_wan_allow: env UNIFI_HOST=192.168.68.1 UNIFI_USERNAME=CursorIA UNIFI_PASSWORD='***REDACTED***' UNIFI_RULE_ID=6a997135a33c069ef0997675 python3 /config/www/unifi_cameras_internas_wan.py allow
   cameras_internas_wan_block: env UNIFI_HOST=192.168.68.1 UNIFI_USERNAME=CursorIA UNIFI_PASSWORD='***REDACTED***' UNIFI_RULE_ID=6a997135a33c069ef0997675 python3 /config/www/unifi_cameras_internas_wan.py block
   docker_ops_update: !secret docker_ops_update_curl
+  docker_ops_shutdown: !secret docker_ops_shutdown_curl
 
 # Replica a protecção no AdGuard backup (Pi). O interruptor nativo só fala com .21.
 rest_command:

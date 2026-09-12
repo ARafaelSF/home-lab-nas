@@ -21,9 +21,10 @@ blueprint:
 
     Recursos: • Boolean de não perturbe • Entidades principais dia/noite • Tempo de
     desligamento separado dia/noite • Período noturno opcional • Brilho/cor opcionais
-    • Luminosidade opcional • Memória de área + extras • Safeguard sem waits longos
-    (reinício HA / Z2M / reload / ligar manual): conta o tempo normal e atua;
-    retorno via cena persistente (automação não fica em execução)
+    • Luminosidade opcional • Gate de acendimento opcional (ex.: só acende com porta
+    aberta — útil com porta de vidro) • Memória de área + extras • Safeguard sem
+    waits longos (reinício HA / Z2M / reload / ligar manual): conta o tempo normal
+    e atua; retorno via cena persistente (automação não fica em execução)
   domain: automation
   author: Antonio Rafael
   homeassistant:
@@ -184,6 +185,64 @@ blueprint:
               step: 1.0
               unit_of_measurement: lx
               mode: slider
+    turn_on_gate_settings:
+      name: "🚪 Gate para acender (porta / abertura)"
+      collapsed: true
+      input:
+        enable_turn_on_gate:
+          name: Exigir porta/abertura para acender?
+          description: >
+            Se habilitado, presença sozinha NÃO acende nem restaura retorno.
+            Serve para portas de vidro: passa do lado de fora → presença dispara,
+            mas a luz só liga se a porta (ou outro sensor) estiver aberta / tiver
+            aberto recentemente.
+            Desligamento por ausência continua normal.
+          default: false
+          selector:
+            boolean: {}
+        turn_on_gate_sensors:
+          name: Sensores do gate (porta, janela, abertura…)
+          description: >
+            Binary sensors que liberam o acendimento quando estão ON (abertos).
+            Ex.: porta da oficina. Deixe vazio se o gate estiver desligado.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - binary_sensor
+              device_class:
+                - door
+                - opening
+                - garage_door
+                - window
+        turn_on_gate_mode:
+          name: Modo do gate
+          description: >
+            Qualquer um aberto = basta um sensor ON/recente.
+            Todos abertos = todos precisam estar ON/recentes.
+          default: any
+          selector:
+            select:
+              options:
+                - label: Qualquer um aberto
+                  value: any
+                - label: Todos abertos
+                  value: all
+        turn_on_gate_lookback_seconds:
+          name: Considerar “aberto recentemente” (segundos)
+          description: >
+            Além de estar ON agora, aceita se o sensor fechou há até N segundos
+            (last_changed). Cobre o atraso entre abrir a porta e o mmWave detectar.
+            0 = só libera com o sensor ON neste instante.
+          default: 45
+          selector:
+            number:
+              min: 0.0
+              max: 300.0
+              step: 1.0
+              unit_of_measurement: s
+              mode: slider
     turn_on_protection_settings:
       name: "🛡️ Proteção ao Ligar"
       collapsed: true
@@ -267,10 +326,10 @@ blueprint:
               unit_of_measurement: s
               mode: slider
         return_delay:
-          name: Tempo de retorno inteligente (segundos)
+          name: Tempo de retorno inteligente — Dia (segundos)
           description: >
-            Janela após o desligamento da área. Se houver presença novamente
-            dentro deste tempo, restaura as luzes que estavam acesas antes de desligar.
+            Janela após o desligamento fora do período noturno. Se houver presença
+            novamente dentro deste tempo, restaura o que estava aceso antes de desligar.
           default: 300
           selector:
             number:
@@ -279,6 +338,31 @@ blueprint:
               step: 1.0
               unit_of_measurement: s
               mode: slider
+        return_delay_night:
+          name: Tempo de retorno inteligente — Noite (segundos)
+          description: >
+            Janela de retorno no período noturno (independente do diurno). Se o período
+            noturno estiver desabilitado, este valor não é usado.
+          default: 300
+          selector:
+            number:
+              min: 0.0
+              max: 7200.0
+              step: 1.0
+              unit_of_measurement: s
+              mode: slider
+        exclude_entities:
+          name: Excluir da memória / desligamento
+          description: >
+            Entidades light da área que NÃO devem ser memorizadas nem desligadas
+            (ex.: LED de AP UniFi ligado por horário).
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - light
+                - switch
     debug_settings:
       name: "📝 Logs"
       collapsed: true
@@ -289,7 +373,8 @@ blueprint:
           selector:
             boolean: {}
 
-mode: single
+mode: queued
+max: 5
 max_exceeded: silent
 
 trigger_variables:
@@ -302,6 +387,8 @@ trigger_variables:
   night_start_time: !input night_start_time
   night_end_time: !input night_end_time
   return_delay: !input return_delay
+  return_delay_night: !input return_delay_night
+  exclude_entities: !input exclude_entities
 
 triggers:
   - trigger: state
@@ -343,7 +430,7 @@ triggers:
         {% else %}
           {% set delay = off_delay | int %}
         {% endif %}
-        {% set lights = area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list %}
+        {% set lights = area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | reject('in', exclude_entities) | list %}
         {% set ns = namespace(extra_on=false, t_extra=0) %}
         {% for entity_id in extra_memory_entities %}
           {% set state_obj = states[entity_id] %}
@@ -375,7 +462,18 @@ triggers:
       {% if states[sid] is none %}
         false
       {% else %}
-        {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) >= (return_delay | int) }}
+        {% if enable_night_mode %}
+          {% set current = now().strftime('%H:%M:%S') %}
+          {% if night_start_time <= night_end_time %}
+            {% set night = night_start_time <= current < night_end_time %}
+          {% else %}
+            {% set night = current >= night_start_time or current < night_end_time %}
+          {% endif %}
+          {% set delay = (return_delay_night if night else return_delay) | int %}
+        {% else %}
+          {% set delay = return_delay | int %}
+        {% endif %}
+        {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) >= delay }}
       {% endif %}
 
   # HA start / reload — limpa memória expirada; se tempo normal já passou, desliga
@@ -411,12 +509,39 @@ variables:
   enable_illuminance_check: !input enable_illuminance_check
   illuminance_sensor: !input illuminance_sensor
   illuminance_below: !input illuminance_below
+  enable_turn_on_gate: !input enable_turn_on_gate
+  turn_on_gate_sensors: !input turn_on_gate_sensors
+  turn_on_gate_mode: !input turn_on_gate_mode
+  turn_on_gate_lookback_seconds: !input turn_on_gate_lookback_seconds
   enable_turn_on_protection: !input enable_turn_on_protection
   turn_on_protection_duration: !input turn_on_protection_duration
   off_delay: !input off_delay
   off_delay_night: !input off_delay_night
   return_delay: !input return_delay
+  return_delay_night: !input return_delay_night
+  exclude_entities: !input exclude_entities
   enable_logs: !input enable_logs
+  turn_on_gate_blocks: >
+    {% if not enable_turn_on_gate or (turn_on_gate_sensors | count == 0) %}
+      false
+    {% else %}
+      {% set lookback = turn_on_gate_lookback_seconds | int %}
+      {% set ns = namespace(ok=0) %}
+      {% for entity_id in turn_on_gate_sensors %}
+        {% if is_state(entity_id, 'on') %}
+          {% set ns.ok = ns.ok + 1 %}
+        {% elif lookback > 0 and states[entity_id] is not none %}
+          {% if (as_timestamp(now()) - as_timestamp(states[entity_id].last_changed)) <= lookback %}
+            {% set ns.ok = ns.ok + 1 %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if turn_on_gate_mode == 'all' %}
+        {{ ns.ok < (turn_on_gate_sensors | count) }}
+      {% else %}
+        {{ ns.ok == 0 }}
+      {% endif %}
+    {% endif %}
   is_recovery_trigger: "{{ trigger.id in ['ha_start', 'automation_reloaded', 'absent_with_lights'] }}"
   is_off_trigger: "{{ trigger.id in ['motion_off_day', 'motion_off_night'] }}"
   is_night: >
@@ -437,6 +562,14 @@ variables:
       {{ off_delay_night | int }}
     {% else %}
       {{ off_delay | int }}
+    {% endif %}
+  selected_return_delay: >
+    {% if not enable_night_mode %}
+      {{ return_delay | int }}
+    {% elif is_night | bool %}
+      {{ return_delay_night | int }}
+    {% else %}
+      {{ return_delay | int }}
     {% endif %}
   selected_entities: >
     {% if is_night | bool %}
@@ -465,7 +598,21 @@ actions:
                 {% else %}
                   {{ (as_timestamp(now()) - as_timestamp(states[memory_scene_entity_id].last_changed)) | int }}
                 {% endif %}
-              return_memory_valid: "{{ has_return_memory | bool and (return_memory_age | int) < (return_delay | int) }}"
+              return_memory_valid: "{{ has_return_memory | bool and (return_memory_age | int) < (selected_return_delay | int) }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ turn_on_gate_blocks | bool }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Presença ignorada: gate de acendimento não liberado (porta/abertura)."
+              - stop: Gate de acendimento não liberado.
 
           - if:
               - condition: template
@@ -479,9 +626,26 @@ actions:
                     data:
                       name: Controle Inteligente de Presença
                       message: "Retorno inteligente ({{ memory_scene_entity_id }}, idade={{ return_memory_age }}s)."
+              - variables:
+                  restore_entities: "{{ state_attr(memory_scene_entity_id, 'entity_id') | default([]) }}"
               - action: scene.turn_on
                 target:
                   entity_id: "{{ memory_scene_entity_id }}"
+              - delay:
+                  milliseconds: 350
+              - repeat:
+                  for_each: "{{ restore_entities }}"
+                  sequence:
+                    - action: homeassistant.turn_on
+                      target:
+                        entity_id: "{{ repeat.item }}"
+                      continue_on_error: true
+                    - delay:
+                        milliseconds: 250
+              - action: scene.turn_on
+                target:
+                  entity_id: "{{ memory_scene_entity_id }}"
+                continue_on_error: true
               - action: scene.delete
                 target:
                   entity_id: "{{ memory_scene_entity_id }}"
@@ -592,7 +756,7 @@ actions:
           - alias: "Desligar área com memória e retorno"
             sequence:
               - variables:
-                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | reject('in', exclude_entities) | list }}"
                   extras_on_now: >
                     {% set ns = namespace(entities=[]) %}
                     {% for entity_id in extra_memory_entities %}
@@ -633,27 +797,49 @@ actions:
                   area_lights_snapshot: "{{ area_lights_on_now }}"
                   extra_entities_snapshot: "{{ extras_on_now }}"
                   snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+                  memory_already_valid: >
+                    {% set sid = 'scene.cip_' ~ control_area %}
+                    {% if states[sid] is none %}
+                      false
+                    {% else %}
+                      {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) < (selected_return_delay | int) }}
+                    {% endif %}
 
+              # Não sobrescrever memória válida: corrida Zigbee apaga canais em
+              # momentos diferentes e um 2º disparo gravava cena sem a pia/espelho.
               - if:
                   - condition: template
-                    value_template: "{{ snapshot_entities | count > 0 }}"
+                    value_template: "{{ (snapshot_entities | count > 0) and (not memory_already_valid | bool) }}"
                 then:
                   - action: scene.create
                     data:
                       scene_id: "{{ memory_scene_id }}"
                       snapshot_entities: "{{ snapshot_entities }}"
-
-              - action: light.turn_off
-                target:
-                  area_id: !input control_area
+                  - delay:
+                      milliseconds: 200
 
               - if:
                   - condition: template
-                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                    value_template: "{{ enable_logs and memory_already_valid | bool }}"
                 then:
-                  - action: homeassistant.turn_off
-                    target:
-                      entity_id: "{{ extra_entities_snapshot }}"
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno já válida — preservada. Desligo restante: {{ snapshot_entities }}."
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - repeat:
+                      for_each: "{{ snapshot_entities }}"
+                      sequence:
+                        - action: homeassistant.turn_off
+                          target:
+                            entity_id: "{{ repeat.item }}"
+                          continue_on_error: true
+                        - delay:
+                            milliseconds: 200
 
               - if:
                   - condition: template
@@ -662,7 +848,7 @@ actions:
                   - action: logbook.log
                     data:
                       name: Controle Inteligente de Presença
-                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ selected_return_delay }}s, sem wait)."
 
       - conditions:
           - condition: trigger
@@ -675,7 +861,7 @@ actions:
           - alias: "Desligar área com memória e retorno"
             sequence:
               - variables:
-                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | reject('in', exclude_entities) | list }}"
                   extras_on_now: >
                     {% set ns = namespace(entities=[]) %}
                     {% for entity_id in extra_memory_entities %}
@@ -716,27 +902,49 @@ actions:
                   area_lights_snapshot: "{{ area_lights_on_now }}"
                   extra_entities_snapshot: "{{ extras_on_now }}"
                   snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+                  memory_already_valid: >
+                    {% set sid = 'scene.cip_' ~ control_area %}
+                    {% if states[sid] is none %}
+                      false
+                    {% else %}
+                      {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) < (selected_return_delay | int) }}
+                    {% endif %}
 
+              # Não sobrescrever memória válida: corrida Zigbee apaga canais em
+              # momentos diferentes e um 2º disparo gravava cena sem a pia/espelho.
               - if:
                   - condition: template
-                    value_template: "{{ snapshot_entities | count > 0 }}"
+                    value_template: "{{ (snapshot_entities | count > 0) and (not memory_already_valid | bool) }}"
                 then:
                   - action: scene.create
                     data:
                       scene_id: "{{ memory_scene_id }}"
                       snapshot_entities: "{{ snapshot_entities }}"
-
-              - action: light.turn_off
-                target:
-                  area_id: !input control_area
+                  - delay:
+                      milliseconds: 200
 
               - if:
                   - condition: template
-                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                    value_template: "{{ enable_logs and memory_already_valid | bool }}"
                 then:
-                  - action: homeassistant.turn_off
-                    target:
-                      entity_id: "{{ extra_entities_snapshot }}"
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno já válida — preservada. Desligo restante: {{ snapshot_entities }}."
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - repeat:
+                      for_each: "{{ snapshot_entities }}"
+                      sequence:
+                        - action: homeassistant.turn_off
+                          target:
+                            entity_id: "{{ repeat.item }}"
+                          continue_on_error: true
+                        - delay:
+                            milliseconds: 200
 
               - if:
                   - condition: template
@@ -745,7 +953,7 @@ actions:
                   - action: logbook.log
                     data:
                       name: Controle Inteligente de Presença
-                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ selected_return_delay }}s, sem wait)."
 
 
       # ========== AUSÊNCIA COM LUZES (restart / manual / Z2M) ==========
@@ -758,7 +966,7 @@ actions:
           - alias: "Desligar área com memória e retorno"
             sequence:
               - variables:
-                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | reject('in', exclude_entities) | list }}"
                   extras_on_now: >
                     {% set ns = namespace(entities=[]) %}
                     {% for entity_id in extra_memory_entities %}
@@ -791,27 +999,49 @@ actions:
                   area_lights_snapshot: "{{ area_lights_on_now }}"
                   extra_entities_snapshot: "{{ extras_on_now }}"
                   snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+                  memory_already_valid: >
+                    {% set sid = 'scene.cip_' ~ control_area %}
+                    {% if states[sid] is none %}
+                      false
+                    {% else %}
+                      {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) < (selected_return_delay | int) }}
+                    {% endif %}
 
+              # Não sobrescrever memória válida: corrida Zigbee apaga canais em
+              # momentos diferentes e um 2º disparo gravava cena sem a pia/espelho.
               - if:
                   - condition: template
-                    value_template: "{{ snapshot_entities | count > 0 }}"
+                    value_template: "{{ (snapshot_entities | count > 0) and (not memory_already_valid | bool) }}"
                 then:
                   - action: scene.create
                     data:
                       scene_id: "{{ memory_scene_id }}"
                       snapshot_entities: "{{ snapshot_entities }}"
-
-              - action: light.turn_off
-                target:
-                  area_id: !input control_area
+                  - delay:
+                      milliseconds: 200
 
               - if:
                   - condition: template
-                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                    value_template: "{{ enable_logs and memory_already_valid | bool }}"
                 then:
-                  - action: homeassistant.turn_off
-                    target:
-                      entity_id: "{{ extra_entities_snapshot }}"
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno já válida — preservada. Desligo restante: {{ snapshot_entities }}."
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - repeat:
+                      for_each: "{{ snapshot_entities }}"
+                      sequence:
+                        - action: homeassistant.turn_off
+                          target:
+                            entity_id: "{{ repeat.item }}"
+                          continue_on_error: true
+                        - delay:
+                            milliseconds: 200
 
               - if:
                   - condition: template
@@ -820,7 +1050,7 @@ actions:
                   - action: logbook.log
                     data:
                       name: Controle Inteligente de Presença
-                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ selected_return_delay }}s, sem wait)."
 
       # ========== EXPIRA MEMÓRIA DE RETORNO ==========
       - conditions:
@@ -877,7 +1107,7 @@ actions:
 
           - if:
               - condition: template
-                value_template: "{{ has_return_memory | bool and (return_memory_age | int) >= (return_delay | int) }}"
+                value_template: "{{ has_return_memory | bool and (return_memory_age | int) >= (selected_return_delay | int) }}"
             then:
               - action: scene.delete
                 target:
@@ -894,7 +1124,7 @@ actions:
 
           - variables:
               motion_is_on: "{{ is_state(motion_sensor, 'on') }}"
-              area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+              area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | reject('in', exclude_entities) | list }}"
               extras_on_now: >
                 {% set ns = namespace(entities=[]) %}
                 {% for entity_id in extra_memory_entities %}
@@ -952,7 +1182,7 @@ actions:
           - alias: "Desligar área com memória e retorno"
             sequence:
               - variables:
-                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | list }}"
+                  area_lights_on_now: "{{ area_entities(control_area) | select('match', '^light\\.') | select('is_state', 'on') | reject('in', exclude_entities) | list }}"
                   extras_on_now: >
                     {% set ns = namespace(entities=[]) %}
                     {% for entity_id in extra_memory_entities %}
@@ -985,27 +1215,49 @@ actions:
                   area_lights_snapshot: "{{ area_lights_on_now }}"
                   extra_entities_snapshot: "{{ extras_on_now }}"
                   snapshot_entities: "{{ (area_lights_snapshot + extra_entities_snapshot) | unique | list }}"
+                  memory_already_valid: >
+                    {% set sid = 'scene.cip_' ~ control_area %}
+                    {% if states[sid] is none %}
+                      false
+                    {% else %}
+                      {{ (as_timestamp(now()) - as_timestamp(states[sid].last_changed)) < (selected_return_delay | int) }}
+                    {% endif %}
 
+              # Não sobrescrever memória válida: corrida Zigbee apaga canais em
+              # momentos diferentes e um 2º disparo gravava cena sem a pia/espelho.
               - if:
                   - condition: template
-                    value_template: "{{ snapshot_entities | count > 0 }}"
+                    value_template: "{{ (snapshot_entities | count > 0) and (not memory_already_valid | bool) }}"
                 then:
                   - action: scene.create
                     data:
                       scene_id: "{{ memory_scene_id }}"
                       snapshot_entities: "{{ snapshot_entities }}"
-
-              - action: light.turn_off
-                target:
-                  area_id: !input control_area
+                  - delay:
+                      milliseconds: 200
 
               - if:
                   - condition: template
-                    value_template: "{{ extra_entities_snapshot | count > 0 }}"
+                    value_template: "{{ enable_logs and memory_already_valid | bool }}"
                 then:
-                  - action: homeassistant.turn_off
-                    target:
-                      entity_id: "{{ extra_entities_snapshot }}"
+                  - action: logbook.log
+                    data:
+                      name: Controle Inteligente de Presença
+                      message: "Memória de retorno já válida — preservada. Desligo restante: {{ snapshot_entities }}."
+
+              - if:
+                  - condition: template
+                    value_template: "{{ snapshot_entities | count > 0 }}"
+                then:
+                  - repeat:
+                      for_each: "{{ snapshot_entities }}"
+                      sequence:
+                        - action: homeassistant.turn_off
+                          target:
+                            entity_id: "{{ repeat.item }}"
+                          continue_on_error: true
+                        - delay:
+                            milliseconds: 200
 
               - if:
                   - condition: template
@@ -1014,7 +1266,7 @@ actions:
                   - action: logbook.log
                     data:
                       name: Controle Inteligente de Presença
-                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ return_delay }}s, sem wait)."
+                      message: "Memória de retorno em scene.cip_{{ control_area }} (janela {{ selected_return_delay }}s, sem wait)."
 
 
     default:

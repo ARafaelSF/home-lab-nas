@@ -1,0 +1,500 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Tempo offline por dispositivo. Filtra quedas em massa (reinício coordenador/HA) e totais curtos (≤ N minutos).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "**Fonte:** métrica `device_availability` no Influx, mesma regra do *Dispositivos offline* no HA.\n\n**Ruído filtrado:**\n- **Queda em massa** — minutos com ≥ N dispositivos offline (reinício do HA/coordenador/Z2M) não entram no tempo.\n- **Mín. minutos** — totais ≤ esse valor contam como zero e saem do ranking.\n\nAjusta os filtros no topo. A linha do tempo continua a mostrar o sinal bruto.",
+        "mode": "markdown"
+      },
+      "title": "Dispositivos offline — guia",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "PBB7EDB19FB19A0A4"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "unit": "none"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 3
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"home_energy\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> last()\n  |> filter(fn: (r) => r._value == 1)\n  |> count()\n  |> yield(name: \"offline_now\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Offline agora",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "PBB7EDB19FB19A0A4"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 3
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"home_energy\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"online\")\n  |> last()\n  |> count()\n  |> yield(name: \"monitored\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Dispositivos monitorados",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "PBB7EDB19FB19A0A4"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 3600
+              }
+            ]
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 3
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "query": "import \"join\"\n\nmins = from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)\n\ncounts = mins\n  |> filter(fn: (r) => r._value == 1)\n  |> group(columns: [\"_time\"])\n  |> count()\n  |> map(fn: (r) => ({_time: r._time, n_offline: r._value}))\n  |> group()\n\njoin.time(\n  left: mins |> group(),\n  right: counts,\n  as: (l, r) => ({l with n_offline: r.n_offline}),\n)\n  |> filter(fn: (r) => (not exists r.n_offline) or r.n_offline < int(v: \"${mass_cut}\"))\n  |> map(fn: (r) => ({ r with _value: if r._value == 1 then 60.0 else 0.0 }))\n  |> group(columns: [\"device\"])\n  |> sum()\n  |> filter(fn: (r) => r._value > float(v: \"${min_offline_min}\") * 60.0)\n  |> group()\n  |> sum()\n  |> yield(name: \"total_offline_s\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Tempo offline total (após filtros)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "PBB7EDB19FB19A0A4"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 600
+              },
+              {
+                "color": "red",
+                "value": 3600
+              }
+            ]
+          },
+          "unit": "dtdurations",
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Tempo offline"
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "targets": [
+        {
+          "query": "import \"join\"\n\nmins = from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)\n\ncounts = mins\n  |> filter(fn: (r) => r._value == 1)\n  |> group(columns: [\"_time\"])\n  |> count()\n  |> map(fn: (r) => ({_time: r._time, n_offline: r._value}))\n  |> group()\n\njoin.time(\n  left: mins |> group(),\n  right: counts,\n  as: (l, r) => ({l with n_offline: r.n_offline}),\n)\n  // Ignora minutos de \"queda em massa\" (reinício HA/coordenador/Z2M)\n  |> filter(fn: (r) => (not exists r.n_offline) or r.n_offline < int(v: \"${mass_cut}\"))\n  |> map(fn: (r) => ({ r with _value: if r._value == 1 then 60.0 else 0.0 }))\n  |> group(columns: [\"device\"])\n  |> sum()\n  // Corte: totais ≤ N minutos contam como zero (somem do ranking)\n  |> filter(fn: (r) => r._value > float(v: \"${min_offline_min}\") * 60.0)\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> rename(columns: {_value: \"Tempo offline\", device: \"Dispositivo\"})\n  |> keep(columns: [\"Dispositivo\", \"Tempo offline\"])\n  |> yield(name: \"ranking\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Ranking — tempo offline (após filtros)",
+      "type": "table",
+      "transformations": []
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "PBB7EDB19FB19A0A4"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "showPoints": "never"
+          },
+          "decimals": 1,
+          "unit": "s",
+          "max": null,
+          "min": 0
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "query": "import \"join\"\n\nmins = from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)\n\ncounts = mins\n  |> filter(fn: (r) => r._value == 1)\n  |> group(columns: [\"_time\"])\n  |> count()\n  |> map(fn: (r) => ({_time: r._time, n_offline: r._value}))\n  |> group()\n\njoin.time(\n  left: mins |> group(),\n  right: counts,\n  as: (l, r) => ({l with n_offline: r.n_offline}),\n)\n  // Ignora minutos de \"queda em massa\" (reinício HA/coordenador/Z2M)\n  |> filter(fn: (r) => (not exists r.n_offline) or r.n_offline < int(v: \"${mass_cut}\"))\n  |> map(fn: (r) => ({ r with _value: if r._value == 1 then 60.0 else 0.0 }))\n  |> group(columns: [\"device\"])\n  |> sum()\n  // Corte: totais ≤ N minutos contam como zero (somem do ranking)\n  |> filter(fn: (r) => r._value > float(v: \"${min_offline_min}\") * 60.0)\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> limit(n: 15)\n  |> map(fn: (r) => ({ r with _field: r.device }))\n  |> yield(name: \"top15\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 15 — tempo offline (após filtros)",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "PBB7EDB19FB19A0A4"
+      },
+      "description": "1 = offline, 0 = online. Legenda com o nome igual ao dashboard do HA (Área — Dispositivo).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "decimals": 0,
+          "max": 1,
+          "min": 0,
+          "unit": "short",
+          "displayName": "${__field.name}"
+        }
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> filter(fn: (r) => if \"${device:regex}\" == \".*\" then true else r.device =~ /${device:regex}/)\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> map(fn: (r) => ({ r with _field: r.device }))\n  |> yield(name: \"offline\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Linha do tempo — offline (1) / online (0)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": [
+    "casa",
+    "offline",
+    "homeassistant",
+    "disponibilidade"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "min_offline_min",
+        "type": "custom",
+        "label": "Ignorar até (min)",
+        "query": "1,2,5,10,15,30",
+        "current": {
+          "text": "1",
+          "value": "1"
+        },
+        "options": [
+          {
+            "text": "1",
+            "value": "1",
+            "selected": true
+          },
+          {
+            "text": "2",
+            "value": "2",
+            "selected": false
+          },
+          {
+            "text": "5",
+            "value": "5",
+            "selected": false
+          },
+          {
+            "text": "10",
+            "value": "10",
+            "selected": false
+          },
+          {
+            "text": "15",
+            "value": "15",
+            "selected": false
+          },
+          {
+            "text": "30",
+            "value": "30",
+            "selected": false
+          }
+        ],
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "mass_cut",
+        "type": "custom",
+        "label": "Queda em massa ≥",
+        "query": "10,15,20,30,50,9999",
+        "current": {
+          "text": "15",
+          "value": "15"
+        },
+        "options": [
+          {
+            "text": "10",
+            "value": "10",
+            "selected": false
+          },
+          {
+            "text": "15",
+            "value": "15",
+            "selected": true
+          },
+          {
+            "text": "20",
+            "value": "20",
+            "selected": false
+          },
+          {
+            "text": "30",
+            "value": "30",
+            "selected": false
+          },
+          {
+            "text": "50",
+            "value": "50",
+            "selected": false
+          },
+          {
+            "text": "9999 (desligar)",
+            "value": "9999",
+            "selected": false
+          }
+        ],
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "Todos",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "PBB7EDB19FB19A0A4"
+        },
+        "definition": "from(bucket: \"home_energy\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"device_availability\") |> keep(columns: [\"device\"]) |> distinct(column: \"device\") |> sort()",
+        "includeAll": true,
+        "label": "Dispositivo",
+        "multi": true,
+        "name": "device",
+        "query": "from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\")\n  |> keep(columns: [\"device\"])\n  |> distinct(column: \"device\")\n  |> sort()",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "America/Sao_Paulo",
+  "title": "Dispositivos offline",
+  "uid": "dispositivos-offline",
+  "version": 2,
+  "weekStart": "monday"
+}

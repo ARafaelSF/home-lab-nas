@@ -33,6 +33,7 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes (qu
 | **Atualizar pendentes** (WUD/HA) | `/opt/container-ops/ops.sh update all` |
 | **Atualizar catálogo inteiro** | `/opt/container-ops/ops.sh update catalog` |
 | **Pelo Home Assistant** | Dash Docker: botão **Atualizar pendentes** / toque no container |
+| **Desligar HA+Docker+Proxmox** | Dash Servidor: **Desligar com segurança** (ou `safe-shutdown.sh`) |
 | **Atualizar sensores HA** (só WUD) | `/opt/container-ops/ops.sh refresh-ha` ou `refresh-ha mealie` |
 | Voltar versão antiga | `/opt/container-ops/ops.sh rollback mealie v2.7.0` |
 | Apagar backups velhos (ficar com 3) | `/opt/container-ops/ops.sh prune mealie 3` |

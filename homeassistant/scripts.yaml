@@ -2599,3 +2599,46 @@ sistema_docker_atualizar_tudo:
     data:
       app: all
 
+sistema_homelab_desligar_seguro:
+  alias: Homelab — desligar com segurança
+  description: Desliga HA (VM 101), Docker (VM 100) e o host Proxmox, por ordem.
+  icon: mdi:power
+  mode: single
+  sequence:
+  - action: persistent_notification.create
+    data:
+      title: Homelab — a desligar
+      message: A iniciar desligamento seguro (HA → Docker → Proxmox)…
+      notification_id: homelab_safe_shutdown
+  - action: script.enviar_notificacao_telegram
+    continue_on_error: true
+    data:
+      destinatarios: antonio
+      titulo: "⏻ Homelab"
+      mensagem: A desligar com segurança — Home Assistant, Docker e Proxmox.
+      parse_mode: html
+  - action: shell_command.docker_ops_shutdown
+    continue_on_error: true
+    response_variable: shutdown_ops
+  - if:
+    - condition: template
+      value_template: "{{ shutdown_ops is not defined or shutdown_ops['returncode'] | default(1) | int != 0 }}"
+    then:
+    - action: persistent_notification.create
+      data:
+        title: Homelab — falhou a iniciar desligamento
+        message: O host Docker não aceitou o pedido de desligamento seguro.
+        notification_id: homelab_safe_shutdown
+    - action: script.enviar_notificacao_telegram
+      continue_on_error: true
+      data:
+        destinatarios: antonio
+        titulo: "⏻ Homelab: problema"
+        mensagem: Não consegui iniciar o desligamento seguro.
+        parse_mode: html
+    - stop: shutdown recusado
+  - action: persistent_notification.create
+    data:
+      title: Homelab — desligamento aceite
+      message: Sequência aceite. Este Home Assistant vai desligar em breve.
+      notification_id: homelab_safe_shutdown
