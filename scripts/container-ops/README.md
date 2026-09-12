@@ -48,7 +48,8 @@ image: ghcr.io/mealie-recipes/mealie:${MEALIE_TAG:-latest}
 /root/homelab/scripts/container-ops/ops.sh list
 /root/homelab/scripts/container-ops/ops.sh backup mealie
 /root/homelab/scripts/container-ops/ops.sh update hermes latest
-/root/homelab/scripts/container-ops/ops.sh update all
+/root/homelab/scripts/container-ops/ops.sh update all      # só pendentes WUD/HA
+/root/homelab/scripts/container-ops/ops.sh update catalog  # TODAS as apps (emergência)
 /root/homelab/scripts/container-ops/ops.sh rollback mealie latest
 /root/homelab/scripts/container-ops/ops.sh prune mealie 3
 ```
@@ -61,9 +62,13 @@ image: ghcr.io/mealie-recipes/mealie:${MEALIE_TAG:-latest}
 4. Valida container `running`  
 5. Se OK, `prune` com keep=1 + refresh WUD→HA  
 
-### `update all`
+### `update all` (pendentes)
 
-Actualiza todas as apps (majority `latest`; Immich → `release`; Uptime Kuma → `2`). Continua se uma falhar; no fim um único refresh WUD→HA.
+Actualiza **só** apps com `updateAvailable` no WUD (a mesma lista do dashboard HA). Tags habituais: majority `latest`; Immich → `release`; Uptime Kuma → `2`; Influx → `2.7`. Continua se uma falhar; no fim um único refresh WUD→HA.
+
+### `update catalog`
+
+Actualiza **todas** as apps do `apps.conf`, ignorando o estado WUD (uso manual de emergência).
 
 ## Dependências
 

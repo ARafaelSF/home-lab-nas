@@ -28,7 +28,7 @@ ALLOWED_PREFIXES = tuple(
     if p.strip()
 )
 LOG_DIR = Path(os.environ.get("CONTAINER_OPS_LOG_DIR", "/opt/container-ops/logs"))
-APP_RE = re.compile(r"^(all|[a-z0-9]+(?:-[a-z0-9]+)*)$")
+APP_RE = re.compile(r"^(all|pending|catalog|everything|[a-z0-9]+(?:-[a-z0-9]+)*)$")
 
 _lock = threading.Lock()
 _busy_app: str | None = None
@@ -39,7 +39,7 @@ def log(msg: str) -> None:
 
 
 def known_apps() -> set[str]:
-    apps: set[str] = {"all"}
+    apps: set[str] = {"all", "pending", "catalog", "everything"}
     path = Path(APPS_CONF)
     if not path.exists():
         return apps
@@ -72,7 +72,10 @@ def json_bytes(payload: dict, code: int, handler: BaseHTTPRequestHandler) -> Non
 
 
 APP_LABELS = {
-    "all": "todos os containers",
+    "all": "containers pendentes",
+    "pending": "containers pendentes",
+    "catalog": "todo o catálogo Docker",
+    "everything": "todo o catálogo Docker",
     "adguard": "AdGuard Home",
     "cadvisor": "cAdvisor",
     "cloudflare": "Cloudflare Tunnel",

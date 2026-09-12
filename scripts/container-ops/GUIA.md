@@ -30,8 +30,9 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes (qu
 | Só backup de um app | `/opt/container-ops/ops.sh backup mealie` |
 | Backup de **todos** | `/opt/container-ops/ops.sh backup-all` |
 | **Atualizar um** container | `/opt/container-ops/ops.sh update hermes latest` |
-| **Atualizar todos** | `/opt/container-ops/ops.sh update all` |
-| **Pelo Home Assistant** | Dash Docker: botão **Atualizar tudo** / toque no container pendente |
+| **Atualizar pendentes** (WUD/HA) | `/opt/container-ops/ops.sh update all` |
+| **Atualizar catálogo inteiro** | `/opt/container-ops/ops.sh update catalog` |
+| **Pelo Home Assistant** | Dash Docker: botão **Atualizar pendentes** / toque no container |
 | **Atualizar sensores HA** (só WUD) | `/opt/container-ops/ops.sh refresh-ha` ou `refresh-ha mealie` |
 | Voltar versão antiga | `/opt/container-ops/ops.sh rollback mealie v2.7.0` |
 | Apagar backups velhos (ficar com 3) | `/opt/container-ops/ops.sh prune mealie 3` |

@@ -78,6 +78,22 @@ verify_stack() {
     chmod 600 "$APP_ENV_FILE"
   fi
   verify_required_env
+  # Bind-mounts de ficheiro: Docker cria um directório se o ficheiro sumir — evita loop de restart.
+  case "$APP_NAME" in
+    dozzle)
+      local users_yml="${APP_STACK_DIR}/users.yml"
+      if [[ -d "$users_yml" ]]; then
+        die "dozzle: ${users_yml} é um directório (ficheiro de auth em falta). Restaura users.yml antes de actualizar."
+      fi
+      [[ -f "$users_yml" ]] || die "dozzle: ficheiro em falta: ${users_yml}"
+      ;;
+    adguard)
+      local conf_yaml="/var/lib/docker/volumes/adguard-home_adguard_conf/_data/AdGuardHome.yaml"
+      if [[ ! -f "$conf_yaml" ]]; then
+        die "adguard: ${conf_yaml} em falta — DNS ficaria em modo instalação. Restaura o YAML antes de actualizar."
+      fi
+      ;;
+  esac
 }
 
 compose() {
@@ -325,8 +341,12 @@ default_update_tag() {
 cmd_update() {
   local app="${1:?app}"
 
-  if [[ "$app" == "all" ]]; then
+  if [[ "$app" == "all" || "$app" == "pending" ]]; then
     cmd_update_all
+    return
+  fi
+  if [[ "$app" == "catalog" || "$app" == "everything" ]]; then
+    cmd_update_catalog
     return
   fi
 
@@ -361,12 +381,119 @@ cmd_update() {
   wud_refresh_ha app
 }
 
-# Actualiza todas as apps cadastradas para a tag habitual (latest / release / 2).
+# Mapa WUD container name → app ops.sh (coluna 7 de apps.conf ou resolve_wud_name).
+wud_name_to_app() {
+  local wud_name="$1" line name svc wud resolved
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    line="$(echo "$line" | xargs)"
+    [[ -z "$line" ]] && continue
+    IFS='|' read -r name _ svc _ _ _ wud <<<"$line"
+    wud="${wud:-}"
+    if [[ -n "$wud" && "$wud" == "$wud_name" ]]; then
+      echo "$name"
+      return 0
+    fi
+    # fallback: mesmo algoritmo de resolve_wud_name
+    case "$name" in
+      npm) resolved="nginx-proxy-manager" ;;
+      cloudflare) resolved="cloudflared" ;;
+      immich) resolved="immich_server" ;;
+      immich-ml) resolved="immich_machine_learning" ;;
+      adguard) resolved="adguardhome" ;;
+      uptime-kuma) resolved="uptime-kuma" ;;
+      *) resolved="${svc//-/_}" ;;
+    esac
+    # WUD usa hífen ou underscore conforme o container_name
+    if [[ "$resolved" == "$wud_name" || "${svc}" == "$wud_name" || "${svc//_/-}" == "$wud_name" || "${svc//-/_}" == "$wud_name" ]]; then
+      echo "$name"
+      return 0
+    fi
+  done <"$APPS_CONF"
+  return 1
+}
+
+# Apps com updateAvailable=true no WUD (igual à lista pendente do HA).
+list_pending_apps() {
+  local raw names app
+  if ! docker inspect wud >/dev/null 2>&1; then
+    die "container 'wud' não encontrado — não consigo listar pendentes"
+  fi
+  raw="$(docker exec wud curl -sf http://127.0.0.1:3000/api/containers 2>/dev/null || true)"
+  [[ -n "$raw" ]] || die "WUD API sem resposta"
+  mapfile -t names < <(printf '%s' "$raw" | python3 -c "
+import json, sys
+for c in json.load(sys.stdin):
+    if c.get('updateAvailable'):
+        print(c.get('name') or '')
+")
+  local -a apps=()
+  local seen="|"
+  for wud_name in "${names[@]}"; do
+    [[ -n "$wud_name" ]] || continue
+    if ! app="$(wud_name_to_app "$wud_name")"; then
+      log "AVISO: pendente WUD '${wud_name}' sem app no apps.conf — ignorado"
+      continue
+    fi
+    if [[ "$seen" != *"|${app}|"* ]]; then
+      apps+=("$app")
+      seen+="${app}|"
+    fi
+  done
+  if ((${#apps[@]})); then
+    printf '%s\n' "${apps[@]}"
+  fi
+}
+
+# Actualiza só apps com update pendente no WUD/HA (não o catálogo inteiro).
 # Continua se uma falhar; no fim faz um único refresh WUD→HA.
 cmd_update_all() {
+  local name tag failed=0 ok=0
+  local -a pending_apps=() updated_apps=() failed_apps=()
+  log "=== update all = só pendentes WUD/HA ==="
+  mapfile -t pending_apps < <(list_pending_apps)
+  if ((${#pending_apps[@]} == 0)); then
+    log "Nenhum container pendente no WUD — nada a actualizar."
+    wud_refresh_ha all || true
+    return 0
+  fi
+  log "Pendentes: ${pending_apps[*]}"
+  log "Immich/ML → release | Uptime Kuma → 2 | Influx → 2.7 | restantes → latest"
+  export CONTAINER_OPS_LENIENT=1
+  export CONTAINER_OPS_SKIP_WUD=1
+  for name in "${pending_apps[@]}"; do
+    [[ -n "$name" ]] || continue
+    tag="$(default_update_tag "$name")"
+    log "---------- ${name} → ${tag} ----------"
+    if cmd_update "$name" "$tag"; then
+      log "OK: ${name}"
+      ok=$((ok + 1))
+      updated_apps+=("$name")
+    else
+      log "FALHOU: ${name} (seguindo para a seguinte)"
+      failed=1
+      failed_apps+=("$name")
+    fi
+  done
+  unset CONTAINER_OPS_LENIENT
+  unset CONTAINER_OPS_SKIP_WUD
+  if ((${#updated_apps[@]})); then
+    log "UPDATED_APPS=${updated_apps[*]}"
+  fi
+  if ((${#failed_apps[@]})); then
+    log "FAILED_APPS=${failed_apps[*]}"
+  fi
+  log "=== update pendentes: ${ok}/${#pending_apps[@]} OK ==="
+  wud_refresh_ha all || true
+  [[ "$failed" -eq 0 ]] || die "Um ou mais updates falharam (ver logs acima)"
+  log "update pendentes concluído."
+}
+
+# Actualiza TODAS as apps do apps.conf (ignora estado WUD). Uso manual de emergência.
+cmd_update_catalog() {
   local line name tag failed=0 ok=0
   local -a updated_apps=() failed_apps=()
-  log "=== update all (tag habitual por app) ==="
+  log "=== update catalog (TODAS as apps cadastradas) ==="
   log "Immich/ML → release | Uptime Kuma → 2 | Influx → 2.7 | restantes → latest"
   export CONTAINER_OPS_LENIENT=1
   export CONTAINER_OPS_SKIP_WUD=1
@@ -395,10 +522,10 @@ cmd_update_all() {
   if ((${#failed_apps[@]})); then
     log "FAILED_APPS=${failed_apps[*]}"
   fi
-  log "=== update all: ${ok} OK ==="
+  log "=== update catalog: ${ok} OK ==="
   wud_refresh_ha all || true
   [[ "$failed" -eq 0 ]] || die "Um ou mais updates falharam (ver logs acima)"
-  log "update all concluído."
+  log "update catalog concluído."
 }
 
 cmd_rollback() {
@@ -454,7 +581,8 @@ cmd_list() {
   log "=== Comandos úteis ==="
   echo "  /root/homelab/scripts/container-ops/ops.sh backup <app>          # ex.: mealie, jellyfin, immich"
   echo "  /root/homelab/scripts/container-ops/ops.sh update <app> <tag>    # ex.: update hermes latest"
-  echo "  /root/homelab/scripts/container-ops/ops.sh update all            # todas as apps (latest/release/2)"
+  echo "  /root/homelab/scripts/container-ops/ops.sh update all            # só pendentes WUD/HA"
+  echo "  /root/homelab/scripts/container-ops/ops.sh update catalog        # TODAS as apps (emergência)"
   echo "  /root/homelab/scripts/container-ops/ops.sh refresh-ha [app]      # actualizar sensores HA via WUD"
   echo "  /root/homelab/scripts/container-ops/ops.sh backup-all            # backup de todas as apps"
   echo "  cat /root/homelab/scripts/container-ops/GUIA.md  # guia em português"
@@ -492,7 +620,8 @@ Comandos:
   update <app> [nova_tag]   Backup + update tag + validação + prune (keep=1) + refresh HA
                             Ex.: update hermes latest
                             Sem tag: usa a habitual (latest / Immich=release / Kuma=2)
-  update all                Actualiza TODAS as apps (latest; Immich=release; Kuma=2)
+  update all                Actualiza só pendentes WUD/HA (o botão do dashboard)
+  update catalog            Actualiza TODAS as apps do apps.conf (emergência)
   rollback <app> <tag>      Reverte tag e recria container + refresh HA
   refresh-ha [app]          Força WUD a republicar sensores no Home Assistant
   prune <app> [keep]        Remove backups antigos (padrão keep=1)
