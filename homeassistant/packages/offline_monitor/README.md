@@ -8,6 +8,7 @@ Publica a cada minuto a métrica Influx `device_availability` com a **mesma regr
 - `rest_command.influx_write_device_availability` — POST no Influx (`home_energy`)
 - Automação `automation.influx_exportar_disponibilidade_de_dispositivos` — `time_pattern` `/1`
 - Dashboard Grafana: **Casa → Dispositivos offline** (`uid: dispositivos-offline`)
+- Lovelace view `dispositivos-offline`: o `auto-entities` tem de usar o **mesmo filtro** que o sensor (inclui `binary_sensor`/`sensor`). Referência: `../dashboard-dispositivos-offline-filter.json` (corrigido 2026-09-13 — o card omitia esses domínios e o contador ficava a 1 com lista vazia).
 
 ## Uso
 
