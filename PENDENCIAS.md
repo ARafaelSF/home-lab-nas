@@ -3,7 +3,7 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-13 (revisão integrações HA)
+**Atualizado:** 2026-09-14 (AdGuard failover DHCP documentado)
 
 ---
 
@@ -22,32 +22,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ---
 
-## 1. UniFi — uplink AP a 100 Mbps (físico)
-
-**Prioridade:** média  
-**Estado actual (API 2026-09-09 ~19:48):**
-
-| AP | IP | Porta UCG | Uplink |
-|----|-----|-----------|--------|
-| **U7 Pro Escritório** | `192.168.68.2` | porta **1** | **100 Mbps** ← problema agora |
-| **U7 Pro Suíte** | `192.168.68.3` | porta **2** | **1 Gbps** ← ficou bom |
-
-**Histórico:** antes o 100 Mbps era na **suíte**. Testes anteriores: cabo UCG↔injector, cabo injector↔AP (tester 8 pinos OK), troca dos PoE, troca das portas no UCG — o problema acompanhava o cabo/ponta da suíte.
-
-**2026-09-09:** AP da suíte levado junto ao PoE e depois reposto. Resultado: suíte passou a **1 Gbps**; o **escritório** ficou a **100 Mbps**. O defeito **mudou de sítio** → reforça causa física (cabo/ponta/injector/troca ao remontar), não RF nem config UniFi.
-
-**Hipóteses ao remontar:** pontas/injectores trocados entre os dois APs; APs trocados de sítio; ou ponta do escritório afrouxada.
-
-**Não é configuração UniFi.** RF (canais, SSIDs) — ver `docs/UNIFI-RF.md`.
-
-- [ ] No UCG, trocar só as fichas porta 1 ↔ 2 (ou só os dois injectores) e ver se os 100 Mbps seguem o cabo ou o AP
-- [ ] Se seguirem o cabo: recrimpar / substituir esse lançamento (ou testar com cabo curto junto ao UCG)
-- [ ] Se ficarem no mesmo AP após a troca: suspeitar da porta Ethernet desse U7
-- [x] Teste “AP suíte junto ao PoE” feito (2026-09-09) — suíte recuperou 1G; problema passou ao escritório
-
----
-
-## 1b. UniFi — min. rate 2.4 GHz (a monitorizar, **não mudar agora**)
+## 1. UniFi — min. rate 2.4 GHz (a monitorizar, **não mudar agora**)
 
 **Prioridade:** baixa  
 **Contexto:** 2.4 GHz separado (escritório 11 / suíte 6). Min. rate continua **1 Mbps**. Subir para 6 Mbps pode largar IoT fraco. A gravar snapshots a cada 10 min neste PC: `scripts/unifi-rf-study/`.
@@ -76,21 +51,7 @@ Candidatos a problema (leitura 2026-09-08):
 
 ---
 
-## 3. AdGuard — failover DHCP (opcional)
-
-**Prioridade:** baixa  
-**Contexto:** 2.º AdGuard no Pi Zero (`192.168.3.22`, VLAN Servidor) já está de pé. O switch do HA espelha a protecção nos dois. DHCP das VLANs ainda aponta **só** para `192.168.3.21`.
-
-**Não fazer:** meter `8.8.8.8` como secundário no DHCP UniFi.
-
-- [x] 2.º AdGuard no Pi + UniFi VLAN Servidor `.22`
-- [x] HA: `rest_command.adguard_backup_protection` + automação a espelhar `switch.adguard_home_protecao`
-- [ ] Se quiseres failover automático: 2.º IP AdGuard no DHCP **ou** VIP — decidir depois
-- [ ] Documentar o desenho em `docs/ADGUARD-DNS-REMOTO.md`
-
----
-
-## 4. Inkbird IHT-2PB — ligação GATT instável
+## 3. Inkbird IHT-2PB — ligação GATT instável
 
 **Prioridade:** média  
 **Contexto (2026-09-06):** Leituras passivas até vão; comandos/alvos falham (`No backend with an available connection slot` / `non-connectable history`). Proxies ESP esgotam slots GATT. Realtek USB na VM HA ajuda BTHome perto do servidor; o Inkbird (cozinha externa) continua a depender dos ESP.
@@ -100,7 +61,7 @@ Candidatos a problema (leitura 2026-09-08):
 
 ---
 
-## 5. Pirata Cecília + Last Alexa (Alexa Devices)
+## 4. Pirata Cecília + Last Alexa (Alexa Devices)
 
 **Prioridade:** alta (validar em uso real)  
 **Contexto (2026-09-07):** Migrámos o Last Called para `sensor.alexa_devices_last_called` (`event.*_voice_event`), com fallback AMP. Snapshot git: `homeassistant/snapshots/pre-alexa-last-called_20260907_104420/`. Commit `72115d3`.
@@ -136,6 +97,8 @@ Candidatos a problema (leitura 2026-09-08):
 | AdGuard backup Pi `.22` + botão HA a filtrar nos dois | 2026-09-08 |
 | UniFi RF: 2.4 ch 11/6, Zigbee 11, 6 GHz 160, Aeron off, Visitantes só 5 GHz | 2026-09-08 |
 | Teste AP suíte junto ao PoE: suíte a 1G; 100 Mbps passou ao escritório | 2026-09-09 |
+| UniFi uplink APs: Escritório + Suíte a **1 Gbps** (API confirmou; removido das pendências) | 2026-09-14 |
+| AdGuard failover DHCP (`.21`+`.22`) + doc em `docs/ADGUARD-DNS-REMOTO.md` | 2026-09-14 |
 
 ---
 

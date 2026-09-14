@@ -2,6 +2,7 @@
 
 **Implementação activa:** opção B (DoH via Cloudflare), concluída em 2026-05-25.  
 **Correcção DoH (insecure):** 2026-05-29 — `http.doh.insecure_enabled: true` (ver abaixo).  
+**Failover LAN:** AdGuard backup no Pi (`192.168.3.22`) como DNS 2 no DHCP UniFi — documentado 2026-09-14.  
 **Guia completo do servidor:** `SERVIDOR-HOMELAB.md`.
 
 ---
@@ -24,8 +25,37 @@ Snippet versionado: `config/adguard/AdGuardHome.http-doh.example.yaml`
 
 | Onde está | DNS | `jellyfin.antonio.rafael.nom.br` |
 |-----------|-----|----------------------------------|
-| **Casa / VPN `192.168.x`** | AdGuard `192.168.3.21` | `192.168.3.21` (NPM local) |
-| **4G com DNS privado** `dns.antonio...` | DoH via Cloudflare → AdGuard | IP Cloudflare (túnel) |
+| **Casa / VPN `192.168.x`** | AdGuard `.21` (primário) + `.22` (failover DHCP) | `192.168.3.21` (NPM local) |
+| **4G com DNS privado** `dns.antonio...` | DoH via Cloudflare → AdGuard `.21` | IP Cloudflare (túnel) |
+
+---
+
+## Failover DNS na LAN (AdGuard principal + Pi)
+
+Desenho escolhido: **2.º IP no DHCP UniFi** (não VIP). Se o AdGuard Docker em `192.168.3.21` cair, os clientes usam o backup no Pi Zero `192.168.3.22` (VLAN Servidor).
+
+| Papel | Onde | IP |
+|-------|------|-----|
+| **Primário** | Docker na VM (`adguardhome`) | `192.168.3.21` |
+| **Backup** | Pi Zero (`adguard-backup`) | `192.168.3.22` |
+
+**DHCP UniFi (DNS 1 / DNS 2)** — estado confirmado 2026-09-14:
+
+| Rede | DNS 1 | DNS 2 |
+|------|-------|-------|
+| Hangar, IoT, Multimédia, Visitantes, Câmeras int./ext. | `192.168.3.21` | `192.168.3.22` |
+| Servidor (VLAN 3) | `.21` / `.22` no config; DHCP DNS custom **desligado** | — |
+
+**Manutenção alinhada:**
+
+| Peça | Função |
+|------|--------|
+| `scripts/adguard-sync/` + timer `adguard-backup-sync.timer` | Replica filtros/regras do `.21` → Pi `.22` |
+| HA `rest_command.adguard_backup_protection` + automação no `switch.adguard_home_protecao` | Espelha liga/desliga da protecção nos dois |
+
+**Não fazer:** meter `8.8.8.8` (ou outro DNS público) como secundário no DHCP das VLANs com AdGuard — bypassa o filtro quando o primário falha e pode partir o split DNS local.
+
+O DoH remoto (`dns.antonio...`) continua a apontar só ao AdGuard principal; o failover `.22` é **só LAN/DHCP**.
 
 ---
 
@@ -36,7 +66,7 @@ Em vez de apontar o DNS global da rede para o AdGuard, configure **por SSID/rede
 | Onde no UniFi | Configuração |
 |---------------|--------------|
 | **Settings → WiFi → [SSID] → Advanced** ou **Settings → Networks → [rede]** | **DHCP DNS Server** / **DHCP Name Server** |
-| WLANs com filtro + domínios `*.antonio.rafael.nom.br` | `192.168.3.21` (AdGuard) |
+| WLANs com filtro + domínios `*.antonio.rafael.nom.br` | `192.168.3.21` e `192.168.3.22` (ver tabela acima) |
 | WLANs de teste, convidados ou diagnóstico | `8.8.8.8`, `8.8.4.4` (bypass AdGuard) |
 | **Settings → Internet → DNS** (WAN) | DNS público ou automático do ISP — **não** usar AdGuard |
 
@@ -199,3 +229,4 @@ WireGuard no UniFi/Proxmox; DNS `192.168.3.21` com VPN ligada. Não precisa de h
 | Abrir porta 53 no router | Abuso, CGNAT |
 | Rewrite global sem `$client` | Quebra domínios no 4G |
 | Activar criptografia no AdGuard com túnel | Redundante; complica certificados |
+| `8.8.8.8` (ou público) como DNS 2 no DHCP UniFi | Bypass do AdGuard no failover; perde split DNS local |
