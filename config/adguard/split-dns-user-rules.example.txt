@@ -7,6 +7,9 @@
 ||antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
 ||.antonio.rafael.nom.br^$client=192.168.0.0/16,dnsrewrite=NOERROR;A;192.168.3.21
 
+# Teste DNAT UniFi (forçar AdGuard): nslookup force-adguard-test.home 8.8.8.8 → deve dar 1.2.3.4
+||force-adguard-test.home^$dnsrewrite=NOERROR;A;1.2.3.4
+
 # DoH + TLS (obrigatório com túnel Cloudflare → HTTP :8080):
 #   config/adguard/AdGuardHome.http-doh.example.yaml
 # trusted_proxies:

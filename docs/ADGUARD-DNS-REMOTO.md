@@ -3,6 +3,7 @@
 **Implementação activa:** opção B (DoH via Cloudflare), concluída em 2026-05-25.  
 **Correcção DoH (insecure):** 2026-05-29 — `http.doh.insecure_enabled: true` (ver abaixo).  
 **Failover LAN:** AdGuard backup no Pi (`192.168.3.22`) como DNS 2 no DHCP UniFi — documentado 2026-09-14.  
+**Forçar AdGuard (DNAT):** UniFi Destination NAT porta 53 → `.21` nas VLANs de clientes — 2026-09-14.  
 **Guia completo do servidor:** `SERVIDOR-HOMELAB.md`.
 
 ---
@@ -25,7 +26,7 @@ Snippet versionado: `config/adguard/AdGuardHome.http-doh.example.yaml`
 
 | Onde está | DNS | `jellyfin.antonio.rafael.nom.br` |
 |-----------|-----|----------------------------------|
-| **Casa / VPN `192.168.x`** | AdGuard `.21` (primário) + `.22` (failover DHCP) | `192.168.3.21` (NPM local) |
+| **Casa / VPN `192.168.x`** | AdGuard `.21` (DHCP + DNAT se hardcoded) + `.22` (failover) | `192.168.3.21` (NPM local) |
 | **4G com DNS privado** `dns.antonio...` | DoH via Cloudflare → AdGuard `.21` | IP Cloudflare (túnel) |
 
 ---
@@ -56,6 +57,58 @@ Desenho escolhido: **2.º IP no DHCP UniFi** (não VIP). Se o AdGuard Docker em 
 **Não fazer:** meter `8.8.8.8` (ou outro DNS público) como secundário no DHCP das VLANs com AdGuard — bypassa o filtro quando o primário falha e pode partir o split DNS local.
 
 O DoH remoto (`dns.antonio...`) continua a apontar só ao AdGuard principal; o failover `.22` é **só LAN/DHCP**.
+
+---
+
+## Forçar AdGuard — DNAT UniFi (DNS hardcoded)
+
+**Problema:** aparelhos com DNS fixo (`8.8.8.8`, etc.) ignoram o DHCP. Só **bloquear** a porta 53 causa timeout e deixa a rede lenta.
+
+**Solução (2026-09-14):** **Destination NAT** no UCG Ultra — reescreve destino TCP/UDP **53** para `192.168.3.21:53`. O cliente continua a “ver” `8.8.8.8` no `nslookup`; o pedido vai ao AdGuard.
+
+### Regras UniFi (Policy Table → NAT)
+
+| Tipo | Interface (VLAN) | Destino (match) | Traduzir para | Notas |
+|------|------------------|-----------------|---------------|--------|
+| **DNAT** | Hangar, IoT, Multimédia, Visitantes, Câmeras int./ext. | porta **53** (qualquer IP) | `192.168.3.21:53` | Uma regra por VLAN; `rule_index` único |
+| **MASQUERADE** | Hangar (opcional) | `192.168.3.21:53` | — | Ajuda o caminho de retorno em alguns clientes |
+| — | **Servidor (VLAN 3)** | — | **sem DNAT** | O NAS usa `8.8.8.8` de propósito (`systemd-resolved`) |
+
+Firewall complementar (Internal → External):
+
+| Regra | Estado | Função |
+|-------|--------|--------|
+| Bloquear DNS externo (porta **53**) | ligada | Rede de segurança se o DNAT falhar |
+| Bloquear DoT externo (porta **853**) | ligada | Impede bypass por DNS-over-TLS |
+
+**Offload:** no UCG, `offload_sch` ficou **desligado** após validação (offload de hardware por vezes ignora NAT customizado).
+
+**Limitações:** não cobre **DoH** (HTTPS/443). VPNs/exit nodes no cliente podem furar o caminho do UCG.
+
+UI: **Settings → Policy Table → NAT** (Network ≥ 8.3 / 9.x / 10.x).
+
+### Como testar (inequívoco)
+
+No AdGuard existe a regra de teste (também em `config/adguard/split-dns-user-rules.example.txt`):
+
+```text
+||force-adguard-test.home^$dnsrewrite=NOERROR;A;1.2.3.4
+```
+
+No PC (Wi‑Fi Hangar / VLAN com DNAT):
+
+```powershell
+nslookup force-adguard-test.home 8.8.8.8
+```
+
+| Resultado | Significado |
+|-----------|-------------|
+| Address **`1.2.3.4`** | Redirect OK — só o AdGuard conhece este nome |
+| Não encontrado / timeout | Não passou pelo AdGuard |
+
+**Nota:** o `nslookup` ainda mostra `Servidor: dns.google` / `Address: 8.8.8.8`. Isso é normal (DNAT transparente). A prova é o **`1.2.3.4`**, não a linha “Servidor”.
+
+Teste fraco (não usar sozinho): `nslookup example.com 8.8.8.8` — resolve em ambos os casos; só o query log do AdGuard distingue.
 
 ---
 
@@ -230,3 +283,4 @@ WireGuard no UniFi/Proxmox; DNS `192.168.3.21` com VPN ligada. Não precisa de h
 | Rewrite global sem `$client` | Quebra domínios no 4G |
 | Activar criptografia no AdGuard com túnel | Redundante; complica certificados |
 | `8.8.8.8` (ou público) como DNS 2 no DHCP UniFi | Bypass do AdGuard no failover; perde split DNS local |
+| Só **bloquear** DNS externo sem DNAT | Timeouts lentos em aparelhos com DNS hardcoded |

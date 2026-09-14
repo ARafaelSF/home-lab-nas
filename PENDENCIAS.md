@@ -3,7 +3,7 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-14 (AdGuard failover DHCP documentado)
+**Atualizado:** 2026-09-14 (DNAT forçar AdGuard documentado)
 
 ---
 
@@ -99,6 +99,7 @@ Candidatos a problema (leitura 2026-09-08):
 | Teste AP suíte junto ao PoE: suíte a 1G; 100 Mbps passou ao escritório | 2026-09-09 |
 | UniFi uplink APs: Escritório + Suíte a **1 Gbps** (API confirmou; removido das pendências) | 2026-09-14 |
 | AdGuard failover DHCP (`.21`+`.22`) + doc em `docs/ADGUARD-DNS-REMOTO.md` | 2026-09-14 |
+| UniFi DNAT porta 53 → AdGuard `.21` (VLANs clientes; teste `force-adguard-test.home`) | 2026-09-14 |
 
 ---
 
