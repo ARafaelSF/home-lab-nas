@@ -3,7 +3,22 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-09 (noite — uplink APs)
+**Atualizado:** 2026-09-13 (revisão integrações HA)
+
+---
+
+## 0. HA — revisão de nomenclatura e vínculos por integração
+
+**Prioridade:** alta (trabalho em série, uma integração de cada vez)  
+**Contexto (2026-09-13):** Inventário de **63** domínios / **228** entradas. Padrão de referência = **BTHome** (`Área - Tipo` no device; entidade com tipo curto; auxiliares como sensação térmica **vinculados** ao device-fonte).
+
+**Documento completo:** `homeassistant/REVISAO-INTEGRACOES-NOMENCLATURA.md`  
+**Dados brutos:** `homeassistant/integracoes-revisao-nomenclatura.json`
+
+- [ ] Percorrer a lista **integração a integração** (sem alterações em lote)
+- [ ] Por cada uma: nomenclatura Área+Tipo + vínculos/organização
+- [ ] Começar pelas prioridade **alta** (físicos): `bthome` (validar), `xiaomi_ble` (limpar duplicados), `mqtt`/`esphome`/`sonoff`/`tasmota`/`localtuya`/`tapo_control`/…
+- [ ] Reautenticar **Alexa Media Player** se ainda pedir login (efeito dos restarts, não perda de config)
 
 ---
 
@@ -134,3 +149,5 @@ Candidatos a problema (leitura 2026-09-08):
 | `homeassistant/snapshots/pre-alexa-last-called_20260907_104420/` | Rollback pré–Last Alexa |
 | `docs/CONTINUAR.md` | Como retomar noutro computador |
 | `docs/UNIFI-RF.md` | Canais Wi-Fi × Zigbee, o que não mexer, estudo min. rate |
+| `homeassistant/REVISAO-INTEGRACOES-NOMENCLATURA.md` | Checklist nomenclatura/vínculos por integração |
+| `homeassistant/integracoes-revisao-nomenclatura.json` | Inventário bruto (2026-09-13) |
