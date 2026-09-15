@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Tempo offline por dispositivo. Filtra quedas em massa (reinício coordenador/HA) e totais curtos (≤ N minutos).",
+  "description": "Tempo offline por dispositivo. Filtra quedas em massa (reinício coordenador/HA) e totais curtos (≤ N minutos). Stats Offline agora / Monitorados usam group() antes do count.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -74,8 +74,9 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"home_energy\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> last()\n  |> filter(fn: (r) => r._value == 1)\n  |> count()\n  |> yield(name: \"offline_now\")",
-          "refId": "A"
+          "query": "from(bucket: \"home_energy\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> last()\n  |> filter(fn: (r) => r._value == 1)\n  |> group()\n  |> count()\n  |> yield(name: \"offline_now\")",
+          "refId": "A",
+          "queryType": "flux"
         }
       ],
       "title": "Offline agora",
@@ -122,8 +123,9 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"home_energy\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"online\")\n  |> last()\n  |> count()\n  |> yield(name: \"monitored\")",
-          "refId": "A"
+          "query": "from(bucket: \"home_energy\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"online\")\n  |> last()\n  |> group()\n  |> count()\n  |> yield(name: \"monitored\")",
+          "refId": "A",
+          "queryType": "flux"
         }
       ],
       "title": "Dispositivos monitorados",
@@ -179,7 +181,8 @@
       "targets": [
         {
           "query": "import \"join\"\n\nmins = from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)\n\ncounts = mins\n  |> filter(fn: (r) => r._value == 1)\n  |> group(columns: [\"_time\"])\n  |> count()\n  |> map(fn: (r) => ({_time: r._time, n_offline: r._value}))\n  |> group()\n\njoin.time(\n  left: mins |> group(),\n  right: counts,\n  as: (l, r) => ({l with n_offline: r.n_offline}),\n)\n  |> filter(fn: (r) => (not exists r.n_offline) or r.n_offline < int(v: \"${mass_cut}\"))\n  |> map(fn: (r) => ({ r with _value: if r._value == 1 then 60.0 else 0.0 }))\n  |> group(columns: [\"device\"])\n  |> sum()\n  |> filter(fn: (r) => r._value > float(v: \"${min_offline_min}\") * 60.0)\n  |> group()\n  |> sum()\n  |> yield(name: \"total_offline_s\")",
-          "refId": "A"
+          "refId": "A",
+          "queryType": "flux"
         }
       ],
       "title": "Tempo offline total (após filtros)",
@@ -242,7 +245,8 @@
       "targets": [
         {
           "query": "import \"join\"\n\nmins = from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)\n\ncounts = mins\n  |> filter(fn: (r) => r._value == 1)\n  |> group(columns: [\"_time\"])\n  |> count()\n  |> map(fn: (r) => ({_time: r._time, n_offline: r._value}))\n  |> group()\n\njoin.time(\n  left: mins |> group(),\n  right: counts,\n  as: (l, r) => ({l with n_offline: r.n_offline}),\n)\n  // Ignora minutos de \"queda em massa\" (reinício HA/coordenador/Z2M)\n  |> filter(fn: (r) => (not exists r.n_offline) or r.n_offline < int(v: \"${mass_cut}\"))\n  |> map(fn: (r) => ({ r with _value: if r._value == 1 then 60.0 else 0.0 }))\n  |> group(columns: [\"device\"])\n  |> sum()\n  // Corte: totais ≤ N minutos contam como zero (somem do ranking)\n  |> filter(fn: (r) => r._value > float(v: \"${min_offline_min}\") * 60.0)\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> rename(columns: {_value: \"Tempo offline\", device: \"Dispositivo\"})\n  |> keep(columns: [\"Dispositivo\", \"Tempo offline\"])\n  |> yield(name: \"ranking\")",
-          "refId": "A"
+          "refId": "A",
+          "queryType": "flux"
         }
       ],
       "title": "Ranking — tempo offline (após filtros)",
@@ -299,7 +303,8 @@
       "targets": [
         {
           "query": "import \"join\"\n\nmins = from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)\n\ncounts = mins\n  |> filter(fn: (r) => r._value == 1)\n  |> group(columns: [\"_time\"])\n  |> count()\n  |> map(fn: (r) => ({_time: r._time, n_offline: r._value}))\n  |> group()\n\njoin.time(\n  left: mins |> group(),\n  right: counts,\n  as: (l, r) => ({l with n_offline: r.n_offline}),\n)\n  // Ignora minutos de \"queda em massa\" (reinício HA/coordenador/Z2M)\n  |> filter(fn: (r) => (not exists r.n_offline) or r.n_offline < int(v: \"${mass_cut}\"))\n  |> map(fn: (r) => ({ r with _value: if r._value == 1 then 60.0 else 0.0 }))\n  |> group(columns: [\"device\"])\n  |> sum()\n  // Corte: totais ≤ N minutos contam como zero (somem do ranking)\n  |> filter(fn: (r) => r._value > float(v: \"${min_offline_min}\") * 60.0)\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> limit(n: 15)\n  |> map(fn: (r) => ({ r with _field: r.device }))\n  |> yield(name: \"top15\")",
-          "refId": "A"
+          "refId": "A",
+          "queryType": "flux"
         }
       ],
       "title": "Top 15 — tempo offline (após filtros)",
@@ -359,7 +364,8 @@
       "targets": [
         {
           "query": "from(bucket: \"home_energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"device_availability\" and r._field == \"offline\")\n  |> filter(fn: (r) => if \"${device:regex}\" == \".*\" then true else r.device =~ /${device:regex}/)\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> map(fn: (r) => ({ r with _field: r.device }))\n  |> yield(name: \"offline\")",
-          "refId": "A"
+          "refId": "A",
+          "queryType": "flux"
         }
       ],
       "title": "Linha do tempo — offline (1) / online (0)",
@@ -418,7 +424,8 @@
           }
         ],
         "includeAll": false,
-        "multi": false
+        "multi": false,
+        "queryType": "flux"
       },
       {
         "name": "mass_cut",
@@ -462,7 +469,8 @@
           }
         ],
         "includeAll": false,
-        "multi": false
+        "multi": false,
+        "queryType": "flux"
       },
       {
         "allValue": ".*",
@@ -483,7 +491,8 @@
         "refresh": 2,
         "regex": "",
         "sort": 1,
-        "type": "query"
+        "type": "query",
+        "queryType": "flux"
       }
     ]
   },
@@ -495,6 +504,6 @@
   "timezone": "America/Sao_Paulo",
   "title": "Dispositivos offline",
   "uid": "dispositivos-offline",
-  "version": 2,
+  "version": 3,
   "weekStart": "monday"
 }
