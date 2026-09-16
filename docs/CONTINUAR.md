@@ -56,4 +56,38 @@ O wrapper `/opt/container-ops/ops.sh` ainda funciona (só redireciona para o git
 
 ## Rede Wi-Fi / RF
 
-Canais já aplicados — ver `docs/UNIFI-RF.md`. Por agora **não mexer mais em RF**. Uplink a 100 Mbps está no **escritório** (suíte a 1G após teste 2026-09-09) — `PENDENCIAS.md` §1. Min. rate: amostras em `scripts/unifi-rf-study/`.
+Canais já aplicados — ver `docs/UNIFI-RF.md`. Por agora **não mexer mais em RF**. Uplinks Escritório+Suíte a 1G. Min. rate 2,4 GHz mantido em **1 Mbps** (decisão 2026-09-15).
+
+---
+
+## Continuar: nomenclatura HA (parado 2026-09-15 à noite)
+
+**Repos:** `home-lab-nas` + alterações **já aplicadas ao vivo** na VM HA (`192.168.3.10`, Proxmox VM 101).  
+**Espelho HA (YAML/packages):** `git@github.com-homeassistant:ARafaelSF/HomeAssistant.git` em `/root/ha-github` no servidor.
+
+### Estado
+
+| | |
+|--|--|
+| Feitas | 9 — `bthome`, `xiaomi_ble`, `tuya`, `localtuya`, `localthings`, `smartthings`, `broadlink`, `hikvision_axpro`, `ttlock` |
+| Faltam | 54 (alta: 9 · média: 8 · baixa: 37) |
+| Próximas altas | `tasmota` → `sonoff` → `esphome` → `mqtt` → `tapo_control` → `midea_ac_lan` → `unifi` → `alexa_media` → `inkbird_iht2pb` |
+
+### Regras (aprovadas)
+
+- Device: `Área - Tipo`; entidade: só a função (`Temperatura`, `Bateria`…).
+- **IDs:** preservar se coerentes; sufixo `_localthings` / `_cloud` só para fontes paralelas.
+- Idioma: **PT-BR** (`controle`, não `controlo`).
+- Fluxo: **propor tabela → utilizador aprova → só então aplicar** (pode agrupar 2 simples).
+- Acesso live: `ssh proxmox` → `qm guest exec 101 …`; editar `.storage` com Core parado (`ha core stop`), Python via `docker run … python:3.12-alpine` em `/mnt/data/supervisor/homeassistant`, depois `ha core start`. Backup em `/mnt/data/supervisor/tmp/*.bak.*`.
+
+### Também feito nesta sessão (já em produção)
+
+- UniFi DNAT DNS → AdGuard; min. rate 1 Mbps aceite; dash Grafana “Dispositivos offline” Flux otimizado.
+- Cards internos Suíte / Sala de TV / Escritório: gráficos de temp/umidade passam a incluir **BTHome Ambiente** (+ AC + sensação). Lovace live na VM (não está no git YAML).
+
+### Ao retomar
+
+1. `git pull` em `192.168.3.21:/root/homelab` (e `/root/ha-github` se for packages).
+2. Ler `PENDENCIAS.md` §0 + `homeassistant/REVISAO-INTEGRACOES-NOMENCLATURA.md`.
+3. Inventariar a próxima integração no storage live; **mostrar proposta**; esperar aprovação.

@@ -3,45 +3,31 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-14 (DNAT forçar AdGuard documentado)
+**Atualizado:** 2026-09-15 (nomenclatura 9/63; gráficos BTHome nos cards internos; parar por hoje)
 
 ---
 
 ## 0. HA — revisão de nomenclatura e vínculos por integração
 
-**Prioridade:** alta (trabalho em série, uma integração de cada vez)  
-**Contexto (2026-09-13):** Inventário de **63** domínios / **228** entradas. Padrão de referência = **BTHome** (`Área - Tipo` no device; entidade com tipo curto; auxiliares como sensação térmica **vinculados** ao device-fonte).
+**Prioridade:** alta (propor → aprovar → aplicar; idioma **PT-BR**)  
+**Progresso:** **9 feitas / 54 faltam** (alta 9/18).  
+**Documento:** `homeassistant/REVISAO-INTEGRACOES-NOMENCLATURA.md` · **Como continuar:** `docs/CONTINUAR.md` § Nomenclatura HA
 
-**Documento completo:** `homeassistant/REVISAO-INTEGRACOES-NOMENCLATURA.md`  
-**Dados brutos:** `homeassistant/integracoes-revisao-nomenclatura.json`
-
-- [ ] Percorrer a lista **integração a integração** (sem alterações em lote)
-- [ ] Por cada uma: nomenclatura Área+Tipo + vínculos/organização
-- [ ] Começar pelas prioridade **alta** (físicos): `bthome` (validar), `xiaomi_ble` (limpar duplicados), `mqtt`/`esphome`/`sonoff`/`tasmota`/`localtuya`/`tapo_control`/…
-- [ ] Reautenticar **Alexa Media Player** se ainda pedir login (efeito dos restarts, não perda de config)
-
----
-
-## 1. UniFi — min. rate 2.4 GHz (a monitorizar, **não mudar agora**)
-
-**Prioridade:** baixa  
-**Contexto:** 2.4 GHz separado (escritório 11 / suíte 6). Min. rate continua **1 Mbps**. Subir para 6 Mbps pode largar IoT fraco. A gravar snapshots a cada 10 min neste PC: `scripts/unifi-rf-study/`.
-
-**Não aplicar** até haver uns dias de amostras e decisão explícita.
-
-Candidatos a problema (leitura 2026-09-08):
-
-- Risco alto: Tuya Indicador Alarme (−74), Sonoff Luz Brinquedoteca (−74)
-- Risco médio: Sonoff Tomada Sala TV, portões Tuya, soldador/repelente oficina, Luz Cozinha, EspHome AC Cecília
-- Rate baixo com sinal ok (provavelmente a dormir): Geladeira, Bancada Cozinha, Nebulosa, Kron QGD/Usina, Ventilador Jantar
-
-- [ ] Deixar gravar **alguns dias** (`scripts/unifi-rf-study/data/clients.jsonl`)
-- [ ] Analisar quem vive abaixo de 6 Mbps vs. quem só cochila
-- [ ] Só então decidir se sobe o min. rate (SSID-wide; sem exclusão por aparelho)
+- [x] `bthome` — títulos `Área - Termo-higrômetro` + device Quarto Cecília (2026-09-15)
+- [x] `xiaomi_ble` — 3 entradas LYWSD03MMC duplicadas removidas (2026-09-15)
+- [x] `tuya` — validado OK (2026-09-15)
+- [x] `localtuya` — cosméticos (indicador alarme, LocalTuya, Antônio) (2026-09-15)
+- [x] `localthings` — `Área - Ar-condicionado` + nomes PT-BR (2026-09-15)
+- [x] `smartthings` — devices Cloud + nomes (2026-09-15)
+- [x] `broadlink` — `Área - BroadLink` + `Controle remoto` / `Emissor IR` (2026-09-15)
+- [x] `hikvision_axpro` — entrada Hub AX Pro + botões PT-BR (2026-09-15)
+- [x] `ttlock` — Fechadura + Gateway Sistema (2026-09-15)
+- [ ] **Seguinte (alta):** `tasmota` → `sonoff` → `esphome` → `mqtt` → `tapo_control` → `midea_ac_lan` → `unifi` → `alexa_media` → `inkbird_iht2pb`
+- [ ] Reautenticar **Alexa Media Player** se ainda pedir login após restarts
 
 ---
 
-## 2. Hermes Agent — acesso ao HA (adiado)
+## 1. Hermes Agent — acesso ao HA (adiado)
 
 **Prioridade:** — (adiado por decisão do utilizador, 2026-09-03)
 
@@ -51,7 +37,7 @@ Candidatos a problema (leitura 2026-09-08):
 
 ---
 
-## 3. Inkbird IHT-2PB — ligação GATT instável
+## 2. Inkbird IHT-2PB — ligação GATT instável
 
 **Prioridade:** média  
 **Contexto (2026-09-06):** Leituras passivas até vão; comandos/alvos falham (`No backend with an available connection slot` / `non-connectable history`). Proxies ESP esgotam slots GATT. Realtek USB na VM HA ajuda BTHome perto do servidor; o Inkbird (cozinha externa) continua a depender dos ESP.
@@ -61,7 +47,7 @@ Candidatos a problema (leitura 2026-09-08):
 
 ---
 
-## 4. Pirata Cecília + Last Alexa (Alexa Devices)
+## 3. Pirata Cecília + Last Alexa (Alexa Devices)
 
 **Prioridade:** alta (validar em uso real)  
 **Contexto (2026-09-07):** Migrámos o Last Called para `sensor.alexa_devices_last_called` (`event.*_voice_event`), com fallback AMP. Snapshot git: `homeassistant/snapshots/pre-alexa-last-called_20260907_104420/`. Commit `72115d3`.
@@ -100,6 +86,7 @@ Candidatos a problema (leitura 2026-09-08):
 | UniFi uplink APs: Escritório + Suíte a **1 Gbps** (API confirmou; removido das pendências) | 2026-09-14 |
 | AdGuard failover DHCP (`.21`+`.22`) + doc em `docs/ADGUARD-DNS-REMOTO.md` | 2026-09-14 |
 | UniFi DNAT porta 53 → AdGuard `.21` (VLANs clientes; teste `force-adguard-test.home`) | 2026-09-14 |
+| UniFi minimum rate 2,4 GHz: 284 amostras/48 h analisadas; manter **1 Mbps** devido a IoT fraco | 2026-09-15 |
 
 ---
 

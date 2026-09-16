@@ -1,13 +1,25 @@
 # Revisão de integrações HA — nomenclatura e vínculos
 
-**Gerado:** 2026-09-13  
+**Gerado:** 2026-09-13 · **Atualizado:** 2026-09-15 (parar por hoje)  
 **Padrão de referência:** BTHome — device `Área - Tipo`; entidade com nome curto do tipo; auxiliares (ex. sensação térmica) **vinculados ao mesmo device**.
-**Modo:** só inventário — **sem alterações** até revisão conjunta, uma integração de cada vez.
+**Progresso:** 9/63 feitas · **Continuar em:** `docs/CONTINUAR.md` § Nomenclatura HA · `PENDENCIAS.md` §0  
+**Próxima:** `tasmota` (propor antes de aplicar).
 
 - Entradas de configuração: **228**
 - Domínios/integrações: **63**
 
 Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos físicos / casa), **média** (helpers/energia), **baixa** (sistema/infra).
+
+## Regra aprovada (2026-09-15)
+
+- **Device:** `Área - Tipo [Qualificador]`. Não incluir marca ou integração, salvo quando forem necessárias para distinguir aparelhos.
+- **Nome visível da entidade:** apenas a função no contexto do device, por exemplo `Temperatura`, `Bateria`, `Potência` ou `Reiniciar`.
+- **Entity ID:** `domínio.area_tipo_função`, em `snake_case` e sem acentos. Preservar IDs coerentes; alterar somente os inconsistentes.
+- **Sufixo de integração no ID:** usar apenas quando houver fontes paralelas ou risco de colisão, por exemplo `_localthings` e `_cloud`.
+- **Título da entrada de integração:** alinhar a `Área - Tipo` quando for editável e seguro; evitar títulos técnicos baseados apenas em IP.
+- **Vínculos:** entidades auxiliares pertencem ao mesmo device da entidade-fonte; helpers sem device nativo devem ser associados quando a plataforma permitir.
+- **Idioma:** **português do Brasil (PT-BR)** nos nomes visíveis, com acentuação correta (ex. *controle*, não *controlo*; *redefinir*, não *repor*).
+- **Execução:** uma integração por vez, verificando referências em automações, scripts, templates e dashboards antes de alterar qualquer ID.
 
 ## `alexa_media` — prioridade alta
 
@@ -21,23 +33,23 @@ Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos 
 
 ## `broadlink` — prioridade alta
 
-- **Entradas:** BroadLink - Sala de TV, BroadLink - Cecília
+- **Entradas:** Sala de TV - BroadLink, Quarto Cecília - BroadLink
 - **Entidades activas (aprox.):** 4
 - **Amostra de entidades:** `remote.sala_de_tv_remote_broadlink, infrared.sala_de_tv_ir_emitter_broadlink, remote.quarto_cecilia_remote_broadlink, infrared.quarto_cecilia_ir_emitter_broadlink`
-- **Nomenclatura — ajustes:** Device `Área - BroadLink` OK; IR emitter nome genérico.
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15: títulos `Área - BroadLink`; entidades `Controle remoto` / `Emissor IR` (corrigido PT-BR 2026-09-15: *controlo*→*controle*). IDs preservados.
 - **Vínculos / organização — ajustes:** OK.
-- **Estado sugerido:** ok / leve
-- **Revisão conjunta:** [ ] por fazer
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `bthome` — prioridade alta
 
-- **Entradas:** Termo-higrômetro Sala de TV, Termo-higrômetro Geladeira, Termo-higrômetro Suíte, Termo-higrômetro Escritório, Termo-higrômetro Sala de Jantar, Termo-higrômetro Oficina, Termo-higrômetro Brinquedoteca, Termo-higrômetro Banheiro Social, Termo-higrômetro Banheiro Suíte, Termo-higrômetro Cozinha Externa
+- **Entradas:** Sala de TV / Quarto Cecília / Suíte / Escritório / Sala de Jantar / Oficina / Brinquedoteca / Banheiro Social / Banheiro Suíte / Cozinha Externa — Termo-higrômetro
 - **Entidades activas (aprox.):** 30
 - **Amostra de entidades:** `sensor.sala_de_tv_termo_bateria, sensor.sala_de_tv_termo_temperatura, sensor.sala_de_tv_termo_umidade, sensor.quarto_cecilia_termo_temperatura, sensor.quarto_cecilia_termo_umidade, sensor.quarto_cecilia_termo_bateria, sensor.suite_termo_temperatura, sensor.suite_termo_umidade`
-- **Nomenclatura — ajustes:** Já alinhado (2026-09-13): devices `Área - Termo-higrômetro`; entradas `Termo-higrômetro Área`. Confirmar Geladeira (título da entrada vs área Quarto Cecília — possível desalinhamento histórico). Orfãos `abertura`/`contagem` desactivados nos novos — confirmar se devem existir.
-- **Vínculos / organização — ajustes:** Sensação térmica vinculada aos devices BTHome. Conferir `sensor.cozinha_termo_sensacao_termica` (sem termo BTHome “Cozinha”).
-- **Estado sugerido:** quase ok — validar pontas
-- **Revisão conjunta:** [ ] por fazer
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15: títulos das 10 entradas → `Área - Termo-higrômetro` (incl. antiga “Geladeira” → Quarto Cecília); device `Quarto Cecília - Termo-higrômetro`. IDs e nomes curtos das entidades mantidos.
+- **Vínculos / organização — ajustes:** Sensação térmica vinculada aos devices BTHome. `sensor.cozinha_termo_sensacao_termica` (sem device) fica para `mqtt`/`template`.
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `esphome` — prioridade alta
 
@@ -51,13 +63,13 @@ Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos 
 
 ## `hikvision_axpro` — prioridade alta
 
-- **Entradas:** Hikvision_axpro_192.168.2.238
+- **Entradas:** Escritório - Hub AX Pro
 - **Entidades activas (aprox.):** 52
 - **Amostra de entidades:** `alarm_control_panel.alarme_hikvision_axpro, binary_sensor.cozinha_porta_alto_contato_hikvision_axpro, binary_sensor.cozinha_porta_baixo_contato_hikvision_axpro, sensor.cozinha_porta_alto_temperatura_hikvision_axpro, sensor.cozinha_porta_baixo_temperatura_hikvision_axpro, binary_sensor.escritorio_porta_varanda_contato_hikvision_axpro, sensor.escritorio_porta_varanda_temperatura_hikvision_axpro, binary_sensor.cozinha_porta_terreiro_contato_hikvision_axpro`
-- **Nomenclatura — ajustes:** Bom padrão `Área - Porta …` + entidade Contato/Temperatura/Bateria. Título da entrada ainda IP técnico.
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15: título entrada `Escritório - Hub AX Pro`; botões `Alarme rápido` / `Limpar alarme rápido`. Devices/entidades já em `Área - Tipo` + nomes curtos. IDs preservados.
 - **Vínculos / organização — ajustes:** OK (sensores no device da porta).
-- **Estado sugerido:** leve (título entrada)
-- **Revisão conjunta:** [ ] por fazer
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `inkbird_iht2pb` — prioridade alta
 
@@ -71,23 +83,23 @@ Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos 
 
 ## `localthings` — prioridade alta
 
-- **Entradas:** Samsung Airconditioner (192.168.2.170), Samsung Airconditioner (192.168.2.172), Samsung Airconditioner (192.168.2.171)
+- **Entradas:** Suíte / Escritório / Sala de TV — Ar-condicionado
 - **Entidades activas (aprox.):** 59
 - **Amostra de entidades:** `sensor.suite_ar_condicionado_temperatura_localthings, sensor.suite_ar_condicionado_umidade_localthings, sensor.suite_ar_condicionado_potencia_localthings, sensor.suite_ar_condicionado_energia_localthings, climate.suite_ar_condicionado_localthings, sensor.suite_ar_condicionado_energia_economizada_localthings, switch.suite_ar_condicionado_display_lighting_localthings, switch.suite_ar_condicionado_sound_effect_localthings`
-- **Nomenclatura — ajustes:** Ar-condicionados / medidores — alinhar com LocalThings vs ESPHome.
-- **Vínculos / organização — ajustes:** Medidores utility_meter ligados aos devices correctos.
-- **Estado sugerido:** rever
-- **Revisão conjunta:** [ ] por fazer
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15: títulos das entradas e devices → `Área - Ar-condicionado`; nomes EN→PT-BR. Correção PT-BR 2026-09-15: *em curso*→*em andamento*, *Repor*→*Redefinir*. IDs `…_localthings` preservados.
+- **Vínculos / organização — ajustes:** Medidores utility_meter ligados aos devices corretos.
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `localtuya` — prioridade alta
 
-- **Entradas:** localtuya
+- **Entradas:** LocalTuya
 - **Entidades activas (aprox.):** 39
 - **Amostra de entidades:** `switch.oficina_soldador_localtuya, switch.oficina_repelente_localtuya, cover.garagem_portao_menor_localtuya, cover.garagem_portao_maior_localtuya, light.alarme_indicacao_luz_localtuya, number.alarme_indicacao_temporizador_localtuya, light.brinquedoteca_nebulosa_localtuya, light.brinquedoteca_nebulosa_estrelas_localtuya`
-- **Nomenclatura — ajustes:** Conferir padrão Área - Tipo (umidificador, etc.).
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15: título da entrada `LocalTuya`; device `Sistema - Indicador de alarme`; entidade `Luz`; cabeceira Antônio. Restantes devices já estavam em `Área - Tipo`. IDs preservados.
 - **Vínculos / organização — ajustes:** Entidades do mesmo aparelho no mesmo device.
-- **Estado sugerido:** rever
-- **Revisão conjunta:** [ ] por fazer
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `midea_ac_lan` — prioridade alta
 
@@ -114,10 +126,10 @@ Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos 
 - **Entradas:** Casa
 - **Entidades activas (aprox.):** 36
 - **Amostra de entidades:** `climate.suite_ar_condicionado_cloud, select.suite_ar_condicionado_dust_filter_alarm_threshold_cloud, sensor.suite_ar_condicionado_diferenca_de_energia_cloud, sensor.suite_ar_condicionado_potencia_da_energia_cloud, sensor.suite_ar_condicionado_energia_economizada_cloud, switch.suite_ar_condicionado_display_lighting_cloud, sensor.suite_ar_condicionado_temperatura_cloud, sensor.suite_ar_condicionado_umidade_cloud`
-- **Nomenclatura — ajustes:** Conferir devices SmartThings vs áreas.
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15: devices `Área - Ar-condicionado Cloud`; climate `Ar-condicionado`; nomes PT preenchidos. IDs `…_cloud` preservados.
 - **Vínculos / organização — ajustes:** —
-- **Estado sugerido:** rever
-- **Revisão conjunta:** [ ] por fazer
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `sonoff` — prioridade alta
 
@@ -151,23 +163,23 @@ Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos 
 
 ## `ttlock` — prioridade alta
 
-- **Entradas:** TTLock
+- **Entradas:** Sala de TV - Fechadura
 - **Entidades activas (aprox.):** 8
 - **Amostra de entidades:** `lock.fechadura_sala, sensor.fechadura_sala_battery, sensor.fechadura_sala_last_operator, sensor.fechadura_sala_last_trigger, binary_sensor.fechadura_sala_passage_mode, switch.fechadura_sala_auto_lock, switch.fechadura_sala_lock_sound, binary_sensor.ttlockantonio_status`
-- **Nomenclatura — ajustes:** Device `Fechadura Sala` sem área no nome; sensores em inglês (`Battery`, `Last Operator`).
-- **Vínculos / organização — ajustes:** OK no device; `TTLockAntonio Status` sem área.
-- **Estado sugerido:** rever
-- **Revisão conjunta:** [ ] por fazer
+- **Nomenclatura — ajustes:** Aplicado 2026-09-15 (PT-BR): título/entrada e device `Sala de TV - Fechadura`; gateway `Sistema - Gateway TTLock`; entidades `Fechadura`, `Bateria`, `Último operador`, `Último disparo`, `Modo passagem`, `Trancar automaticamente`, `Som`, `Estado`. IDs preservados.
+- **Vínculos / organização — ajustes:** OK.
+- **Estado sugerido:** concluído neste bloco
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `tuya` — prioridade alta
 
 - **Entradas:** arafaelsf@gmail.com
 - **Entidades activas (aprox.):** 2
 - **Amostra de entidades:** `sensor.suite_relogio_tuya_temperatura, sensor.suite_relogio_tuya_umidade`
-- **Nomenclatura — ajustes:** Suíte Relógio parece OK (Temperatura/Umidade).
+- **Nomenclatura — ajustes:** Device `Suíte - Relógio` e entidades OK. Sufixo `_tuya` mantido (paralelo ao LocalTuya). Título da conta cloud deixado.
 - **Vínculos / organização — ajustes:** OK no device.
-- **Estado sugerido:** ok / validar
-- **Revisão conjunta:** [ ] por fazer
+- **Estado sugerido:** concluído (validado)
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `unifi` — prioridade alta
 
@@ -181,12 +193,12 @@ Legenda de prioridade sugerida para a ordem de revisão: **alta** (dispositivos 
 
 ## `xiaomi_ble` — prioridade alta
 
-- **Entradas:** Temperature/Humidity Sensor 1904 (LYWSD03MMC), Temperature/Humidity Sensor 6ED4 (LYWSD03MMC), Temperature/Humidity Sensor 8F33 (LYWSD03MMC)
+- **Entradas:** *(removidas 2026-09-15)*
 - **Entidades activas (aprox.):** 0
-- **Nomenclatura — ajustes:** 3 entradas com títulos técnicos LYWSD03MMC 1904/6ED4/8F33 — duplicam os termos já em BTHome.
-- **Vínculos / organização — ajustes:** Provável remoção das entradas xiaomi_ble se BTHome cobrir tudo (0 entidades activas).
-- **Estado sugerido:** rever / limpar
-- **Revisão conjunta:** [ ] por fazer
+- **Nomenclatura — ajustes:** Removidas as 3 entradas técnicas `LYWSD03MMC 1904/6ED4/8F33` — duplicavam BTHome (Banheiro Social, Banheiro Suíte, Cozinha Externa). Sem entidades/devices ligados.
+- **Vínculos / organização — ajustes:** —
+- **Estado sugerido:** concluído (removido)
+- **Revisão conjunta:** [x] feito 2026-09-15
 
 ## `adaptive_lighting` — prioridade média
 

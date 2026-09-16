@@ -78,7 +78,8 @@ Firewall complementar (Internal → External):
 
 | Regra | Estado | Função |
 |-------|--------|--------|
-| Bloquear DNS externo (porta **53**) | ligada | Rede de segurança se o DNAT falhar |
+| Bloquear DNS externo (porta **53**) | ligada **só nas VLANs de clientes** (Hangar, IoT, Multimédia, Visitantes, Câmeras) | Rede de segurança se o DNAT falhar |
+| Servidor → Permitir DNS externo (NAS) | ligada | VLAN 3 / `.21` precisa de `8.8.8.8:53` (Docker, cloudflared, Tailscale). Sem esta excepção o host fica com lookups de ~8 s |
 | Bloquear DoT externo (porta **853**) | ligada | Impede bypass por DNS-over-TLS |
 
 **Offload:** no UCG, `offload_sch` ficou **desligado** após validação (offload de hardware por vezes ignora NAT customizado).
