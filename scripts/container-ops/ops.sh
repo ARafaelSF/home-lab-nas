@@ -9,7 +9,7 @@ APPS_CONF="${CONTAINER_OPS_APPS:-${SCRIPT_DIR}/apps.conf}"
 BACKUP_ROOT="${OPS_ROOT}/backups"
 TIMESTAMP="$(date +%Y-%m-%d_%H%M%S)"
 
-log()  { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*"; }
+log()  { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*" >&2; }
 die()  {
   log "ERRO: $*"
   if [[ "${CONTAINER_OPS_LENIENT:-0}" -eq 1 ]]; then
@@ -427,12 +427,13 @@ for c in json.load(sys.stdin):
     if c.get('updateAvailable'):
         print(c.get('name') or '')
 ")
-  local -a apps=()
+  local -a apps=() skipped=()
   local seen="|"
   for wud_name in "${names[@]}"; do
     [[ -n "$wud_name" ]] || continue
     if ! app="$(wud_name_to_app "$wud_name")"; then
       log "AVISO: pendente WUD '${wud_name}' sem app no apps.conf — ignorado"
+      skipped+=("$wud_name")
       continue
     fi
     if [[ "$seen" != *"|${app}|"* ]]; then
@@ -440,6 +441,9 @@ for c in json.load(sys.stdin):
       seen+="${app}|"
     fi
   done
+  if ((${#skipped[@]})); then
+    log "SKIPPED_WUD=${skipped[*]}"
+  fi
   if ((${#apps[@]})); then
     printf '%s\n' "${apps[@]}"
   fi

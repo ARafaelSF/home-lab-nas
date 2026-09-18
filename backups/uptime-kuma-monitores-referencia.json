@@ -1,18 +1,126 @@
 {
   "note": "Monitores via LAN (porta direta na VM). Não usar HTTPS Cloudflare para admin/infra.",
   "dns": "URLs com IP — sem depender de dns_resolve_server",
+  "updated": "2026-09-17",
+  "groups": {
+    "24": "Mídia e fotos",
+    "25": "Casa e utilidades",
+    "26": "Infraestrutura"
+  },
   "monitorList": [
-    {"name": "Portainer", "url": "https://192.168.3.21:9443/api/status", "ignoreTls": true},
-    {"name": "AdGuard Home", "url": "http://192.168.3.21:8080"},
-    {"name": "Immich", "url": "http://192.168.3.21:2283/api/server/ping"},
-    {"name": "Jellyfin", "url": "http://192.168.3.21:8096/health"},
-    {"name": "Vaultwarden", "url": "http://192.168.3.21:3003/"},
-    {"name": "Homepage", "url": "http://192.168.3.21:3001/"},
-    {"name": "Nginx Proxy Manager", "url": "http://192.168.3.21:81/"},
-    {"name": "Mealie", "url": "http://192.168.3.21:9925/"},
-    {"name": "Duplicati", "url": "http://192.168.3.21:8200/"},
-    {"name": "Home Assistant", "url": "http://192.168.3.10:8123/"},
-    {"name": "Filebrowser", "url": "http://192.168.3.21:8085/"},
-    {"name": "Uptime Kuma", "url": "http://127.0.0.1:3001/api/entry-page"}
+    {
+      "name": "Portainer",
+      "url": "https://192.168.3.21:9443/api/status",
+      "ignoreTls": true,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "AdGuard Home",
+      "url": "http://192.168.3.21:8080",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Immich",
+      "url": "http://192.168.3.21:2283/api/server/ping",
+      "ignoreTls": false,
+      "group": "Mídia e fotos"
+    },
+    {
+      "name": "Jellyfin",
+      "url": "http://192.168.3.21:8096/health",
+      "ignoreTls": false,
+      "group": "Mídia e fotos"
+    },
+    {
+      "name": "Vaultwarden",
+      "url": "http://192.168.3.21:3003/",
+      "ignoreTls": false,
+      "group": "Casa e utilidades"
+    },
+    {
+      "name": "Homepage",
+      "url": "http://192.168.3.21:3001/",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Nginx Proxy Manager",
+      "url": "http://192.168.3.21:81/",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Mealie",
+      "url": "http://192.168.3.21:9925/",
+      "ignoreTls": false,
+      "group": "Casa e utilidades"
+    },
+    {
+      "name": "Duplicati",
+      "url": "http://192.168.3.21:8200/",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Home Assistant",
+      "url": "http://192.168.3.10:8123/",
+      "ignoreTls": false,
+      "group": "Casa e utilidades"
+    },
+    {
+      "name": "Filebrowser",
+      "url": "http://192.168.3.21:8085/",
+      "ignoreTls": false,
+      "group": "Casa e utilidades"
+    },
+    {
+      "name": "Uptime Kuma",
+      "url": "http://127.0.0.1:3001/api/entry-page",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Firefly III",
+      "url": "http://192.168.3.21:3004/",
+      "ignoreTls": false,
+      "group": "Casa e utilidades"
+    },
+    {
+      "name": "Estoque",
+      "url": "http://192.168.3.21:3011/",
+      "ignoreTls": false,
+      "group": "Casa e utilidades"
+    },
+    {
+      "name": "Glances",
+      "url": "http://192.168.3.21:61208/",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Dozzle",
+      "url": "http://192.168.3.21:8888/",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Grafana",
+      "url": "http://192.168.3.21:3005/api/health",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "Prometheus",
+      "url": "http://192.168.3.21:9090/-/healthy",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    },
+    {
+      "name": "InfluxDB",
+      "url": "http://192.168.3.21:8086/health",
+      "ignoreTls": false,
+      "group": "Infraestrutura"
+    }
   ]
 }

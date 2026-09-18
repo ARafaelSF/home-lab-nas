@@ -2642,3 +2642,198 @@ sistema_homelab_desligar_seguro:
       title: Homelab — desligamento aceite
       message: Sequência aceite. Este Home Assistant vai desligar em breve.
       notification_id: homelab_safe_shutdown
+
+reiniciar_zigbee_core_z2m:
+  alias: Reiniciar Zigbee → Core → Z2M
+  description: Reinicia o rádio Zigbee do SLZB, depois o core do SLZB, depois o bridge Zigbee2MQTT, em sequência.
+  icon: mdi:restart
+  mode: single
+  sequence:
+  - action: button.press
+    target:
+      entity_id: button.slzb_06_reiniciar_zigbee
+    continue_on_error: true
+  - delay:
+      seconds: 20
+  - action: button.press
+    target:
+      entity_id: button.slzb_06_reiniciar_core
+    continue_on_error: true
+  - delay:
+      seconds: 30
+  - action: button.press
+    target:
+      entity_id: button.zigbee2mqtt_bridge_restart
+    continue_on_error: true
+
+
+
+calib_termo_guardar:
+  alias: Calib — Guardar amostra
+  description: Grava no CSV (/share/calibracao) as leituras dos termohigrómetros com checkbox Em uso.
+  icon: mdi:content-save
+  mode: single
+  sequence:
+  - variables:
+      calib_payload: >
+        {% set ns = namespace(devices=[]) %}
+        {% if is_state('input_boolean.calib_banheiro_social_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'banheiro_social',
+            'name': 'Banheiro social',
+            'entity_temp': 'sensor.banheiro_social_termo_temperatura',
+            'temp': states('sensor.banheiro_social_termo_temperatura'),
+            'entity_rh': 'sensor.banheiro_social_termo_umidade',
+            'rh': states('sensor.banheiro_social_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_banheiro_suite_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'banheiro_suite',
+            'name': 'Banheiro suíte',
+            'entity_temp': 'sensor.banheiro_suite_termo_temperatura',
+            'temp': states('sensor.banheiro_suite_termo_temperatura'),
+            'entity_rh': 'sensor.banheiro_suite_termo_umidade',
+            'rh': states('sensor.banheiro_suite_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_brinquedoteca_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'brinquedoteca',
+            'name': 'Brinquedoteca',
+            'entity_temp': 'sensor.brinquedoteca_termo_temperatura',
+            'temp': states('sensor.brinquedoteca_termo_temperatura'),
+            'entity_rh': 'sensor.brinquedoteca_termo_umidade',
+            'rh': states('sensor.brinquedoteca_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_cozinha_externa_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'cozinha_externa',
+            'name': 'Cozinha externa (BTHome)',
+            'entity_temp': 'sensor.cozinha_externa_termo_temperatura',
+            'temp': states('sensor.cozinha_externa_termo_temperatura'),
+            'entity_rh': 'sensor.cozinha_externa_termo_umidade',
+            'rh': states('sensor.cozinha_externa_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_cozinha_externa_z2m_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'cozinha_externa_z2m',
+            'name': 'Cozinha externa (Z2M)',
+            'entity_temp': 'sensor.cozinha_externa_termo_higrometro_z2m_temperature',
+            'temp': states('sensor.cozinha_externa_termo_higrometro_z2m_temperature'),
+            'entity_rh': 'sensor.cozinha_externa_termo_higrometro_z2m_humidity',
+            'rh': states('sensor.cozinha_externa_termo_higrometro_z2m_humidity')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_geladeira_z2m_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'geladeira_z2m',
+            'name': 'Geladeira Z2M (interno)',
+            'entity_temp': 'sensor.cozinha_termo_higrometro_geladeira_z2m_temperature',
+            'temp': states('sensor.cozinha_termo_higrometro_geladeira_z2m_temperature'),
+            'entity_rh': 'sensor.cozinha_termo_higrometro_geladeira_z2m_humidity',
+            'rh': states('sensor.cozinha_termo_higrometro_geladeira_z2m_humidity')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_geladeira_z2m_external_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'geladeira_z2m_external',
+            'name': 'Geladeira Z2M (sonda externa)',
+            'entity_temp': 'sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature',
+            'temp': states('sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature'),
+            'entity_rh': '',
+            'rh': none
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_escritorio_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'escritorio',
+            'name': 'Escritório',
+            'entity_temp': 'sensor.escritorio_termo_temperatura',
+            'temp': states('sensor.escritorio_termo_temperatura'),
+            'entity_rh': 'sensor.escritorio_termo_umidade',
+            'rh': states('sensor.escritorio_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_oficina_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'oficina',
+            'name': 'Oficina',
+            'entity_temp': 'sensor.oficina_termo_temperatura',
+            'temp': states('sensor.oficina_termo_temperatura'),
+            'entity_rh': 'sensor.oficina_termo_umidade',
+            'rh': states('sensor.oficina_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_quarto_cecilia_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'quarto_cecilia',
+            'name': 'Quarto Cecília',
+            'entity_temp': 'sensor.quarto_cecilia_termo_temperatura',
+            'temp': states('sensor.quarto_cecilia_termo_temperatura'),
+            'entity_rh': 'sensor.quarto_cecilia_termo_umidade',
+            'rh': states('sensor.quarto_cecilia_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_sala_de_jantar_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'sala_de_jantar',
+            'name': 'Sala de jantar',
+            'entity_temp': 'sensor.sala_de_jantar_termo_temperatura',
+            'temp': states('sensor.sala_de_jantar_termo_temperatura'),
+            'entity_rh': 'sensor.sala_de_jantar_termo_umidade',
+            'rh': states('sensor.sala_de_jantar_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_sala_de_tv_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'sala_de_tv',
+            'name': 'Sala de TV',
+            'entity_temp': 'sensor.sala_de_tv_termo_temperatura',
+            'temp': states('sensor.sala_de_tv_termo_temperatura'),
+            'entity_rh': 'sensor.sala_de_tv_termo_umidade',
+            'rh': states('sensor.sala_de_tv_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_suite_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'suite',
+            'name': 'Suíte',
+            'entity_temp': 'sensor.suite_termo_temperatura',
+            'temp': states('sensor.suite_termo_temperatura'),
+            'entity_rh': 'sensor.suite_termo_umidade',
+            'rh': states('sensor.suite_termo_umidade')
+          }] %}
+        {% endif %}
+        {% if is_state('input_boolean.calib_suite_relogio_tuya_em_uso', 'on') %}
+          {% set ns.devices = ns.devices + [{
+            'id': 'suite_relogio_tuya',
+            'name': 'Relógio suíte (Tuya)',
+            'entity_temp': 'sensor.suite_relogio_tuya_temperatura',
+            'temp': states('sensor.suite_relogio_tuya_temperatura'),
+            'entity_rh': 'sensor.suite_relogio_tuya_umidade',
+            'rh': states('sensor.suite_relogio_tuya_umidade')
+          }] %}
+        {% endif %}
+        {{ {"ref_temp": states("input_number.calib_referencia_temperatura"), "ref_rh": states("input_number.calib_referencia_umidade"), "devices": ns.devices} | tojson }}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ (calib_payload | fromjson).devices | count > 0 }}"
+      sequence:
+      - action: shell_command.calib_termo_guardar
+        data:
+          payload: "{{ calib_payload }}"
+      - action: persistent_notification.create
+        data:
+          notification_id: calib_termo_guardar
+          title: Calibração termohigrómetros
+          message: "Amostra pedida → /share/calibracao/termo_higro_amostras.csv"
+    default:
+    - action: persistent_notification.create
+      data:
+        notification_id: calib_termo_guardar
+        title: Calibração termohigrómetros
+        message: "Nada guardado — marca pelo menos um Em uso e preenche a referência °C."

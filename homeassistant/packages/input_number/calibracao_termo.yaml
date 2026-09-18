@@ -1,0 +1,17 @@
+calib_referencia_temperatura:
+  name: "Calib — Referência temperatura"
+  icon: mdi:thermometer-check
+  min: -10
+  max: 50
+  step: 0.1
+  unit_of_measurement: "°C"
+  mode: box
+
+calib_referencia_umidade:
+  name: "Calib — Referência humidade"
+  icon: mdi:water-percent
+  min: 0
+  max: 100
+  step: 1
+  unit_of_measurement: "%"
+  mode: box

@@ -147,7 +147,7 @@
           entity_id:
           - light.suite_luz_indireta_z2m
         data:
-          brightness_pct: 30
+          brightness_pct: 100
       button_one_long_press:
       - choose:
         - conditions:
@@ -338,7 +338,8 @@
         metadata: {}
         target:
           entity_id: light.suite_luz_indireta_z2m
-        data: {}
+        data:
+          brightness_pct: 100
       button_one_long_press:
       - choose:
         - conditions:
@@ -1297,9 +1298,10 @@
       enable_logs: false
       enable_night_mode: true
       enable_turn_on_protection: true
-      extra_memory_entities: []
+      extra_memory_entities:
+      - switch.brinquedoteca_repelente_sonoff
       motion_sensor: binary_sensor.brinquedoteca_presenca_z2m_occupancy
-      night_end_time: 08:00:00
+      night_end_time: 06:00:00
       night_start_time: '22:00:00'
       off_delay: 120
       off_delay_night: 120
@@ -1309,7 +1311,9 @@
       target_entities_night:
       - light.brinquedoteca_nebulosa_localtuya
       - light.brinquedoteca_nebulosa_estrelas_localtuya
-      turn_on_protection_duration: 6
+      turn_on_protection_duration: 5
+      return_delay_night: 300
+      exclude_entities: []
     path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
 - id: '1768054228835'
   alias: "\U0001F6B6\U0001F4A1\U0001F916 Cozinha — Luz por presença inteligente"
@@ -1331,6 +1335,8 @@
       target_entities_day:
       - light.cozinha_luz_sonoff
       turn_on_protection_duration: 5
+      return_delay_night: 600
+      exclude_entities: []
     path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
 - id: '1768059289288'
   alias: "\U0001F6E1️ Alarme — Armado/Desarmado (Telegram)"
@@ -1381,12 +1387,13 @@
       enable_logs: false
       enable_night_mode: true
       enable_turn_on_protection: true
-      extra_memory_entities: []
+      extra_memory_entities:
+      - switch.quarto_cecilia_repelente_z2m
       motion_sensor: binary_sensor.quarto_cecilia_presenca_z2m_occupancy
       night_end_time: 09:00:00
       night_start_time: '20:00:00'
-      off_delay: 10
-      off_delay_night: 10
+      off_delay: 60
+      off_delay_night: 60
       return_delay: 300
       target_entities_day:
       - light.quarto_cecilia_luz_sonoff
@@ -1394,6 +1401,9 @@
       turn_on_protection_duration: 5
       night_brightness_pct: 100
       enable_night_light_options: true
+      return_delay_night: 300
+      exclude_entities:
+      - light.quarto_cecilia_abajur_z2m
     path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
 - id: '1768069383315'
   alias: "\U0001F6B6\U0001F4A1\U0001F916 Banheiro Social — Luz por presença inteligente"
@@ -1404,18 +1414,20 @@
       control_area: banheiro_social
       disable_automation_boolean: input_boolean.banheiro_social_nao_perturbe
       enable_logs: false
-      enable_night_mode: true
+      enable_night_mode: false
       enable_turn_on_protection: true
       extra_memory_entities: []
-      motion_sensor: binary_sensor.banheiro_social_movimento_z2m_occupancy
+      motion_sensor: binary_sensor.banheiro_social_presenca_z2m_occupancy
       off_delay: 120
-      off_delay_night: 60
+      off_delay_night: 120
       return_delay: 300
       target_entities_day:
       - light.banheiro_social_luz_sonoff
-      turn_on_protection_duration: 3
+      turn_on_protection_duration: 5
       target_entities_night:
       - light.banheiro_social_luz_sonoff
+      return_delay_night: 300
+      exclude_entities: []
     path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
 - id: '1768166187247'
   alias: ⛲ Controle por Horário — Fonte do Jardim Japonês
@@ -1446,7 +1458,7 @@
     e notifica via Telegram se alguma estava ligada.
   triggers:
   - at: 07:00:00
-    platform: time
+    trigger: time
   conditions: []
   actions:
   - variables:
@@ -1493,8 +1505,9 @@
   mode: single
 - id: '1768322566586'
   alias: "\U0001F6B6\U0001F4A1\U0001F916 Oficina — Luz por presença inteligente"
-  description: 'Convertida do BP antigo controle_luz_presenca (necessário para poder
-    remover o BP antigo). Dia: Luz Oficina. Desliga área e restaura no retorno.'
+  description: 'Presença na oficina. Acende Luz Oficina. Gate: só acende/restaura
+    se a porta estiver aberta (ou abriu há até 45s) — evita falso positivo pela porta
+    de vidro. Desliga área e restaura no retorno.'
   use_blueprint:
     input:
       control_area: oficina
@@ -1513,6 +1526,13 @@
       target_entities_day:
       - light.oficina_luz_sonoff
       turn_on_protection_duration: 3
+      return_delay_night: 1800
+      exclude_entities: []
+      enable_turn_on_gate: true
+      turn_on_gate_sensors:
+      - binary_sensor.oficina_porta_z2m_contact
+      turn_on_gate_mode: any
+      turn_on_gate_lookback_seconds: 45
     path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
 - id: '1769123404531'
   alias: "\U0001F6A8\U0001F6E1️ Notificação - Falha ao armar alarme"
@@ -3811,7 +3831,7 @@
       enable_day_light_options: false
       enable_night_mode: true
       night_start_time: '21:00:00'
-      night_end_time: 07:00:00
+      night_end_time: 06:00:00
       target_entities_night:
       - light.banheiro_suite_led_banheiro_suite
       enable_night_light_options: true
@@ -3827,8 +3847,10 @@
       extra_memory_entities: []
       off_delay: 120
       return_delay: 600
-      enable_logs: true
+      enable_logs: false
       off_delay_night: 10
+      return_delay_night: 600
+      exclude_entities: []
 - id: '1782472500767'
   alias: "\U0001F504 Recarregar - UniFi Network"
   description: Monitora UniFi Network. Se o Led dos APs cair, recarrega a integração
@@ -3873,6 +3895,8 @@
       off_delay_night: 6
       return_delay: 45
       enable_logs: true
+      return_delay_night: 45
+      exclude_entities: []
 - id: '1784242546106'
   alias: "\U0001F504 Recarregar - TTLock"
   description: Monitora a fechadura TTLock. Se a integração cair, recarrega automaticamente
@@ -3993,16 +4017,19 @@
   mode: single
 - id: '1786476425509'
   alias: "\U0001F501 Z2M — Contar falhas do coordenador"
-  description: Conta SRSP, NWK_NO_ROUTE, BUFFER_FULL, MAC_NO_RESOURCES e Failed to
-    ping no log MQTT do Z2M.
+  description: Conta so erros graves do adaptador no log MQTT (SRSP timeout/execute,
+    adapter disconnected, serial). Nao conta NWK_NO_ROUTE nem Failed to ping.
+
   triggers:
   - trigger: mqtt
     topic: zigbee2mqtt/bridge/logging
   conditions:
   - condition: template
-    value_template: '{% set p = trigger.payload | default('''') %}{{ ''SRSP'' in p
-      or ''NWK_NO_ROUTE'' in p or ''BUFFER_FULL'' in p or ''MAC_NO_RESOURCES'' in
-      p or ''Failed to ping'' in p }}'
+    value_template: "{% set p = trigger.payload | default('') | lower %}{{
+      ('failed to execute srsp' in p) or ('srsp timeout' in p) or ('adapter disconnected' in p)
+      or ('cannot start' in p) or ('error while opening serial' in p) or (('serialport' in p)
+      and ('error' in p)) or (('zh:ember' in p) and ('error' in p)) }}"
+
   actions:
   - action: counter.increment
     target:
@@ -4026,17 +4053,18 @@
       entity_id: counter.z2m_srsp_falhas
   mode: single
 - id: '1786476437458'
-  alias: "\U0001F501 Z2M — Recuperar coordenador"
-  description: 'Quando o contador de falhas Zigbee passa de 4 (≥5), faz recuperação
-    completa. Usa state for: no limiar (rearmável) + cooldown 30 min. Também reage
-    se o contador já estiver alto quando o cooldown terminar.'
+  alias: Z2M — Recuperar coordenador
+  description: 'Recupera Zigbee so quando o bridge MQTT fica offline 2+ min (ou retry
+    no fim do cooldown se ainda offline). Ciclo stop Z2M + SLZB radio/core + start
+    Z2M. Nao usa contador de log (evita reinicio com mesh saudavel). Nao reinicia o
+    HA; se falhar, notifica Telegram.'
   triggers:
-  - trigger: numeric_state
-    entity_id: counter.z2m_srsp_falhas
-    above: 4
+  - trigger: state
+    entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
+    to: 'off'
     for:
-      seconds: 30
-    id: limiar
+      minutes: 2
+    id: bridge_off
   - trigger: state
     entity_id: timer.z2m_coordenador_cooldown
     from: active
@@ -4046,27 +4074,41 @@
   - condition: state
     entity_id: timer.z2m_coordenador_cooldown
     state: idle
-  - condition: numeric_state
-    entity_id: counter.z2m_srsp_falhas
-    above: 4
+  - condition: or
+    conditions:
+    - condition: trigger
+      id: bridge_off
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: cooldown_fim
+      - condition: state
+        entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
+        state: 'off'
   actions:
+  - variables:
+      motivo: "{% if trigger.id == 'cooldown_fim' %}Cooldown terminou e o bridge continua
+        offline{% else %}Bridge MQTT offline ha 2+ minutos{% endif %}"
+      falhas: '{{ states(''counter.z2m_srsp_falhas'') }}'
   - action: script.enviar_notificacao_telegram
     data:
       destinatarios: antonio
-      titulo: "\U0001F504 Zigbee2MQTT recuperando"
-      mensagem: "⚠️ Atenção: várias falhas no coordenador Zigbee (SRSP / rota / buffer
-        / MAC_NO_RESOURCES).\n\n\U0001F504 Recuperação completa: parar Zigbee2MQTT
-        → reiniciar rádio SLZB-06 → subir Zigbee2MQTT."
+      titulo: Zigbee2MQTT recuperando
+      mensagem: 'Atencao: {{ motivo }}. Contador log (info): {{ falhas }}. Ciclo: parar Z2M,
+        reiniciar radio+core SLZB-06, subir Z2M. Nao reinicio o Home Assistant; se
+        falhar aviso no Telegram.'
       parse_mode: MarkdownV2
   - action: persistent_notification.create
     data:
       notification_id: z2m_coordenador_travado
-      title: Zigbee — recuperação automática
-      message: 'Falhas detectadas. Ciclo completo: stop app → rádio SLZB-06 → start
-        app.'
+      title: Zigbee — recuperacao automatica
+      message: '{{ motivo }}. Ciclo stop Z2M + SLZB + start Z2M.'
   - action: timer.start
     target:
       entity_id: timer.z2m_coordenador_cooldown
+  - action: counter.reset
+    target:
+      entity_id: counter.z2m_srsp_falhas
   - action: hassio.addon_stop
     data:
       addon: 45df7312_zigbee2mqtt
@@ -4076,6 +4118,13 @@
   - action: button.press
     target:
       entity_id: button.slzb_06_reiniciar_zigbee
+    continue_on_error: true
+  - delay:
+      seconds: 20
+  - action: button.press
+    target:
+      entity_id: button.slzb_06_reiniciar_core
+    continue_on_error: true
   - delay:
       seconds: 60
   - action: hassio.addon_start
@@ -4103,29 +4152,30 @@
       - action: script.enviar_notificacao_telegram
         data:
           destinatarios: antonio
-          titulo: ✅ Zigbee recuperação
-          mensagem: Recuperação completa concluída. Bridge MQTT conectado. Cooldown
-            de 30 minutos ativo.
+          titulo: Zigbee recuperacao OK
+          mensagem: Recuperacao concluida. Bridge MQTT conectado. Cooldown 30 min
+            ativo.
           parse_mode: MarkdownV2
       - action: persistent_notification.create
         data:
           notification_id: z2m_coordenador_travado
-          title: Zigbee — recuperação OK
-          message: Bridge MQTT conectado após stop/start + rádio SLZB-06.
+          title: Zigbee — recuperacao OK
+          message: Bridge MQTT conectado.
     default:
     - action: script.enviar_notificacao_telegram
       data:
         destinatarios: antonio
-        titulo: ⚠️ Zigbee recuperação incompleta
-        mensagem: O ciclo stop/rádio/start rodou, mas o bridge MQTT não voltou em
-          3 minutos. Verifique o Zigbee2MQTT e o SLZB-06.
+        titulo: Zigbee recuperacao FALHOU
+        mensagem: Ciclo automatico terminou mas o bridge MQTT NAO voltou. NAO reiniciei
+          o Home Assistant. Verifique Apps Z2M e SLZB-06. Se precisar reiniciar o
+          sistema HA, faca manualmente. Apos cooldown 30 min, se continuar offline,
+          tento de novo.
         parse_mode: MarkdownV2
     - action: persistent_notification.create
       data:
         notification_id: z2m_coordenador_travado
-        title: Zigbee — recuperação incompleta
-        message: Bridge MQTT não conectou após a recuperação completa. Intervenção
-          manual pode ser necessária.
+        title: Zigbee — recuperacao falhou
+        message: Bridge offline. Sem reinicio do HA. Intervencao manual pode ser necessaria.
   mode: single
 - id: '1787225915185'
   alias: "\U0001F372 Cozinha — Termocirculador ciclo concluído"
@@ -4745,7 +4795,8 @@
 - id: '1787676506851'
   alias: "\U0001F9CA Geladeira Midea — Temperatura alta"
   description: 'Após 1 min com refrigerador acima de 10°C: Telegram (Antonio/Renata)
-    + Echo Cozinha; repete a cada 5 min. Botão silencia até o próximo evento.'
+    + Echo Cozinha. Reaviso se geladeira ou somatropina subir ≥1°C desde o último
+    aviso, ou a cada 15 min. Botão silencia até o próximo evento.'
   triggers:
   - trigger: numeric_state
     entity_id: sensor.cozinha_geladeira_midea_temperatura_refrigerador
@@ -4905,8 +4956,15 @@
             - trigger: numeric_state
               entity_id: sensor.cozinha_geladeira_midea_temperatura_refrigerador
               below: 10
+            - trigger: template
+              value_template: "{% set g = states('sensor.cozinha_geladeira_midea_temperatura_refrigerador')
+                %}{% set s = states('sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature')
+                %}{% set ag = temp_atual | float(0) %}{% set asom = temp_somatropina | float(0)
+                %}{{ (g not in ['unknown', 'unavailable', 'none', ''] and g | float(0)
+                >= ag + 1) or (s not in ['unknown', 'unavailable', 'none', ''] and s
+                | float(0) >= asom + 1) }}"
             timeout:
-              minutes: 5
+              minutes: 15
             continue_on_timeout: true
   mode: parallel
   max: 10
@@ -5344,57 +5402,6 @@
       tempo_entre_tentativas: 120
       tempo_espera: 60
     path: Antonio/recarregar_integracao.yaml
-- id: '1788439379199'
-  alias: "\U0001F4E1 SLZB — Marcar mudança Ethernet"
-  description: Grava o timestamp quando o botão for pressionado ou quando o modo de
-    conexão do SLZB mudar para eth — marcador para comparar temperatura USB vs Ethernet
-    no Influx/Grafana.
-  triggers:
-  - trigger: state
-    entity_id: input_button.slzb_marcar_mudanca_ethernet
-    id: botao
-  - trigger: state
-    entity_id: sensor.slzb_06_connection_mode
-    to: eth
-    id: modo_eth
-  actions:
-  - action: input_datetime.set_datetime
-    target:
-      entity_id: input_datetime.slzb_mudanca_para_ethernet
-    data:
-      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
-  - action: input_boolean.turn_on
-    target:
-      entity_id: input_boolean.slzb_ja_mudou_para_ethernet
-  - action: script.enviar_notificacao_telegram
-    data:
-      destinatarios: antonio
-      titulo: "\U0001F4E1 SLZB → Ethernet"
-      mensagem: Marcador USB→Ethernet gravado em {{ now().strftime('%d/%m/%Y %H:%M')
-        }}. Use esse ponto no Grafana para comparar temperatura e quedas.
-      parse_mode: MarkdownV2
-  mode: single
-- id: '1788439379959'
-  alias: "\U0001F321️ SLZB — Temperatura alta"
-  description: Avisa quando a temperatura do chip Core do SLZB-06 fica acima do limiar
-    (threshold helper) por 10 minutos — útil enquanto coleta baseline USB e após mudar
-    para Ethernet.
-  triggers:
-  - trigger: state
-    entity_id: binary_sensor.sistema_slzb_06_slzb_core_temp_alta
-    to: 'on'
-    for:
-      minutes: 10
-  actions:
-  - action: script.enviar_notificacao_telegram
-    data:
-      destinatarios: antonio
-      titulo: "\U0001F321️ SLZB temperatura alta"
-      mensagem: 'Core: {{ states(''sensor.slzb_06_core_chip_temp'') }}°C · Zigbee:
-        {{ states(''sensor.slzb_06_zigbee_chip_temp'') }}°C · Modo: {{ states(''sensor.slzb_06_connection_mode'')
-        }}'
-      parse_mode: MarkdownV2
-  mode: single
 - id: '1788441209362'
   alias: "\U0001F512 Câmeras internas — Internet Tapo (60 min)"
   description: Liga/desliga a regra UniFi 'Cameras Internas → Bloquear WAN'. Interruptor
@@ -5666,16 +5673,15 @@
         %}"
   mode: single
 - id: '1788558999225'
-  alias: "\U0001F504 Recarregar - Alexa Devices (listas)"
+  alias: "\U0001F504 Recarregar - Alexa To-do (listas)"
   description: 'Quando as listas Alexa (todo.lista_*) ficarem unavailable, recarrega
-    alexa_devices e avisa no Telegram (Antonio). Contagem: counter.alexa_devices_quedas_das_listas.'
+    alexa_todo e avisa no Telegram (Antonio). Contagem: counter.alexa_devices_quedas_das_listas.'
   use_blueprint:
     input:
       max_tentativas: 10
       target_entities:
       - todo.lista_compras
       - todo.lista_principal
-      - todo.lista_congelador
       - todo.lista_filmes
       - todo.lista_remedios
       - todo.lista_escritorio
@@ -5685,7 +5691,7 @@
       telegram_mensagem: "⚠️ As __DISPOSITIVOS__ ficaram indisponíveis.\n\n\U0001F504
         A tentar recarregar a integração __INTEGRACAO__."
       telegram_texto_botao: "\U0001F6D1 Cancelar Tentativas"
-      telegram_titulo: "\U0001F504 Alexa Devices (listas) reiniciada"
+      telegram_titulo: "\U0001F504 Alexa To-do (listas) reiniciada"
       tempo_entre_tentativas: 120
       tempo_espera: 60
     path: Antonio/recarregar_integracao.yaml
@@ -5709,10 +5715,10 @@
       titulo: "\U0001F4A7 Pressurizador — limite de tempo"
   mode: single
 - id: '1788568108628'
-  alias: "\U0001F522 Contador — quedas Alexa Devices (listas)"
+  alias: "\U0001F522 Contador — quedas Alexa To-do (listas)"
   description: Incrementa counter.alexa_devices_quedas_das_listas uma vez por incidente
     (quando lista_compras fica unavailable por 60s). Usa uma lista como proxy para
-    não contar 7 vezes a mesma queda da integração.
+    não contar 6 vezes a mesma queda da integração alexa_todo.
   triggers:
   - entity_id: todo.lista_compras
     for:
@@ -5867,3 +5873,283 @@
     continue_on_error: true
     data:
       is_on: '{{ trigger.to_state.state == ''on'' }}'
+- id: '1789075957266'
+  alias: Lavabo - Exaustor com Luz
+  description: Liga o exaustor com a luz do lavabo; após desligar a luz, mantém 5
+    min e força desligar. Ignora durante manutenção semanal.
+  triggers:
+  - id: luz_on
+    trigger: state
+    entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+    to: 'on'
+  - id: luz_off
+    trigger: state
+    entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+    to: 'off'
+  - id: timer_fim
+    trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.lavabo_exaustor
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: luz_on
+      sequence:
+      - action: timer.cancel
+        target:
+          entity_id: timer.lavabo_exaustor
+      - action: fan.turn_on
+        target:
+          entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+    - conditions:
+      - condition: trigger
+        id: luz_off
+      - condition: state
+        entity_id: input_boolean.lavabo_exaustor_manutencao
+        state: 'off'
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.lavabo_exaustor
+        data:
+          duration: 00:05:00
+    - conditions:
+      - condition: trigger
+        id: timer_fim
+      - condition: state
+        entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.lavabo_exaustor_manutencao
+        state: 'off'
+      sequence:
+      - action: fan.turn_off
+        target:
+          entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+  mode: queued
+  max: 5
+- id: '1789075959278'
+  alias: Lavabo - Exaustor Forçar Desligar
+  description: Se a luz estiver apagada e o exaustor continuar ligado por mais de
+    5 min (fora de manutenção), força desligar.
+  triggers:
+  - trigger: state
+    entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+    to: 'off'
+    for: 00:05:30
+  conditions:
+  - condition: state
+    entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.lavabo_exaustor_manutencao
+    state: 'off'
+  actions:
+  - action: timer.cancel
+    target:
+      entity_id: timer.lavabo_exaustor
+  - action: fan.turn_off
+    target:
+      entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+  mode: single
+- id: '1789075960289'
+  alias: Lavabo - Exaustor Manutenção Semanal
+  description: Toda segunda às 09:00 liga o exaustor por 5 minutos e desliga (manutenção).
+  triggers:
+  - trigger: time
+    at: 09:00:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+  actions:
+  - action: timer.cancel
+    target:
+      entity_id: timer.lavabo_exaustor
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.lavabo_exaustor_manutencao
+  - action: fan.turn_on
+    target:
+      entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+  - delay: 00:05:00
+  - action: fan.turn_off
+    target:
+      entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.lavabo_exaustor_manutencao
+  mode: single
+- id: '1789234265772'
+  alias: Influx — exportar disponibilidade de dispositivos
+  description: A cada minuto publica online/offline no Influx (device_availability),
+    mesma lógica do sensor.dispositivos_offline. Legenda = Área — Nome.
+  triggers:
+  - trigger: time_pattern
+    minutes: /1
+  actions:
+  - action: rest_command.influx_write_device_availability
+    data:
+      payload: '{% from ''device_availability.jinja'' import device_availability_lines
+        %}{{ device_availability_lines() }}'
+  mode: single
+- id: '1789236195158'
+  alias: "\U0001F6B6\U0001F4A1\U0001F916 Escritório — Luz por presença inteligente"
+  description: 'Presença no escritório. Principal: Spot Computador. Extras na memória:
+    repelente e monitores. Sem período noturno. Exclui LED do AP UniFi do desligamento/memória.'
+  use_blueprint:
+    path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
+    input:
+      disable_automation_boolean: input_boolean.escritorio_nao_perturbe
+      motion_sensor: binary_sensor.escritorio_presenca_z2m_occupancy
+      target_entities_day:
+      - light.escritorio_interruptor_escritorio_z2m_l3_spot_computador
+      enable_day_light_options: false
+      enable_night_mode: false
+      target_entities_night: []
+      enable_illuminance_check: false
+      enable_turn_on_protection: true
+      turn_on_protection_duration: 5
+      control_area: escritorio
+      extra_memory_entities:
+      - switch.escritorio_repelente_sonoff
+      - switch.escritorio_monitores_tasmota
+      exclude_entities:
+      - light.escritorio_ap_unifi_led
+      off_delay: 300
+      off_delay_night: 300
+      return_delay: 1200
+      return_delay_night: 1200
+      enable_logs: false
+- id: '1789250308242'
+  alias: "\U0001F6B6\U0001F4A1\U0001F916 Sala de Jantar — Luz por presença inteligente"
+  description: 'Só apaga (não acende principais). Memoriza Lustre/Pé Direito/Arandela
+    se estiverem acesas e desliga após ausência; restaura no retorno. Sem presença+memória:
+    não liga nada.'
+  mode: queued
+  use_blueprint:
+    path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
+    input:
+      disable_automation_boolean: input_boolean.sala_de_jantar_nao_perturbe
+      motion_sensor: binary_sensor.sala_de_jantar_presenca_z2m_occupancy
+      target_entities_day: []
+      enable_day_light_options: false
+      enable_night_mode: false
+      target_entities_night: []
+      enable_illuminance_check: false
+      enable_turn_on_protection: true
+      control_area: sala_de_jantar
+      extra_memory_entities:
+      - switch.sala_de_jantar_repelente_sonoff
+      exclude_entities: []
+      off_delay: 300
+      off_delay_night: 300
+      return_delay: 1200
+      return_delay_night: 1200
+      enable_turn_on_gate: false
+      enable_logs: false
+- id: '1789250681079'
+  alias: "\U0001F6B6\U0001F4A1\U0001F916 Sala de TV — Luz por presença inteligente"
+  description: 'Só apaga (não acende principais). Memoriza lights da área e desliga
+    após ausência; restaura no retorno. Sem memória: presença não liga nada.'
+  mode: queued
+  use_blueprint:
+    path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
+    input:
+      disable_automation_boolean: input_boolean.sala_de_tv_nao_perturbe
+      motion_sensor: binary_sensor.sala_de_tv_presenca_z2m_occupancy
+      target_entities_day: []
+      enable_day_light_options: false
+      enable_night_mode: false
+      target_entities_night: []
+      enable_illuminance_check: false
+      enable_turn_on_protection: true
+      control_area: sala_de_tv
+      extra_memory_entities:
+      - switch.sala_de_tv_repelente_sonoff
+      exclude_entities: []
+      off_delay: 300
+      off_delay_night: 300
+      return_delay: 1200
+      return_delay_night: 1200
+      enable_turn_on_gate: false
+      enable_logs: false
+- id: '1789250682827'
+  alias: "\U0001F6B6\U0001F4A1\U0001F916 Suíte — Luz por presença inteligente"
+  description: 'Só apaga (não acende principais). Memoriza lights da suíte (exclui
+    LED AP/câmera/tuyacloud) e desliga após ausência; restaura no retorno. Sem memória:
+    presença não liga nada.'
+  mode: queued
+  use_blueprint:
+    path: Antonio/controle_inteligente_luz_presenca_area_retorno.yaml
+    input:
+      disable_automation_boolean: input_boolean.suite_nao_perturbe
+      motion_sensor: binary_sensor.suite_presenca_z2m_occupancy
+      target_entities_day: []
+      enable_day_light_options: false
+      enable_night_mode: false
+      target_entities_night: []
+      enable_illuminance_check: false
+      enable_turn_on_protection: true
+      control_area: suite
+      extra_memory_entities:
+      - switch.suite_repelente_sonoff
+      exclude_entities:
+      - light.suite_ap_unifi_led
+      - light.camera_suite_floodlight_timed
+      off_delay: 300
+      off_delay_night: 300
+      return_delay: 1200
+      return_delay_night: 1200
+      enable_turn_on_gate: false
+      enable_logs: false
+- id: homelab_safe_shutdown_result_20260912
+  alias: Homelab — resultado desligamento seguro
+  description: Webhook do listener Docker quando o shutdown é aceite ou falha cedo.
+  mode: single
+  trigger:
+  - platform: webhook
+    webhook_id: homelab_safe_shutdown_result
+    allowed_methods:
+    - POST
+    local_only: true
+  action:
+  - action: persistent_notification.create
+    data:
+      title: Homelab — desligamento
+      message: '{{ trigger.json.message | default(''sem detalhe'') }}'
+      notification_id: homelab_safe_shutdown
+  - action: script.enviar_notificacao_telegram
+    continue_on_error: true
+    data:
+      destinatarios: antonio
+      titulo: ⏻ Homelab
+      mensagem: '{{ trigger.json.message | default(''sem detalhe'') }}'
+      parse_mode: html
+- id: '1789390944621'
+  alias: 'Escritorio: Presenca liga Monitores (se Desktop ligado)'
+  description: Complementar a CIP do escritorio. Quando a presenca volta e o desktop
+    ainda esta ligado, liga os monitores mesmo depois da janela de retorno inteligente
+    (return_delay) ter expirado.
+  triggers:
+  - entity_id: binary_sensor.escritorio_presenca_z2m_occupancy
+    id: presenca
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: switch.escritorio_desktop_sonoff
+    state: 'on'
+  - condition: state
+    entity_id: switch.escritorio_monitores_tasmota
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.escritorio_nao_perturbe
+    state: 'off'
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.escritorio_monitores_tasmota
+  mode: single

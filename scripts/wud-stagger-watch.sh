@@ -166,6 +166,12 @@ print('FAIL|' + msg.replace('|', '/') + '|' + action)
 
 if [[ "$RESULT" == "OK" ]]; then
   log "OK: ${NAME}"
+  # Data da imagem remota + rótulos FROM→TO na dash/Telegram (WUD deixa result.created vazio)
+  if [[ -x /root/homelab/scripts/wud-enrich-ha-versions.py ]]; then
+    WUD_MQTT_PASSWORD="$(docker exec wud printenv WUD_TRIGGER_MQTT_HA_PASSWORD 2>/dev/null || true)" \
+      /root/homelab/scripts/wud-enrich-ha-versions.py "${NAME}" \
+      >>/var/log/wud-enrich.log 2>&1 || log "AVISO: enrich HA versions falhou para ${NAME}"
+  fi
   exit 0
 fi
 

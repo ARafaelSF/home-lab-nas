@@ -25,8 +25,10 @@ services:
       UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION: "true"
       UNIFI_CONTROLLER_TYPE: proxy
       UNIFI_VERIFY_SSL: "false"
-    # Só Tailscale (+ loopback via TS IP). Não expor na internet.
+    # 0.0.0.0 evita falha no boot se o Tailscale ainda não tiver IP
+    # (100.118.156.15:3010 falhava com "cannot assign requested address").
+    # Continua acessível via Tailscale em http://100.118.156.15:3010/mcp
     ports:
-      - "100.118.156.15:3010:3000"
+      - "3010:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"

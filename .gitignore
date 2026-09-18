@@ -1,44 +1,42 @@
-# Segredos — nunca commitar
-.env
-*.env
+
 !*.env.example
+# Backups locais (podem conter dados sensíveis)
+# Cursor / IDE
+# Estudo RF UniFi (amostras com MAC/IP)
+# Immich DB dumps / HA secrets (nunca no Git público)
+# OS
+# Segredos — nunca commitar
+# UniFi MCP secrets
 # ficheiros de tokens gerados pelo influxdb-setup.sh (.env.tokens.new, etc.)
-.env.tokens*
+**/.dashboard-password
 **/.env.tokens*
+**/pbs-*-auth*
+**/pbs-*-password*
+**/secrets.yaml
+**/secrets/
+**/stack.env
+*.env
+*.password
+*~
+.DS_Store
+.cursor-server/
+.cursor/
+.env
+.env.tokens*
+backups/*.db
+backups/*.tar.gz
+backups/immich/
+backups/influx-migration/
+backups/manifests/runtime-*.txt
+compose/dozzle/users.yml
+compose/hermes-agent/.dashboard-password
+compose/monitoring/.grafana-admin
+compose/unifi-mcp/.env
+homeassistant/localthings-certs/
+homeassistant/secrets.yaml
+scripts/**/__pycache__/
+scripts/unifi-rf-study/data/
+secrets/
 stack.env
 stack.env.bak
-**/stack.env
 wud-registries.env
-compose/dozzle/users.yml
-*.password
-**/.dashboard-password
-compose/hermes-agent/.dashboard-password
-**/secrets/
-homeassistant/localthings-certs/
-
-# Backups locais (podem conter dados sensíveis)
-backups/*.tar.gz
-backups/*.db
-backups/manifests/runtime-*.txt
-backups/influx-migration/
-
-# Cursor / IDE
-.cursor/
-.cursor-server/
-
-# OS
-.DS_Store
-*~
-
-# UniFi MCP secrets
-compose/unifi-mcp/.env
-
-# Estudo RF UniFi (amostras com MAC/IP)
-scripts/unifi-rf-study/data/
-scripts/**/__pycache__/
-
-# Immich DB dumps / HA secrets (nunca no Git público)
-backups/immich/
-**/secrets.yaml
-homeassistant/secrets.yaml
-compose/monitoring/.grafana-admin

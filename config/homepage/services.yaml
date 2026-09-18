@@ -67,6 +67,17 @@
             icon: firefly-iii.png
             description: Rede local
             siteMonitor: http://192.168.3.21:3004/
+    - Estoque:
+        - HTTPS:
+            href: https://estoque.antonio.rafael.nom.br/
+            icon: mdi-package-variant-closed
+            description: Domínio seguro
+            siteMonitor: https://estoque.antonio.rafael.nom.br/
+        - LAN:
+            href: http://192.168.3.21:3011
+            icon: mdi-package-variant-closed
+            description: Rede local
+            siteMonitor: http://192.168.3.21:3011/
     - Hermes Agent:
         - HTTPS:
             href: https://hermes.antonio.rafael.nom.br/

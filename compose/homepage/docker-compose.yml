@@ -10,9 +10,13 @@ services:
     ports:
       - 3001:3000
     environment:
-      - HOMEPAGE_ALLOWED_HOSTS=192.168.3.21:3001,home-server-nas.antonio.rafael.nom.br,localhost:3001 
+      - HOMEPAGE_ALLOWED_HOSTS=192.168.3.21:3001,home-server-nas.antonio.rafael.nom.br,localhost:3001
     volumes:
       - homepage_config:/app/config
+      # YAML do repositório (ro) — evita o container voltar a copiar o default no update
+      - /root/homelab/config/homepage/services.yaml:/app/config/services.yaml:ro
+      - /root/homelab/config/homepage/bookmarks.yaml:/app/config/bookmarks.yaml:ro
+      - /root/homelab/config/homepage/widgets.yaml:/app/config/widgets.yaml:ro
       - /root/homelab/config/homepage/icons:/app/public/icons
     restart: unless-stopped
 

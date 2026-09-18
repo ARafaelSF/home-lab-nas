@@ -1,0 +1,86 @@
+[
+  {
+    "id": "banheiro_social",
+    "name": "Banheiro social",
+    "temp": "sensor.banheiro_social_termo_temperatura",
+    "humidity": "sensor.banheiro_social_termo_umidade"
+  },
+  {
+    "id": "banheiro_suite",
+    "name": "Banheiro suíte",
+    "temp": "sensor.banheiro_suite_termo_temperatura",
+    "humidity": "sensor.banheiro_suite_termo_umidade"
+  },
+  {
+    "id": "brinquedoteca",
+    "name": "Brinquedoteca",
+    "temp": "sensor.brinquedoteca_termo_temperatura",
+    "humidity": "sensor.brinquedoteca_termo_umidade"
+  },
+  {
+    "id": "cozinha_externa",
+    "name": "Cozinha externa (BTHome)",
+    "temp": "sensor.cozinha_externa_termo_temperatura",
+    "humidity": "sensor.cozinha_externa_termo_umidade"
+  },
+  {
+    "id": "cozinha_externa_z2m",
+    "name": "Cozinha externa (Z2M)",
+    "temp": "sensor.cozinha_externa_termo_higrometro_z2m_temperature",
+    "humidity": "sensor.cozinha_externa_termo_higrometro_z2m_humidity"
+  },
+  {
+    "id": "geladeira_z2m",
+    "name": "Geladeira Z2M (interno)",
+    "temp": "sensor.cozinha_termo_higrometro_geladeira_z2m_temperature",
+    "humidity": "sensor.cozinha_termo_higrometro_geladeira_z2m_humidity"
+  },
+  {
+    "id": "geladeira_z2m_external",
+    "name": "Geladeira Z2M (sonda externa)",
+    "temp": "sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature",
+    "humidity": null
+  },
+  {
+    "id": "escritorio",
+    "name": "Escritório",
+    "temp": "sensor.escritorio_termo_temperatura",
+    "humidity": "sensor.escritorio_termo_umidade"
+  },
+  {
+    "id": "oficina",
+    "name": "Oficina",
+    "temp": "sensor.oficina_termo_temperatura",
+    "humidity": "sensor.oficina_termo_umidade"
+  },
+  {
+    "id": "quarto_cecilia",
+    "name": "Quarto Cecília",
+    "temp": "sensor.quarto_cecilia_termo_temperatura",
+    "humidity": "sensor.quarto_cecilia_termo_umidade"
+  },
+  {
+    "id": "sala_de_jantar",
+    "name": "Sala de jantar",
+    "temp": "sensor.sala_de_jantar_termo_temperatura",
+    "humidity": "sensor.sala_de_jantar_termo_umidade"
+  },
+  {
+    "id": "sala_de_tv",
+    "name": "Sala de TV",
+    "temp": "sensor.sala_de_tv_termo_temperatura",
+    "humidity": "sensor.sala_de_tv_termo_umidade"
+  },
+  {
+    "id": "suite",
+    "name": "Suíte",
+    "temp": "sensor.suite_termo_temperatura",
+    "humidity": "sensor.suite_termo_umidade"
+  },
+  {
+    "id": "suite_relogio_tuya",
+    "name": "Relógio suíte (Tuya)",
+    "temp": "sensor.suite_relogio_tuya_temperatura",
+    "humidity": "sensor.suite_relogio_tuya_umidade"
+  }
+]

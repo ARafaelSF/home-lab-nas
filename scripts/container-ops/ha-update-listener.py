@@ -110,6 +110,7 @@ APP_LABELS = {
     "blackbox-exporter": "Blackbox Exporter",
     "speedtest-exporter": "Speedtest Exporter",
     "unifi-mcp": "UniFi Network MCP",
+    "portainer": "Portainer",
 }
 
 
@@ -120,6 +121,7 @@ def friendly_name(app: str) -> str:
 FALHOU_RE = re.compile(r"FALHOU:\s+(\S+)")
 FAILED_APPS_RE = re.compile(r"FAILED_APPS=(.+)")
 UPDATED_APPS_RE = re.compile(r"UPDATED_APPS=(.+)")
+SKIPPED_WUD_RE = re.compile(r"SKIPPED_WUD=(.+)")
 VERSION_RE = re.compile(r"VERSION_(FROM|TO)=([^|\s]+)\|([^\n]+)")
 OK_APP_RE = re.compile(r"\] OK: ([a-z0-9]+(?:-[a-z0-9]+)*)\s*$", re.M)
 
@@ -135,21 +137,31 @@ def _unique_apps(apps: list[str]) -> list[str]:
 
 
 def parse_failed_apps(text: str) -> list[str]:
+    """Só aceita nomes de apps conhecidos (evita partir avisos em 'palavras: falhou')."""
+    known = known_apps() - {"all", "pending", "catalog", "everything"}
     apps: list[str] = []
     for match in FAILED_APPS_RE.finditer(text):
-        apps.extend(a for a in match.group(1).replace(",", " ").split() if a)
+        apps.extend(a for a in match.group(1).replace(",", " ").split() if a in known)
     if not apps:
-        apps = FALHOU_RE.findall(text)
+        apps = [a for a in FALHOU_RE.findall(text) if a in known]
     return _unique_apps(apps)
 
 
 def parse_updated_apps(text: str) -> list[str]:
+    known = known_apps() - {"all", "pending", "catalog", "everything"}
     apps: list[str] = []
     for match in UPDATED_APPS_RE.finditer(text):
-        apps.extend(a for a in match.group(1).replace(",", " ").split() if a)
+        apps.extend(a for a in match.group(1).replace(",", " ").split() if a in known)
     if not apps:
-        apps = OK_APP_RE.findall(text)
+        apps = [a for a in OK_APP_RE.findall(text) if a in known]
     return _unique_apps(apps)
+
+
+def parse_skipped_wud(text: str) -> list[str]:
+    names: list[str] = []
+    for match in SKIPPED_WUD_RE.finditer(text):
+        names.extend(a.strip("'\"") for a in match.group(1).replace(",", " ").split() if a)
+    return _unique_apps(names)
 
 
 def _clean_ver(ver: str) -> str:
@@ -211,13 +223,19 @@ def friendly_summary(
     froms: dict[str, str] | None = None,
     tos: dict[str, str] | None = None,
     updated: list[str] | None = None,
+    skipped: list[str] | None = None,
 ) -> str:
     nome = friendly_name(app)
     failed = failed or []
     updated = list(updated or [])
+    skipped = skipped or []
     if app != "all" and app not in updated and ok:
         updated = [app] + updated
     lines = version_lines(froms or {}, tos or {}, failed, updated)
+    if skipped:
+        lines.append(
+            "Ignorados (sem cadastro): " + ", ".join(skipped)
+        )
     extra = ("\n" + "\n".join(lines)) if lines else ""
     if app == "all":
         if ok:
@@ -333,8 +351,9 @@ def run_update(app: str) -> None:
         ok = proc.returncode == 0
         failed = parse_failed_apps(text)
         updated = parse_updated_apps(text)
+        skipped = parse_skipped_wud(text)
         froms, tos = parse_versions(text)
-        summary = friendly_summary(ok, app, failed, froms, tos, updated)
+        summary = friendly_summary(ok, app, failed, froms, tos, updated, skipped)
         log(f"resumo: {summary.replace(chr(10), ' | ')}")
         notify_ha(ok, app, summary, summary=summary)
     except subprocess.TimeoutExpired:

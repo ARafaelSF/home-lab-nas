@@ -1,0 +1,43 @@
+# Checkbox "Em uso" por dispositivo — calibração termohigrómetros
+calib_banheiro_social_em_uso:
+  name: "Calib — Banheiro social"
+  icon: mdi:checkbox-marked-outline
+calib_banheiro_suite_em_uso:
+  name: "Calib — Banheiro suíte"
+  icon: mdi:checkbox-marked-outline
+calib_brinquedoteca_em_uso:
+  name: "Calib — Brinquedoteca"
+  icon: mdi:checkbox-marked-outline
+calib_cozinha_externa_em_uso:
+  name: "Calib — Cozinha externa (BTHome)"
+  icon: mdi:checkbox-marked-outline
+calib_cozinha_externa_z2m_em_uso:
+  name: "Calib — Cozinha externa (Z2M)"
+  icon: mdi:checkbox-marked-outline
+calib_geladeira_z2m_em_uso:
+  name: "Calib — Geladeira Z2M (interno)"
+  icon: mdi:checkbox-marked-outline
+calib_geladeira_z2m_external_em_uso:
+  name: "Calib — Geladeira Z2M (sonda)"
+  icon: mdi:checkbox-marked-outline
+calib_escritorio_em_uso:
+  name: "Calib — Escritório"
+  icon: mdi:checkbox-marked-outline
+calib_oficina_em_uso:
+  name: "Calib — Oficina"
+  icon: mdi:checkbox-marked-outline
+calib_quarto_cecilia_em_uso:
+  name: "Calib — Quarto Cecília"
+  icon: mdi:checkbox-marked-outline
+calib_sala_de_jantar_em_uso:
+  name: "Calib — Sala de jantar"
+  icon: mdi:checkbox-marked-outline
+calib_sala_de_tv_em_uso:
+  name: "Calib — Sala de TV"
+  icon: mdi:checkbox-marked-outline
+calib_suite_em_uso:
+  name: "Calib — Suíte"
+  icon: mdi:checkbox-marked-outline
+calib_suite_relogio_tuya_em_uso:
+  name: "Calib — Relógio suíte (Tuya)"
+  icon: mdi:checkbox-marked-outline
