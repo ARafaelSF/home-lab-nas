@@ -1,0 +1,26 @@
+# Estado da rotina semanal Proxmox reserva (publicado pelo script / listener)
+sensor:
+  - name: "Proxmox Reserva Estado MQTT"
+    unique_id: sistema_proxmox_reserva_estado_mqtt
+    default_entity_id: sensor.sistema_proxmox_reserva_estado_mqtt
+    state_topic: "homelab/proxmox_reserva/estado"
+    icon: mdi:server-network
+    expire_after: 1209600
+    device:
+      identifiers:
+        - "proxmox_reserva_backup"
+      name: "Proxmox Reserva"
+      manufacturer: "Homelab"
+      model: "PBS semanal"
+  - name: "Proxmox Reserva Último MQTT"
+    unique_id: sistema_proxmox_reserva_ultimo_mqtt
+    default_entity_id: sensor.sistema_proxmox_reserva_ultimo_mqtt
+    state_topic: "homelab/proxmox_reserva/ultimo"
+    icon: mdi:clock-outline
+    expire_after: 1209600
+    device:
+      identifiers:
+        - "proxmox_reserva_backup"
+      name: "Proxmox Reserva"
+      manufacturer: "Homelab"
+      model: "PBS semanal"

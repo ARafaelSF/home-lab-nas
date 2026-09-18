@@ -10,6 +10,7 @@ Implementado via MCP em **2026-05-29**.
 | `sensor.sistema_docker_backup_onedrive_linha` | `há 7 dias — Erro` | Resumo job **homelab-onedrive** |
 | `sensor.sistema_docker_backup_problemas` | `0`, `1`, `2`… | Contagem de problemas (badge Home) |
 | `binary_sensor.sistema_docker_backup_atencao` | `on` / `off` | Alerta agregado |
+| `sensor.sistema_proxmox_reserva_linha` | `há 2 dias — OK` | Resumo cópia semanal Proxmox reserva |
 
 ## Helpers (gravados pelo webhook)
 
@@ -19,6 +20,10 @@ Implementado via MCP em **2026-05-29**.
 | `input_select.sistema_docker_backup_ssd_estado` | `success` / `warning` / `error` / `unknown` / `none` |
 | `input_datetime.sistema_docker_backup_onedrive_ultimo` | Último backup OneDrive |
 | `input_select.sistema_docker_backup_onedrive_estado` | Estado OneDrive |
+| `input_datetime.sistema_proxmox_reserva_ultimo` | Última cópia Proxmox reserva |
+| `input_text.sistema_proxmox_reserva_estado` | Estado Proxmox reserva (helper) |
+| `sensor.sistema_proxmox_reserva_estado_mqtt` | Estado via MQTT (fonte principal) |
+| `sensor.sistema_proxmox_reserva_ultimo_mqtt` | Última cópia via MQTT |
 
 ## Regras de alerta
 
@@ -26,6 +31,7 @@ Implementado via MCP em **2026-05-29**.
 |-----|----------------|----------------------|
 | **docker-local** (SSD) | Diário (~02:00) | Sem registo ou último backup há **> 36 h** (e não for erro) |
 | **homelab-onedrive** | Semanal (terça ~04:00) | Sem registo ou último backup há **> 9 dias** (e não for erro) |
+| **Proxmox reserva** | Semanal (após OneDrive) | Sem registo ou última cópia há **> 9 dias** (e não for erro) |
 
 Pontuação em `sensor.sistema_docker_backup_problemas`:
 

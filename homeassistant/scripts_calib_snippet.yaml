@@ -40,21 +40,11 @@ calib_termo_guardar:
         {% if is_state('input_boolean.calib_cozinha_externa_em_uso', 'on') %}
           {% set ns.devices = ns.devices + [{
             'id': 'cozinha_externa',
-            'name': 'Cozinha externa (BTHome)',
+            'name': 'Cozinha externa',
             'entity_temp': 'sensor.cozinha_externa_termo_temperatura',
             'temp': states('sensor.cozinha_externa_termo_temperatura'),
             'entity_rh': 'sensor.cozinha_externa_termo_umidade',
             'rh': states('sensor.cozinha_externa_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_cozinha_externa_z2m_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'cozinha_externa_z2m',
-            'name': 'Cozinha externa (Z2M)',
-            'entity_temp': 'sensor.cozinha_externa_termo_higrometro_z2m_temperature',
-            'temp': states('sensor.cozinha_externa_termo_higrometro_z2m_temperature'),
-            'entity_rh': 'sensor.cozinha_externa_termo_higrometro_z2m_humidity',
-            'rh': states('sensor.cozinha_externa_termo_higrometro_z2m_humidity')
           }] %}
         {% endif %}
         {% if is_state('input_boolean.calib_geladeira_z2m_em_uso', 'on') %}

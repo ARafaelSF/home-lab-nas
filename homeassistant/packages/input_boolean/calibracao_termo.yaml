@@ -9,10 +9,7 @@ calib_brinquedoteca_em_uso:
   name: "Calib — Brinquedoteca"
   icon: mdi:checkbox-marked-outline
 calib_cozinha_externa_em_uso:
-  name: "Calib — Cozinha externa (BTHome)"
-  icon: mdi:checkbox-marked-outline
-calib_cozinha_externa_z2m_em_uso:
-  name: "Calib — Cozinha externa (Z2M)"
+  name: "Calib — Cozinha externa"
   icon: mdi:checkbox-marked-outline
 calib_geladeira_z2m_em_uso:
   name: "Calib — Geladeira Z2M (interno)"

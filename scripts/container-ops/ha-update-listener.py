@@ -27,6 +27,14 @@ HA_SHUTDOWN_WEBHOOK = os.environ.get(
     "HA_SHUTDOWN_WEBHOOK_URL",
     "http://192.168.3.10:8123/api/webhook/homelab_safe_shutdown_result",
 )
+HA_RESERVA_WEBHOOK = os.environ.get(
+    "HA_RESERVA_WEBHOOK_URL",
+    "http://192.168.3.10:8123/api/webhook/proxmox_reserva_backup_result",
+)
+RESERVA_SH = os.environ.get(
+    "PROXMOX_RESERVA_SH",
+    "/root/homelab/scripts/proxmox-reserva/rotina-semanal.sh",
+)
 LISTEN_HOST = os.environ.get("LISTEN_HOST", "192.168.3.21")
 LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "8787"))
 ALLOWED_PREFIXES = tuple(
@@ -41,6 +49,7 @@ SHUTDOWN_CONFIRM = "DESLIGAR"
 _lock = threading.Lock()
 _busy_app: str | None = None
 _shutdown_pending = False
+_reserva_pending = False
 
 
 def log(msg: str) -> None:
@@ -281,6 +290,70 @@ def notify_ha(
         log(f"webhook HA falhou: {exc}")
 
 
+def notify_reserva(ok: bool, message: str, status: str | None = None) -> None:
+    st = status or ("success" if ok else "error")
+    data = json.dumps(
+        {
+            "job_name": "Proxmox Reserva",
+            "job_key": "proxmox_reserva",
+            "status": st,
+            "ok": ok,
+            "message": message[:3500],
+            "time": __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds"),
+        }
+    ).encode()
+    req = urllib.request.Request(
+        HA_RESERVA_WEBHOOK,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            log(f"webhook reserva HA {resp.status} ok={ok}")
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        log(f"webhook reserva HA falhou: {exc}")
+
+
+def run_reserva() -> None:
+    global _reserva_pending
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOG_DIR / "ha-proxmox-reserva-last.log"
+    cmd = [RESERVA_SH, "--shutdown-reserva"]
+    # O script já notifica o HA; o listener só garante aviso se o processo rebentar.
+    env = os.environ.copy()
+    env["NOTIFY_HA"] = "1"
+    log(f"a correr: {' '.join(cmd)}")
+    try:
+        with log_path.open("w") as fh:
+            proc = subprocess.run(
+                cmd,
+                stdout=fh,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=43200,  # 12 h — restore Docker pode demorar
+                check=False,
+                env=env,
+            )
+        text = log_path.read_text(errors="replace")
+        ok = proc.returncode == 0
+        if not ok:
+            # Se o script falhou antes do webhook interno
+            notify_reserva(
+                False,
+                f"Rotina Proxmox reserva falhou (código {proc.returncode}).\n{text[-1500:]}",
+            )
+        log(f"reserva terminou ok={ok} code={proc.returncode}")
+    except subprocess.TimeoutExpired:
+        notify_reserva(False, "A rotina Proxmox reserva excedeu 12 horas e foi interrompida.")
+    except OSError as exc:
+        notify_reserva(False, f"Falha ao iniciar a rotina Proxmox reserva: {exc}")
+    finally:
+        with _lock:
+            _reserva_pending = False
+        log("reserva: livre")
+
+
 def notify_shutdown(ok: bool, message: str) -> None:
     data = json.dumps({"ok": ok, "message": message[:3500]}).encode()
     req = urllib.request.Request(
@@ -379,15 +452,20 @@ class Handler(BaseHTTPRequestHandler):
             json_bytes({"error": "not found"}, 404, self)
             return
         json_bytes(
-            {"ok": True, "busy": _busy_app, "shutdown_pending": _shutdown_pending},
+            {
+                "ok": True,
+                "busy": _busy_app,
+                "shutdown_pending": _shutdown_pending,
+                "reserva_pending": _reserva_pending,
+            },
             200,
             self,
         )
 
     def do_POST(self) -> None:  # noqa: N802
-        global _busy_app, _shutdown_pending
+        global _busy_app, _shutdown_pending, _reserva_pending
         path = self.path.rstrip("/")
-        if path not in {"/update", "/shutdown"}:
+        if path not in {"/update", "/shutdown", "/proxmox-reserva"}:
             json_bytes({"error": "not found"}, 404, self)
             return
         if not authorized(self):
@@ -401,6 +479,16 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length) or b"{}")
         except json.JSONDecodeError:
             json_bytes({"error": "invalid json"}, 400, self)
+            return
+
+        if path == "/proxmox-reserva":
+            with _lock:
+                if _reserva_pending:
+                    json_bytes({"error": "busy", "reserva_pending": True}, 409, self)
+                    return
+                _reserva_pending = True
+            threading.Thread(target=run_reserva, daemon=True).start()
+            json_bytes({"accepted": True, "action": "proxmox-reserva"}, 202, self)
             return
 
         if path == "/shutdown":

@@ -19,15 +19,9 @@
   },
   {
     "id": "cozinha_externa",
-    "name": "Cozinha externa (BTHome)",
+    "name": "Cozinha externa",
     "temp": "sensor.cozinha_externa_termo_temperatura",
     "humidity": "sensor.cozinha_externa_termo_umidade"
-  },
-  {
-    "id": "cozinha_externa_z2m",
-    "name": "Cozinha externa (Z2M)",
-    "temp": "sensor.cozinha_externa_termo_higrometro_z2m_temperature",
-    "humidity": "sensor.cozinha_externa_termo_higrometro_z2m_humidity"
   },
   {
     "id": "geladeira_z2m",

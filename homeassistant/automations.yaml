@@ -3781,6 +3781,26 @@
           entity_id: input_select.sistema_docker_backup_onedrive_estado
         data:
           option: '{{ status_opt }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ job_key == ''proxmox_reserva'' or ''proxmox'' in job }}'
+      sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.sistema_proxmox_reserva_ultimo
+        data:
+          datetime: '{{ backup_time }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.sistema_proxmox_reserva_estado
+        data:
+          value: '{{ status_opt }}'
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+      - action: switch.turn_off
+        target:
+          entity_id: switch.escritorio_servidor_minipc_tasmota
   mode: queued
   max: 10
 - id: '1780944346290'
@@ -3799,11 +3819,12 @@
   - variables:
       linha_ssd: '{{ states(''sensor.sistema_docker_backup_ssd_linha'') }}'
       linha_od: '{{ states(''sensor.sistema_docker_backup_onedrive_linha'') }}'
+      linha_reserva: '{{ states(''sensor.sistema_proxmox_reserva_linha'') }}'
       problemas: '{{ states(''sensor.sistema_docker_backup_problemas'') }}'
   - action: script.enviar_notificacao_telegram
     data:
       destinatarios: antonio
-      titulo: "\U0001F4BE Homelab — backup Duplicati"
+      titulo: "\U0001F4BE Homelab — backups"
       mensagem: '{{ problemas }} problema(s) nos backups Docker.
 
 
@@ -3811,8 +3832,10 @@
 
         OneDrive homelab-onedrive: {{ linha_od }}
 
+        Proxmox reserva: {{ linha_reserva }}
 
-        Verifique o Duplicati na VM Docker.'
+
+        Verifique o painel Backups no Servidor.'
       parse_mode: MarkdownV2
   mode: single
 - id: '1782396837750'
@@ -6153,3 +6176,219 @@
     target:
       entity_id: switch.escritorio_monitores_tasmota
   mode: single
+
+- id: proxmox_reserva_registar
+  alias: "💾 Homelab: Registar backup (Proxmox Reserva)"
+  description: Atualiza helpers da cópia semanal Proxmox reserva via webhook.
+  mode: queued
+  max: 5
+  triggers:
+  - trigger: webhook
+    webhook_id: proxmox_reserva_backup_result
+    allowed_methods:
+    - POST
+    local_only: false
+  conditions: []
+  actions:
+  - variables:
+      status_raw: '{{ trigger.json.status | default(''unknown'') }}'
+      backup_time: '{{ trigger.json.time | default(now().isoformat()) }}'
+      status_opt: '{{ status_raw if status_raw in [''success'', ''warning'', ''error'', ''unknown'', ''none''] else ''unknown'' }}'
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sistema_proxmox_reserva_ultimo
+    data:
+      datetime: '{{ backup_time }}'
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.sistema_proxmox_reserva_estado
+    data:
+      value: '{{ status_opt }}'
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+  - action: switch.turn_off
+    target:
+      entity_id: switch.escritorio_servidor_minipc_tasmota
+  - action: persistent_notification.create
+    data:
+      title: 'Proxmox Reserva — {{ status_opt }}'
+      message: '{{ trigger.json.message | default('''') }} ({{ backup_time }})'
+      notification_id: proxmox_reserva_backup
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ status_opt in [''error'', ''warning''] }}'
+      sequence:
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: antonio
+          titulo: "💾 Homelab — Proxmox Reserva"
+          mensagem: 'Estado: {{ status_opt }}
+
+
+            {{ trigger.json.message | default('''') }}
+
+
+            Verifique o painel Backups no Servidor.'
+          parse_mode: MarkdownV2
+- id: proxmox_reserva_iniciar_apos_onedrive
+  alias: "💾 Homelab: Iniciar Proxmox Reserva (após OneDrive)"
+  description: Após backup OneDrive OK (terça), liga a tomada da reserva, espera o
+    Proxmox e dispara a rotina semanal no listener :8787.
+  mode: single
+  triggers:
+  - trigger: webhook
+    webhook_id: duplicati_backup_result
+    allowed_methods:
+    - POST
+    local_only: true
+    id: onedrive_ok
+  - platform: time
+    at: 07:00:00
+    id: fallback_terca
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: onedrive_ok
+      - condition: template
+        value_template: "{{ (trigger.json.job_key | default('')) == 'onedrive' or 'onedrive'
+          in (trigger.json.job_name | default('') | lower) }}"
+      - condition: template
+        value_template: "{{ trigger.json.status | default('') == 'success' }}"
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: fallback_terca
+      - condition: time
+        weekday:
+        - tue
+      - condition: template
+        value_template: "{% set raw = states('input_datetime.sistema_proxmox_reserva_ultimo')
+          %}{% set st = states('input_text.sistema_proxmox_reserva_estado') %}{%
+          if st == 'error' %}true{% elif raw in ['unknown','unavailable',''] %}true{%
+          else %}{{ (now().timestamp() - as_timestamp(raw)) > (6 * 86400) }}{% endif
+          %}"
+  - condition: state
+    entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+    state: 'off'
+  actions:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+  - action: switch.turn_on
+    target:
+      entity_id: switch.escritorio_servidor_minipc_tasmota
+  - action: persistent_notification.create
+    data:
+      title: Proxmox Reserva — a iniciar
+      message: Tomada ligada. A aguardar o Proxmox da reserva e a correr a cópia semanal.
+      notification_id: proxmox_reserva_backup
+  - delay: '00:05:00'
+  - action: shell_command.proxmox_reserva_rotina
+    response_variable: reserva_start
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ reserva_start is not defined or reserva_start['returncode']
+          | default(1) | int != 0 }}"
+      sequence:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.sistema_proxmox_reserva_estado
+        data:
+          value: error
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: antonio
+          titulo: "💾 Homelab — Proxmox Reserva"
+          mensagem: "Falha ao disparar a rotina (shell_command). A reserva pode ter
+            ficado ligada — verifique a tomada."
+          parse_mode: MarkdownV2
+- id: proxmox_reserva_watchdog
+  alias: "💾 Homelab: Watchdog Proxmox Reserva"
+  description: Se a rotina ficar em curso mais de 12h, marca erro, desliga a tomada
+    e avisa no Telegram.
+  mode: single
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+    to: 'on'
+    for: '12:00:00'
+  actions:
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.sistema_proxmox_reserva_estado
+    data:
+      value: error
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sistema_proxmox_reserva_ultimo
+    data:
+      datetime: '{{ now().isoformat() }}'
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+  - action: switch.turn_off
+    target:
+      entity_id: switch.escritorio_servidor_minipc_tasmota
+  - action: script.enviar_notificacao_telegram
+    data:
+      destinatarios: antonio
+      titulo: "💾 Homelab — Proxmox Reserva"
+      mensagem: "Watchdog 12h — a rotina não terminou. Tomada desligada. Verifique logs
+        em /var/log/homelab/ e /opt/container-ops/logs/."
+      parse_mode: MarkdownV2
+
+
+- id: proxmox_reserva_mqtt_sync
+  alias: "💾 Homelab: Sync MQTT Proxmox Reserva"
+  description: Quando o script publica estado no MQTT, atualiza helpers, desliga a tomada e avisa no Telegram se erro.
+  mode: queued
+  max: 5
+  triggers:
+  - trigger: mqtt
+    topic: homelab/proxmox_reserva/estado
+  actions:
+  - variables:
+      status_opt: "{{ trigger.payload | default('unknown') }}"
+      backup_time: "{{ states('sensor.sistema_proxmox_reserva_ultimo_mqtt') }}"
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.sistema_proxmox_reserva_estado
+    data:
+      value: "{{ status_opt if status_opt in ['success','warning','error','unknown','none'] else 'unknown' }}"
+  - condition: template
+    value_template: "{{ backup_time not in ['unknown','unavailable',''] }}"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sistema_proxmox_reserva_ultimo
+    data:
+      datetime: "{{ backup_time }}"
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.sistema_proxmox_reserva_em_curso
+  - action: switch.turn_off
+    target:
+      entity_id: switch.escritorio_servidor_minipc_tasmota
+  - action: persistent_notification.create
+    data:
+      title: "Proxmox Reserva — {{ status_opt }}"
+      message: "Atualizado via MQTT em {{ backup_time }}"
+      notification_id: proxmox_reserva_backup
+  - condition: template
+    value_template: "{{ status_opt in ['error','warning'] }}"
+  - action: script.enviar_notificacao_telegram
+    data:
+      destinatarios: antonio
+      titulo: "💾 Homelab — Proxmox Reserva"
+      mensagem: "Estado: {{ status_opt }} (MQTT)
+
+        Verifique o painel Backups no Servidor."
+      parse_mode: MarkdownV2

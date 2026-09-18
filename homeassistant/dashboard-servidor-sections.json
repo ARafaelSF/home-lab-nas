@@ -170,7 +170,7 @@
         },
         {
           "type": "markdown",
-          "content": "SSD = **docker-local** (diário, alerta após 36h). OneDrive = **homelab-onedrive** (semanal, alerta após 9 dias)."
+          "content": "SSD = **docker-local** (diário, alerta após 36h). OneDrive = **homelab-onedrive** (semanal, alerta após 9 dias). Proxmox reserva = cópia semanal das VMs (alerta após 9 dias)."
         },
         {
           "type": "entities",
@@ -189,7 +189,12 @@
               "icon": "mdi:microsoft-onedrive"
             },
             {
-              "entity": "sensor.sistema_docker_backup_problemas",
+              {
+              "entity": "sensor.sistema_proxmox_reserva_linha",
+              "name": "Backup Proxmox Reserva",
+              "icon": "mdi:server-network"
+            },
+            "entity": "sensor.sistema_docker_backup_problemas",
               "name": "Problemas",
               "icon": "mdi:alert-circle"
             }
@@ -222,6 +227,18 @@
               "type": "tile",
               "entity": "input_datetime.sistema_docker_backup_onedrive_ultimo",
               "name": "Último OneDrive",
+              "icon": "mdi:clock-outline"
+            },
+            {
+              "type": "tile",
+              "entity": "sensor.sistema_proxmox_reserva_estado_mqtt",
+              "name": "Estado Reserva",
+              "icon": "mdi:server-network"
+            },
+            {
+              "type": "tile",
+              "entity": "sensor.sistema_proxmox_reserva_ultimo_mqtt",
+              "name": "Último Reserva",
               "icon": "mdi:clock-outline"
             }
           ]
