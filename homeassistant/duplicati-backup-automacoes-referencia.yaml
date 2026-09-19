@@ -45,11 +45,11 @@ automation:
                   entity_id: input_datetime.sistema_docker_backup_ssd_ultimo
                 data:
                   datetime: "{{ backup_time }}"
-              - action: input_select.select_option
+              - action: input_text.set_value
                 target:
-                  entity_id: input_select.sistema_docker_backup_ssd_estado
+                  entity_id: input_text.sistema_docker_backup_ssd_estado
                 data:
-                  option: "{{ status_opt }}"
+                  value: "{{ status_opt }}"
           - conditions:
               - condition: template
                 value_template: "{{ job_key == 'onedrive' or 'onedrive' in job }}"
@@ -59,11 +59,11 @@ automation:
                   entity_id: input_datetime.sistema_docker_backup_onedrive_ultimo
                 data:
                   datetime: "{{ backup_time }}"
-              - action: input_select.select_option
+              - action: input_text.set_value
                 target:
-                  entity_id: input_select.sistema_docker_backup_onedrive_estado
+                  entity_id: input_text.sistema_docker_backup_onedrive_estado
                 data:
-                  option: "{{ status_opt }}"
+                  value: "{{ status_opt }}"
 
   - id: duplicati_backup_ok_homelab
     alias: "💾 Homelab: Backup OK (Duplicati)"

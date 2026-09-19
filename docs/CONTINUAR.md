@@ -80,6 +80,7 @@ Canais já aplicados — ver `docs/UNIFI-RF.md`. Por agora **não mexer mais em 
 - Idioma: **PT-BR** (`controle`, não `controlo`).
 - Fluxo: **propor tabela → utilizador aprova → só então aplicar** (pode agrupar 2 simples).
 - Acesso live: `ssh proxmox` → `qm guest exec 101 …`; editar `.storage` com Core parado (`ha core stop`), Python via `docker run … python:3.12-alpine` em `/mnt/data/supervisor/homeassistant`, depois `ha core start`. Backup em `/mnt/data/supervisor/tmp/*.bak.*`.
+- **Lovelace em modo storage** (`.storage/lovelace.*`): o Core lê o ficheiro uma única vez e mantém a config em memória. Editar por Samba com o Core a correr não tem efeito nenhum no frontend (nem com refresh) — é obrigatório `ha core stop` → editar → `ha core start`.
 
 ### Também feito nesta sessão (já em produção)
 

@@ -50,6 +50,7 @@ _lock = threading.Lock()
 _busy_app: str | None = None
 _shutdown_pending = False
 _reserva_pending = False
+_reserva_shutdown_pending = False
 
 
 def log(msg: str) -> None:
@@ -354,6 +355,37 @@ def run_reserva() -> None:
         log("reserva: livre")
 
 
+def run_reserva_shutdown() -> None:
+    """Desliga só o host Proxmox reserva (sem backup/restore)."""
+    global _reserva_shutdown_pending
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOG_DIR / "ha-proxmox-reserva-shutdown-last.log"
+    cmd = [RESERVA_SH, "--shutdown-only"]
+    env = os.environ.copy()
+    env["NOTIFY_HA"] = "0"
+    log(f"a correr: {' '.join(cmd)}")
+    try:
+        with log_path.open("w") as fh:
+            proc = subprocess.run(
+                cmd,
+                stdout=fh,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=300,
+                check=False,
+                env=env,
+            )
+        log(f"reserva shutdown terminou code={proc.returncode}")
+    except subprocess.TimeoutExpired:
+        log("reserva shutdown: timeout 5 min")
+    except OSError as exc:
+        log(f"reserva shutdown: falha ao iniciar: {exc}")
+    finally:
+        with _lock:
+            _reserva_shutdown_pending = False
+        log("reserva shutdown: livre")
+
+
 def notify_shutdown(ok: bool, message: str) -> None:
     data = json.dumps({"ok": ok, "message": message[:3500]}).encode()
     req = urllib.request.Request(
@@ -457,15 +489,21 @@ class Handler(BaseHTTPRequestHandler):
                 "busy": _busy_app,
                 "shutdown_pending": _shutdown_pending,
                 "reserva_pending": _reserva_pending,
+                "reserva_shutdown_pending": _reserva_shutdown_pending,
             },
             200,
             self,
         )
 
     def do_POST(self) -> None:  # noqa: N802
-        global _busy_app, _shutdown_pending, _reserva_pending
+        global _busy_app, _shutdown_pending, _reserva_pending, _reserva_shutdown_pending
         path = self.path.rstrip("/")
-        if path not in {"/update", "/shutdown", "/proxmox-reserva"}:
+        if path not in {
+            "/update",
+            "/shutdown",
+            "/proxmox-reserva",
+            "/proxmox-reserva-shutdown",
+        }:
             json_bytes({"error": "not found"}, 404, self)
             return
         if not authorized(self):
@@ -479,6 +517,37 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length) or b"{}")
         except json.JSONDecodeError:
             json_bytes({"error": "invalid json"}, 400, self)
+            return
+
+        if path == "/proxmox-reserva-shutdown":
+            confirm = str(payload.get("confirm") or "").strip()
+            if confirm != SHUTDOWN_CONFIRM:
+                json_bytes(
+                    {
+                        "error": "confirmacao invalida",
+                        "hint": f'envie {{"confirm":"{SHUTDOWN_CONFIRM}"}}',
+                    },
+                    400,
+                    self,
+                )
+                return
+            with _lock:
+                if _reserva_shutdown_pending or _reserva_pending:
+                    json_bytes(
+                        {
+                            "error": "busy",
+                            "reserva_pending": _reserva_pending,
+                            "reserva_shutdown_pending": _reserva_shutdown_pending,
+                        },
+                        409,
+                        self,
+                    )
+                    return
+                _reserva_shutdown_pending = True
+            threading.Thread(target=run_reserva_shutdown, daemon=True).start()
+            json_bytes(
+                {"accepted": True, "action": "proxmox-reserva-shutdown"}, 202, self
+            )
             return
 
         if path == "/proxmox-reserva":

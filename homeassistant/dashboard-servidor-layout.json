@@ -181,7 +181,7 @@
           "cards": [
             {
               "type": "tile",
-              "entity": "input_select.sistema_docker_backup_ssd_estado",
+              "entity": "input_text.sistema_docker_backup_ssd_estado",
               "name": "Estado SSD",
               "icon": "mdi:harddisk"
             },
@@ -193,7 +193,7 @@
             },
             {
               "type": "tile",
-              "entity": "input_select.sistema_docker_backup_onedrive_estado",
+              "entity": "input_text.sistema_docker_backup_onedrive_estado",
               "name": "Estado OneDrive",
               "icon": "mdi:microsoft-onedrive"
             },

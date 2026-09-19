@@ -1,10 +1,10 @@
 [Unit]
-Description=Sincronizar AdGuard oficial → backup a cada 6 h
+Description=Sincronizar AdGuard oficial → backup a cada 1 h
 
 [Timer]
 OnBootSec=5min
-OnUnitActiveSec=6h
-AccuracySec=5min
+OnUnitActiveSec=1h
+AccuracySec=1min
 Persistent=true
 
 [Install]

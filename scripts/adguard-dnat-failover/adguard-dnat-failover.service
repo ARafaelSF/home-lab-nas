@@ -1,0 +1,13 @@
+[Unit]
+Description=AdGuard DNAT failover (.21 ↔ .22) via UniFi API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/adguard-dnat-failover.env
+ExecStart=/usr/bin/python3 %h/adguard-dnat-failover/adguard-dnat-failover.py
+Nice=10
+
+[Install]
+WantedBy=default.target

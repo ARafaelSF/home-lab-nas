@@ -3,7 +3,7 @@
 **Implementação activa:** opção B (DoH via Cloudflare), concluída em 2026-05-25.  
 **Correcção DoH (insecure):** 2026-05-29 — `http.doh.insecure_enabled: true` (ver abaixo).  
 **Failover LAN:** AdGuard backup no Pi (`192.168.3.22`) como DNS 2 no DHCP UniFi — documentado 2026-09-14.  
-**Forçar AdGuard (DNAT):** UniFi Destination NAT porta 53 → `.21` nas VLANs de clientes — 2026-09-14.  
+**Forçar AdGuard (DNAT):** UniFi Destination NAT porta 53 → **VIP `192.168.3.23`** (keepalived `.21`/`.22`); exclui `.20/30` do match — 2026-09-19.
 **Guia completo do servidor:** `SERVIDOR-HOMELAB.md`.
 
 ---
@@ -66,13 +66,31 @@ O DoH remoto (`dns.antonio...`) continua a apontar só ao AdGuard principal; o f
 
 **Solução (2026-09-14):** **Destination NAT** no UCG Ultra — reescreve destino TCP/UDP **53** para `192.168.3.21:53`. O cliente continua a “ver” `8.8.8.8` no `nslookup`; o pedido vai ao AdGuard.
 
+**Correcção failover (2026-09-19):** o match passou a ser porta **53** com **inversão** do intervalo `192.168.3.20/30` (cobre `.21`, `.22` e VIP `.23`). Assim:
+- consultas directas a `.21` / `.22` / `.23` → **sem** DNAT
+- `8.8.8.8:53` / DNS externos → DNAT → **VIP `192.168.3.23`**
+- firewall «Bloquear DNS externo» mantém-se nas VLANs de clientes
+
+**Porque o DNAT não aponta “para os dois”:** cada pacote só pode ser reescrito para **um** IP. A solução correcta é um **VIP** (keepalived):
+
+| | |
+|--|--|
+| VIP | `192.168.3.23` |
+| Quem o segura | `.21` (MASTER) se o AdGuard principal estiver saudável; senão o Pi `.22` (BACKUP) |
+| Tempo | ~2–4 s (VRRP), sem mudar regras UniFi |
+| Onde corre | **nos dois** hosts (`scripts/adguard-vip/`) |
+
+DHCP continua com DNS1=`.21` + DNS2=`.22`. O DNAT (DNS hardcoded) usa só o VIP.
+
+**Incidente 2026-09-19 (teste com principal desligado):** o VIP passou ao Pi (correcto), mas o `nslookup force-adguard-test.home 8.8.8.8` deu **NXDOMAIN**. Causa: o sync `.21`→`.22` estava a falhar (`sudo` no Pi pedia password), logo o backup **não tinha** a regra `force-adguard-test.home` e respondia como DNS “normal” (domínio inexistente). Corrigido: NOPASSWD limitado no Pi + sync OK; timer de sync passou de 6 h para **1 h**. Validação posterior: com keepalived parado no `.21`, o VIP vai ao Pi e o teste devolve `1.2.3.4`.
+
 ### Regras UniFi (Policy Table → NAT)
 
 | Tipo | Interface (VLAN) | Destino (match) | Traduzir para | Notas |
 |------|------------------|-----------------|---------------|--------|
-| **DNAT** | Hangar, IoT, Multimédia, Visitantes, Câmeras int./ext. | porta **53** (qualquer IP) | `192.168.3.21:53` | Uma regra por VLAN; `rule_index` único |
-| **MASQUERADE** | Hangar (opcional) | `192.168.3.21:53` | — | Ajuda o caminho de retorno em alguns clientes |
-| — | **Servidor (VLAN 3)** | — | **sem DNAT** | O NAS usa `8.8.8.8` de propósito (`systemd-resolved`) |
+| **DNAT** | Hangar, IoT, Multimédia, Visitantes, Câmeras int./ext. | porta **53**, **exceto** `192.168.3.20/30` | `192.168.3.23:53` | VIP keepalived |
+| **MASQUERADE** | Hangar (opcional) | `192.168.3.23:53` | — | Caminho de retorno |
+| — | **Servidor (VLAN 3)** | — | **sem DNAT** | O NAS usa `8.8.8.8` de propósito |
 
 Firewall complementar (Internal → External):
 

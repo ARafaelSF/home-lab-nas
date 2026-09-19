@@ -6,6 +6,8 @@ Publica a cada minuto a métrica Influx `device_availability` com a **mesma regr
 
 - `custom_templates/device_availability.jinja` — monta o line protocol (`Área — Nome` na tag `device`)
 - `rest_command.influx_write_device_availability` — POST no Influx (`home_energy`)
+- `rest_command.influx_delete_device_availability` — DELETE só da medição `device_availability`
+- Script `script.limpar_historico_dispositivos_offline` — botão no subview Offline (confirmação no tap)
 - Automação `automation.influx_exportar_disponibilidade_de_dispositivos` — `time_pattern` `/1`
 - Dashboard Grafana (HA addon): **Dispositivos offline** (`uid: dispositivos-offline`)
 - Cópia provisionada no Grafana Docker: `compose/monitoring/grafana/dashboards/casa/dispositivos-offline.json`
@@ -16,6 +18,7 @@ Publica a cada minuto a métrica Influx `device_availability` com a **mesma regr
 
 - **Grafana no HA** (preferido): abrir o add-on Grafana → dashboard `Dispositivos offline`
 - Grafana Docker (legado): `http://192.168.3.21:3005/d/dispositivos-offline`
+- **Limpar ruído:** no subview Offline → **Limpar histórico offline** (apaga só `device_availability`; o export volta a encher a cada minuto)
 
 Legenda dos gráficos = `Área — Nome do dispositivo` (igual ao dashboard do HA).
 

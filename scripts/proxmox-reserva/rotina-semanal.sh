@@ -6,6 +6,7 @@
 #   ./rotina-semanal.sh              # backup + restore + relatório
 #   ./rotina-semanal.sh --check      # só valida conectividade e estado
 #   ./rotina-semanal.sh --shutdown-reserva   # no fim, desliga o host .30
+#   ./rotina-semanal.sh --shutdown-only      # só desliga o host .30 (sem backup)
 #   ./rotina-semanal.sh --backup-only
 #   ./rotina-semanal.sh --restore-only
 #
@@ -30,6 +31,7 @@ DO_CHECK=0
 DO_BACKUP=1
 DO_RESTORE=1
 DO_SHUTDOWN=0
+SHUTDOWN_ONLY=0
 
 for arg in "$@"; do
   case "$arg" in
@@ -37,8 +39,9 @@ for arg in "$@"; do
     --backup-only) DO_RESTORE=0 ;;
     --restore-only) DO_BACKUP=0 ;;
     --shutdown-reserva) DO_SHUTDOWN=1 ;;
+    --shutdown-only) SHUTDOWN_ONLY=1; DO_BACKUP=0; DO_RESTORE=0; DO_CHECK=0; DO_SHUTDOWN=1; NOTIFY_HA=0 ;;
     -h|--help)
-      sed -n '2,14p' "$0"
+      sed -n '2,15p' "$0"
       exit 0
       ;;
     *)
@@ -285,6 +288,16 @@ shutdown_reserva() {
 
 # --- main ---
 log "rotina semanal início"
+
+if [[ "$SHUTDOWN_ONLY" -eq 1 ]]; then
+  if ! ping -c1 -W2 "$RESERVA_IP" >/dev/null 2>&1; then
+    log "reserva já offline — nada a desligar"
+    exit 0
+  fi
+  shutdown_reserva
+  exit 0
+fi
+
 wait_reserva_up
 
 if [[ "$DO_CHECK" -eq 1 ]]; then

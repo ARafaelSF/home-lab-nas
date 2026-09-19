@@ -1,0 +1,210 @@
+[
+  {
+    "_id": "6aa8745116d2731c169e8a29",
+    "description": "DNS → AdGuard (Vlan_Hangar) · excl. AdGuard .21/.22 · alvo .22 (Pi)",
+    "destination_filter": {
+      "address": "192.168.3.20/30",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": true,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "6949caaf5553bb54480959fa",
+    "ip_address": "192.168.3.22",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": true,
+    "port": "53",
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 11001,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "DNAT"
+  },
+  {
+    "_id": "6aa8745116d2731c169e8a2c",
+    "description": "DNS → AdGuard (Vlan_IoT) · excl. AdGuard .21/.22 · alvo .22 (Pi)",
+    "destination_filter": {
+      "address": "192.168.3.20/30",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": true,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "694a942a13559454a6971769",
+    "ip_address": "192.168.3.22",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": false,
+    "port": "53",
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 11002,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "DNAT"
+  },
+  {
+    "_id": "6aa8745116d2731c169e8a2f",
+    "description": "DNS → AdGuard (Vlan_Multimidia) · excl. AdGuard .21/.22 · alvo .22 (Pi)",
+    "destination_filter": {
+      "address": "192.168.3.20/30",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": true,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "694aaa0513559454a6971ed6",
+    "ip_address": "192.168.3.22",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": false,
+    "port": "53",
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 11003,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "DNAT"
+  },
+  {
+    "_id": "6aa8745116d2731c169e8a32",
+    "description": "DNS → AdGuard (Vlan_Visitantes) · excl. AdGuard .21/.22 · alvo .22 (Pi)",
+    "destination_filter": {
+      "address": "192.168.3.20/30",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": true,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "694aaa1f13559454a6971ed9",
+    "ip_address": "192.168.3.22",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": false,
+    "port": "53",
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 11004,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "DNAT"
+  },
+  {
+    "_id": "6aa8745116d2731c169e8a35",
+    "description": "DNS → AdGuard (Vlan_CamerasInternas) · excl. AdGuard .21/.22 · alvo .22 (Pi)",
+    "destination_filter": {
+      "address": "192.168.3.20/30",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": true,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "69515fb113559454a699aae7",
+    "ip_address": "192.168.3.22",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": false,
+    "port": "53",
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 11005,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "DNAT"
+  },
+  {
+    "_id": "6aa8745116d2731c169e8a38",
+    "description": "DNS → AdGuard (Vlan_CamerasExternas) · excl. AdGuard .21/.22 · alvo .22 (Pi)",
+    "destination_filter": {
+      "address": "192.168.3.20/30",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": true,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "6952a5e0ed72e623138dfc0a",
+    "ip_address": "192.168.3.22",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": false,
+    "port": "53",
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 11006,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "DNAT"
+  },
+  {
+    "_id": "6aa8751416d2731c169e8a63",
+    "description": "Masq DNS replies via AdGuard (Hangar)",
+    "destination_filter": {
+      "address": "192.168.3.22",
+      "filter_type": "ADDRESS_AND_PORT",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false,
+      "port": "53"
+    },
+    "enabled": true,
+    "exclude": false,
+    "in_interface": "6949caaf5553bb54480959fa",
+    "ip_version": "IPV4",
+    "is_predefined": false,
+    "logging": true,
+    "pppoe_use_base_interface": false,
+    "protocol": "tcp_udp",
+    "rule_index": 12001,
+    "source_filter": {
+      "filter_type": "NONE",
+      "firewall_group_ids": [],
+      "invert_address": false,
+      "invert_port": false
+    },
+    "type": "MASQUERADE"
+  }
+]

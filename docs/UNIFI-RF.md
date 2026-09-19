@@ -1,6 +1,6 @@
 # UniFi RF × Zigbee — Hangar
 
-**Aplicado:** 2026-09-08 · **Decisão pendente:** min. rate 2.4 (alguns dias de amostras)
+**Aplicado:** 2026-09-08 · **Min. rate 2.4:** mantido a 1 Mbps (estudo encerrado; amostras apagadas)
 
 Zigbee canal 11 (2405 MHz) e Wi-Fi 11 (2462 MHz) **não se sobrepõem**. A sobreposição real seria Zigbee 11 com **Wi-Fi 1** — esse canal fica evitado.
 
@@ -32,14 +32,7 @@ SSIDs:
 
 Cozinha (−77) e oficina (−81) **já estão no 5 GHz**. O UniFi não os empurra para o 2.4 (o *band steering* faz o contrário). Se a voz falhar: na app Alexa, esquecer o Wi-Fi e voltar a ligar ao Hangar Multimídia.
 
-## Estudo min. rate (a correr neste PC)
+## Estudo min. rate (encerrado)
 
-Snapshots a cada 10 min → `scripts/unifi-rf-study/data/clients.jsonl` (fora do git).
-
-```bash
-python3 /root/homelab/scripts/unifi-rf-study/snapshot.py
-```
-
-Depois de **alguns dias**: ver quem vive abaixo de 6 Mbps vs. quem só cochila a 1–2 Mbps. Só então decidir se sobe o min. rate.
-
-Candidatos (2026-09-08): alarme Tuya e luz da brinquedoteca (alto); tomada sala TV, portões, oficina, luz cozinha, AC Cecília (médio).
+O loop de snapshots (10 min → `scripts/unifi-rf-study/data/`) **já não corre** (parou ~2026-09-10; dados apagados 2026-09-19).  
+Min. rate 2.4 permanece a **1 Mbps** — não subir sem novo estudo. Script ainda em `scripts/unifi-rf-study/snapshot.py` se precisar de amostrar outra vez.

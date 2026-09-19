@@ -17,9 +17,9 @@ Implementado via MCP em **2026-05-29**.
 | Entidade | Conteúdo |
 |----------|----------|
 | `input_datetime.sistema_docker_backup_ssd_ultimo` | Data/hora do último backup SSD |
-| `input_select.sistema_docker_backup_ssd_estado` | `success` / `warning` / `error` / `unknown` / `none` |
+| `input_text.sistema_docker_backup_ssd_estado` | `success` / `warning` / `error` / `unknown` / `none` |
 | `input_datetime.sistema_docker_backup_onedrive_ultimo` | Último backup OneDrive |
-| `input_select.sistema_docker_backup_onedrive_estado` | Estado OneDrive |
+| `input_text.sistema_docker_backup_onedrive_estado` | Estado OneDrive |
 | `input_datetime.sistema_proxmox_reserva_ultimo` | Última cópia Proxmox reserva |
 | `input_text.sistema_proxmox_reserva_estado` | Estado Proxmox reserva (helper) |
 | `sensor.sistema_proxmox_reserva_estado_mqtt` | Estado via MQTT (fonte principal) |

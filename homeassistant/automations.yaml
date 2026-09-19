@@ -3762,11 +3762,11 @@
           entity_id: input_datetime.sistema_docker_backup_ssd_ultimo
         data:
           datetime: '{{ backup_time }}'
-      - action: input_select.select_option
+      - action: input_text.set_value
         target:
-          entity_id: input_select.sistema_docker_backup_ssd_estado
+          entity_id: input_text.sistema_docker_backup_ssd_estado
         data:
-          option: '{{ status_opt }}'
+          value: '{{ status_opt }}'
     - conditions:
       - condition: template
         value_template: '{{ job_key == ''onedrive'' or ''onedrive'' in job }}'
@@ -3776,11 +3776,11 @@
           entity_id: input_datetime.sistema_docker_backup_onedrive_ultimo
         data:
           datetime: '{{ backup_time }}'
-      - action: input_select.select_option
+      - action: input_text.set_value
         target:
-          entity_id: input_select.sistema_docker_backup_onedrive_estado
+          entity_id: input_text.sistema_docker_backup_onedrive_estado
         data:
-          option: '{{ status_opt }}'
+          value: '{{ status_opt }}'
     - conditions:
       - condition: template
         value_template: '{{ job_key == ''proxmox_reserva'' or ''proxmox'' in job }}'
@@ -5898,16 +5898,18 @@
       is_on: '{{ trigger.to_state.state == ''on'' }}'
 - id: '1789075957266'
   alias: Lavabo - Exaustor com Luz
-  description: Liga o exaustor com a luz do lavabo; após desligar a luz, mantém 5
-    min e força desligar. Ignora durante manutenção semanal.
+  description: Liga o exaustor só com transição real off→on da luz; após on→off
+    mantém 5 min. Ignora unavailable (Zigbee fraco). Ignora durante manutenção.
   triggers:
   - id: luz_on
     trigger: state
     entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+    from: 'off'
     to: 'on'
   - id: luz_off
     trigger: state
     entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+    from: 'on'
     to: 'off'
   - id: timer_fim
     trigger: event
@@ -5941,9 +5943,11 @@
     - conditions:
       - condition: trigger
         id: timer_fim
-      - condition: state
-        entity_id: light.lavabo_interruptor_z2m_l1_lavabo
-        state: 'off'
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+          state: 'on'
       - condition: state
         entity_id: input_boolean.lavabo_exaustor_manutencao
         state: 'off'
@@ -5955,20 +5959,34 @@
   max: 5
 - id: '1789075959278'
   alias: Lavabo - Exaustor Forçar Desligar
-  description: Se a luz estiver apagada e o exaustor continuar ligado por mais de
-    5 min (fora de manutenção), força desligar.
+  description: >-
+    Watchdog — se o exaustor ficar ligado 90s sem a luz estar on (fora de
+    manutenção), desliga. Não depende da luz ficar estável (unavailable
+    reiniciava o antigo for 5min30s).
   triggers:
   - trigger: state
-    entity_id: light.lavabo_interruptor_z2m_l1_lavabo
-    to: 'off'
-    for: 00:05:30
+    entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
+    to: 'on'
+    for: 00:01:30
+  - trigger: time_pattern
+    minutes: /2
   conditions:
   - condition: state
     entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
     state: 'on'
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: light.lavabo_interruptor_z2m_l1_lavabo
+      state: 'on'
   - condition: state
     entity_id: input_boolean.lavabo_exaustor_manutencao
     state: 'off'
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: timer.lavabo_exaustor
+      state: active
   actions:
   - action: timer.cancel
     target:
@@ -6259,6 +6277,9 @@
           in (trigger.json.job_name | default('') | lower) }}"
       - condition: template
         value_template: "{{ trigger.json.status | default('') == 'success' }}"
+      - condition: time
+        weekday:
+        - tue
     - condition: and
       conditions:
       - condition: trigger
@@ -6392,3 +6413,45 @@
 
         Verifique o painel Backups no Servidor."
       parse_mode: MarkdownV2
+
+- id: pirata_cecilia_restaurar_apos_queda
+  alias: "🏴‍☠️ Pirata Cecília — Restaurar após queda/restart"
+  description: Se o HA reiniciar a meio da sessão, o timer fica idle mas o input_text
+    ainda tem o tempo. Retoma o timer com essa duração (badge volta a aparecer).
+  mode: single
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: webhook
+    webhook_id: pirata_cecilia_restaurar
+    allowed_methods:
+    - POST
+    local_only: true
+    id: manual
+  conditions:
+  - condition: state
+    entity_id: timer.pirata_cecilia_sessao
+    state: idle
+  - condition: state
+    entity_id: input_boolean.pirata_cecilia_usou_hoje
+    state: 'off'
+  actions:
+  - delay:
+      seconds: "{{ 2 if trigger.id == 'manual' else 20 }}"
+  - variables:
+      rem: "{% if trigger.platform == 'webhook' and trigger.json.remaining is defined and (trigger.json.remaining | string | trim) not in ['', 'none'] %}{{ trigger.json.remaining | string | trim }}{% else %}{{ states('input_text.pirata_cecilia_tempo_restante') | string | trim }}{% endif %}"
+  - condition: template
+    value_template: "{{ rem not in ['', '—', 'unknown', 'unavailable', '0:00:00'] and ':' in rem }}"
+  - condition: state
+    entity_id: timer.pirata_cecilia_sessao
+    state: idle
+  - action: timer.start
+    target:
+      entity_id: timer.pirata_cecilia_sessao
+    data:
+      duration: '{{ rem }}'
+  - action: persistent_notification.create
+    data:
+      notification_id: pirata_cecilia_restaurado
+      title: Pirata — sessão restaurada
+      message: "Timer retomado com {{ rem }} restantes."
