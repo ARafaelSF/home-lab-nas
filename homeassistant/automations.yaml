@@ -6484,7 +6484,8 @@
 - id: '1789904745166'
   alias: Suíte — Relógio brilho noite/dia
   description: Às 22:00 põe brilho 0; às 06:00 restaura brilho 3. No arranque do HA,
-    se for noite, força brilho 0.
+    se for noite, força brilho 0. Duplo clique no botão alterna ligar/desligar; à noite
+    auto-apaga aos 60 s se não desligar.
   triggers:
   - id: noite
     trigger: time

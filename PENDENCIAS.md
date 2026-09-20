@@ -3,7 +3,7 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-20 (Hangar Wi‑Fi; purge presença escritório; limpeza recorder na lista)
+**Atualizado:** 2026-09-20 (relógio suíte toggle; aviso alexa_skill.yaml)
 
 ---
 
@@ -72,6 +72,15 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ---
 
+## 5. HA — avisos de config (`alexa_skill.yaml`)
+
+**Prioridade:** baixa  
+**Contexto (2026-09-20):** `ha core check` / `check_config` passa, mas o YAML avisa chaves `description` duplicadas em `packages/alexa_skill/alexa_skill.yaml` (linhas ~379/381 e ~448/450). Cosmético / higiene YAML; não bloqueia o Core.
+
+- [ ] Revisar e remover as chaves `description` duplicadas no skill Alexa
+
+---
+
 ## Já resolvido / aceite (referência recente)
 
 | Item | Data |
@@ -105,6 +114,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 | Tiles backup: datas `dd/mm/YYYY HH:MM` (`backup_ultimos_fmt.yaml`) | 2026-09-20 |
 | Hangar Wi‑Fi: senha nova no Pi + UniFi; clientes a migrar | 2026-09-20 |
 | Purge recorder presença escritório + exclude illuminance/dis_current | 2026-09-20 |
+| Relógio suíte: duplo clique toggle; à noite auto-apaga aos 60 s | 2026-09-20 |
 
 ---
 

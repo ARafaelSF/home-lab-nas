@@ -2673,30 +2673,41 @@ limpar_historico_dispositivos_offline:
         voltam a encher a partir do próximo minuto (export automático).
 
 suite_relogio_mostrar_brilho_noite:
-  alias: "Suíte — Relógio brilho temporário (noite)"
-  description: Acende o brilho do relógio em 1 por 30 s (só entre 22:00 e 06:00), depois volta a 0.
+  alias: "Suíte — Relógio ligar/desligar (botão)"
+  description: Duplo clique alterna o relógio (ligado ↔ apagado). De dia liga com brilho 3; à noite (22:00–06:00) liga com brilho 1 e, se não desligar, apaga aos 60 s.
   mode: restart
   sequence:
-  - condition: or
-    conditions:
-    - condition: time
-      after: '22:00:00'
-    - condition: time
-      before: '06:00:00'
-  - action: number.set_value
-    target:
-      entity_id: number.suite_relogio_brilho_tela_localtuya
-    data:
-      value: 1
-  - delay: '00:00:30'
-  - condition: or
-    conditions:
-    - condition: time
-      after: '22:00:00'
-    - condition: time
-      before: '06:00:00'
-  - action: number.set_value
-    target:
-      entity_id: number.suite_relogio_brilho_tela_localtuya
-    data:
-      value: 0
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ states('number.suite_relogio_brilho_tela_localtuya') | float(0) > 0 }}"
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.suite_relogio_brilho_tela_localtuya
+        data:
+          value: 0
+    default:
+    - action: number.set_value
+      target:
+        entity_id: number.suite_relogio_brilho_tela_localtuya
+      data:
+        value: "{{ 1 if (now().hour >= 22 or now().hour < 6) else 3 }}"
+    - condition: or
+      conditions:
+      - condition: time
+        after: '22:00:00'
+      - condition: time
+        before: '06:00:00'
+    - delay: '00:01:00'
+    - condition: or
+      conditions:
+      - condition: time
+        after: '22:00:00'
+      - condition: time
+        before: '06:00:00'
+    - action: number.set_value
+      target:
+        entity_id: number.suite_relogio_brilho_tela_localtuya
+      data:
+        value: 0
