@@ -1176,8 +1176,8 @@ homelab_teste_notificacao_backup:
 pirata_cecilia:
   alias: "\U0001F3F4‍☠️ Pirata Cecília"
   description: Lembrete diário e consulta por voz do pirata, com pausa e retomada.
-    Responde no Echo que invocou. Prefere sensor.alexa_devices_last_called;
-    fallback AMP last_called se o evento ainda não chegou.
+    Responde no Echo que invocou. Prefere sensor.alexa_devices_last_called; fallback
+    AMP last_called se o evento ainda não chegou.
   fields:
     modo:
       default: consultar
@@ -1223,10 +1223,10 @@ pirata_cecilia:
       - choose:
         - conditions:
           - condition: template
-            value_template: >-
-              {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
-              {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-              {{ not (amig and age is not none and (age | int) < 60) }}
+            value_template: '{% set age = state_attr(''sensor.alexa_devices_last_called'',
+              ''age_seconds'') %} {% set amig = state_attr(''sensor.alexa_devices_last_called'',
+              ''echo_amigavel'') %} {{ not (amig and age is not none and (age | int)
+              < 60) }}'
           sequence:
           - action: alexa_media.update_last_called
             continue_on_error: true
@@ -1235,36 +1235,26 @@ pirata_cecilia:
               sequence:
               - if:
                 - condition: template
-                  value_template: >-
-                    {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
-                    {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-                    {% if amig and age is not none and (age | int) < 60 %}
-                      false
-                    {% else %}
-                      {% set mapa = {
-                        'media_player.sala_de_tv_echo_mediaplayer': 'sala',
-                        'media_player.cozinha_echo_mediaplayer': 'cozinha',
-                        'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',
-                        'media_player.escritorio_echo_mediaplayer': 'escritorio',
-                        'media_player.oficina_echo_mediaplayer': 'oficina',
-                        'media_player.suite_echo_mediaplayer': 'suite',
-                        'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',
-                        'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',
-                        'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',
-                        'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',
-                        'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar',
-                      } %}
-                      {% set t0 = (t0_ms | default(0)) | int %}
-                      {% set ns = namespace(ok=false) %}
-                      {% for mp, nome in mapa.items() %}
-                        {% set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}
-                        {% set lc = state_attr(mp, 'last_called') %}
-                        {% if (lc is true or lc == true) and t >= (t0 - 8000) %}
-                          {% set ns.ok = true %}
-                        {% endif %}
-                      {% endfor %}
-                      {{ not ns.ok }}
-                    {% endif %}
+                  value_template: "{% set age = state_attr('sensor.alexa_devices_last_called',
+                    'age_seconds') %} {% set amig = state_attr('sensor.alexa_devices_last_called',
+                    'echo_amigavel') %} {% if amig and age is not none and (age |
+                    int) < 60 %}\n  false\n{% else %}\n  {% set mapa = {\n    'media_player.sala_de_tv_echo_mediaplayer':
+                    'sala',\n    'media_player.cozinha_echo_mediaplayer': 'cozinha',\n
+                    \   'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
+                    \   'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
+                    \   'media_player.oficina_echo_mediaplayer': 'oficina',\n    'media_player.suite_echo_mediaplayer':
+                    'suite',\n    'media_player.banheiro_suite_echo_mediaplayer':
+                    'banheiro_suite',\n    'media_player.banheiro_social_echo_mediaplayer':
+                    'banheiro_social',\n    'media_player.quarto_cecilia_echo_mediaplayer':
+                    'quarto_cecilia',\n    'media_player.sala_de_jantar_echo_mediaplayer':
+                    'sala_de_jantar',\n    'media_player.sala_de_jantar_echo_devices':
+                    'sala_de_jantar',\n  } %}\n  {% set t0 = (t0_ms | default(0))
+                    | int %}\n  {% set ns = namespace(ok=false) %}\n  {% for mp, nome
+                    in mapa.items() %}\n    {% set t = (state_attr(mp, 'last_called_timestamp')
+                    or 0) | int %}\n    {% set lc = state_attr(mp, 'last_called')
+                    %}\n    {% if (lc is true or lc == true) and t >= (t0 - 8000)
+                    %}\n      {% set ns.ok = true %}\n    {% endif %}\n  {% endfor
+                    %}\n  {{ not ns.ok }}\n{% endif %}"
                 then:
                 - delay:
                     milliseconds: 400
@@ -1286,7 +1276,10 @@ pirata_cecilia:
       - sala
       - cozinha
       - brinquedoteca
-      echo_de_ecos: "{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+      echo_de_ecos: "{% set amig = state_attr('sensor.alexa_devices_last_called',
+        'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called',
+        'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n
+        \ {{ amig }}\n{% else %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
         'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer':
         'brinquedoteca',\n  'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
         \ 'media_player.oficina_echo_mediaplayer': 'oficina',\n  'media_player.suite_echo_mediaplayer':
@@ -1301,7 +1294,8 @@ pirata_cecilia:
         \ {% if (lc is true or lc == true) and fresco and t >= ns.fts %}\n    {% set
         ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif %}\n  {% if t >
         ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome %}\n  {% endif
-        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{% endif %}"
+        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{%
+        endif %}"
       mapa_echo:
         media_player.sala_de_tv_echo_mediaplayer: sala
         media_player.cozinha_echo_mediaplayer: cozinha
@@ -1323,7 +1317,10 @@ pirata_cecilia:
         '
       alexa: "{% set informado = alexa_dispositivo | default('') | string | trim %}\n{%
         if informado not in ['', 'none', 'None', 'unknown', 'unavailable'] %}\n  {{
-        informado }}\n{% else %}\n{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
+        informado }}\n{% else %}\n{% set amig = state_attr('sensor.alexa_devices_last_called',
+        'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called',
+        'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n
+        \ {{ amig }}\n{% else %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer':
         'sala',\n  'media_player.cozinha_echo_mediaplayer': 'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer':
         'brinquedoteca',\n  'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
         \ 'media_player.oficina_echo_mediaplayer': 'oficina',\n  'media_player.suite_echo_mediaplayer':
@@ -1338,25 +1335,29 @@ pirata_cecilia:
         \ {% if (lc is true or lc == true) and fresco and t >= ns.fts %}\n    {% set
         ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif %}\n  {% if t >
         ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome %}\n  {% endif
-        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{% endif %}\n{%
-        endif %}"
-      echo_tpl: "{% if alexa_informo %}\n  {{ alexa }}\n{% else %}\n{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else %}\n{% set mapa =
-        {\n  'media_player.sala_de_tv_echo_mediaplayer': 'sala',\n  'media_player.cozinha_echo_mediaplayer':
-        'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',\n
-        \ 'media_player.escritorio_echo_mediaplayer': 'escritorio',\n  'media_player.oficina_echo_mediaplayer':
-        'oficina',\n  'media_player.suite_echo_mediaplayer': 'suite',\n  'media_player.banheiro_suite_echo_mediaplayer':
-        'banheiro_suite',\n  'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
-        \ 'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n  'media_player.sala_de_jantar_echo_mediaplayer':
-        'sala_de_jantar',\n  'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n}
-        %}\n{% set t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(dev='sala',
-        ts=0, flagged=none, fts=0) %}\n{% for mp, nome in mapa.items() %}\n  {% set
-        t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}\n  {% set lc =
-        state_attr(mp, 'last_called') %}\n  {% set fresco = (t0 == 0) or (t >= (t0
-        - 5000)) %}\n  {% if (lc is true or lc == true) and fresco and t >= ns.fts
-        %}\n    {% set ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif
-        %}\n  {% if t > ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome
-        %}\n  {% endif %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else
-        ns.dev }}\n{% endif %}\n{% endif %}"
+        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{%
+        endif %}\n{% endif %}"
+      echo_tpl: "{% if alexa_informo %}\n  {{ alexa }}\n{% else %}\n{% set amig =
+        state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}\n{% set
+        age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}\n{%
+        if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{% else
+        %}\n{% set mapa = {\n  'media_player.sala_de_tv_echo_mediaplayer': 'sala',\n
+        \ 'media_player.cozinha_echo_mediaplayer': 'cozinha',\n  'media_player.brinquedoteca_echo_mediaplayer':
+        'brinquedoteca',\n  'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
+        \ 'media_player.oficina_echo_mediaplayer': 'oficina',\n  'media_player.suite_echo_mediaplayer':
+        'suite',\n  'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+        \ 'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n  'media_player.quarto_cecilia_echo_mediaplayer':
+        'quarto_cecilia',\n  'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',\n
+        \ 'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar'\n} %}\n{% set
+        t0 = (t0_ms | default(0)) | int %}\n{% set ns = namespace(dev='sala', ts=0,
+        flagged=none, fts=0) %}\n{% for mp, nome in mapa.items() %}\n  {% set t =
+        (state_attr(mp, 'last_called_timestamp') or 0) | int %}\n  {% set lc = state_attr(mp,
+        'last_called') %}\n  {% set fresco = (t0 == 0) or (t >= (t0 - 5000)) %}\n
+        \ {% if (lc is true or lc == true) and fresco and t >= ns.fts %}\n    {% set
+        ns.flagged = nome %}\n    {% set ns.fts = t %}\n  {% endif %}\n  {% if t >
+        ns.ts %}\n    {% set ns.ts = t %}\n    {% set ns.dev = nome %}\n  {% endif
+        %}\n{% endfor %}\n{{ ns.flagged if ns.flagged is not none else ns.dev }}\n{%
+        endif %}\n{% endif %}"
   - variables:
       tempo_falta: "{% set m = minutos_restantes | int %}\n{% if m <= 0 %}\n  menos
         de um minuto\n{% elif m == 1 %}\n  1 minuto\n{% else %}\n  {{ m }} minutos\n{%
@@ -1773,8 +1774,8 @@ pirata_cecilia:
           - action: script.enviar_notificacao_alexa
             data:
               dispositivos: '{{ echo }}'
-              mensagem: Cecília, beleza, vou iniciar o timer de uma hora e avisar
-                quando acabar.
+              mensagem: Cecília, certo, vou iniciar o timer de uma hora e avisar quando
+                acabar.
         - conditions:
           - condition: template
             value_template: '{{ nao_quer }}'
@@ -2313,26 +2314,26 @@ rega_executar_retry:
             destinatarios: antonio
             titulo: ✅ Rega retry
             mensagem: Fechou com sucesso.
-
 teste_last_alexa:
-  alias: "🧪 Teste Last Alexa"
-  description: >
-    Teste do Last Called via Alexa Devices (sensor.alexa_devices_last_called),
+  alias: "\U0001F9EA Teste Last Alexa"
+  description: 'Teste do Last Called via Alexa Devices (sensor.alexa_devices_last_called),
     com fallback para Alexa Media Player se o evento ainda não chegou.
+
+    '
   icon: mdi:microphone-message
   mode: single
   sequence:
   - variables:
-      t0: "{{ as_timestamp(now()) }}"
+      t0: '{{ as_timestamp(now()) }}'
   - delay:
       milliseconds: 800
   - choose:
     - conditions:
       - condition: template
-        value_template: >-
-          {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
-          {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-          {{ not (amig and age is not none and (age | int) < 60) }}
+        value_template: '{% set age = state_attr(''sensor.alexa_devices_last_called'',
+          ''age_seconds'') %} {% set amig = state_attr(''sensor.alexa_devices_last_called'',
+          ''echo_amigavel'') %} {{ not (amig and age is not none and (age | int) <
+          60) }}'
       sequence:
       - action: alexa_media.update_last_called
         continue_on_error: true
@@ -2341,111 +2342,71 @@ teste_last_alexa:
           sequence:
           - if:
             - condition: template
-              value_template: >-
-                {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
-                {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-                {% if amig and age is not none and (age | int) < 60 %}
-                  false
-                {% else %}
-                  {% set mapa = [
-                    'media_player.sala_de_tv_echo_mediaplayer',
-                    'media_player.cozinha_echo_mediaplayer',
-                    'media_player.brinquedoteca_echo_mediaplayer',
-                    'media_player.escritorio_echo_mediaplayer',
-                    'media_player.oficina_echo_mediaplayer',
-                    'media_player.suite_echo_mediaplayer',
-                    'media_player.banheiro_suite_echo_mediaplayer',
-                    'media_player.banheiro_social_echo_mediaplayer',
-                    'media_player.quarto_cecilia_echo_mediaplayer',
-                    'media_player.sala_de_jantar_echo_mediaplayer',
-                    'media_player.sala_de_jantar_echo_devices',
-                  ] %}
-                  {% set t0ms = (t0 | float * 1000) | int %}
-                  {% set ns = namespace(ok=false) %}
-                  {% for mp in mapa %}
-                    {% set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}
-                    {% set lc = state_attr(mp, 'last_called') %}
-                    {% if (lc is true or lc == true) and t >= (t0ms - 8000) %}
-                      {% set ns.ok = true %}
-                    {% endif %}
-                  {% endfor %}
-                  {{ not ns.ok }}
-                {% endif %}
+              value_template: "{% set age = state_attr('sensor.alexa_devices_last_called',
+                'age_seconds') %} {% set amig = state_attr('sensor.alexa_devices_last_called',
+                'echo_amigavel') %} {% if amig and age is not none and (age | int)
+                < 60 %}\n  false\n{% else %}\n  {% set mapa = [\n    'media_player.sala_de_tv_echo_mediaplayer',\n
+                \   'media_player.cozinha_echo_mediaplayer',\n    'media_player.brinquedoteca_echo_mediaplayer',\n
+                \   'media_player.escritorio_echo_mediaplayer',\n    'media_player.oficina_echo_mediaplayer',\n
+                \   'media_player.suite_echo_mediaplayer',\n    'media_player.banheiro_suite_echo_mediaplayer',\n
+                \   'media_player.banheiro_social_echo_mediaplayer',\n    'media_player.quarto_cecilia_echo_mediaplayer',\n
+                \   'media_player.sala_de_jantar_echo_mediaplayer',\n    'media_player.sala_de_jantar_echo_devices',\n
+                \ ] %}\n  {% set t0ms = (t0 | float * 1000) | int %}\n  {% set ns
+                = namespace(ok=false) %}\n  {% for mp in mapa %}\n    {% set t = (state_attr(mp,
+                'last_called_timestamp') or 0) | int %}\n    {% set lc = state_attr(mp,
+                'last_called') %}\n    {% if (lc is true or lc == true) and t >= (t0ms
+                - 8000) %}\n      {% set ns.ok = true %}\n    {% endif %}\n  {% endfor
+                %}\n  {{ not ns.ok }}\n{% endif %}"
             then:
             - delay:
                 milliseconds: 400
             - action: alexa_media.update_last_called
               continue_on_error: true
   - variables:
-      echo_mp: >-
-        {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-        {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
-        {% if amig and age is not none and (age | int) < 90 %}
-          {{ amig }}
-        {% else %}
-          {% set mapa = {
-            'media_player.sala_de_tv_echo_mediaplayer': 'sala',
-            'media_player.cozinha_echo_mediaplayer': 'cozinha',
-            'media_player.brinquedoteca_echo_mediaplayer': 'brinquedoteca',
-            'media_player.escritorio_echo_mediaplayer': 'escritorio',
-            'media_player.oficina_echo_mediaplayer': 'oficina',
-            'media_player.suite_echo_mediaplayer': 'suite',
-            'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',
-            'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',
-            'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',
-            'media_player.sala_de_jantar_echo_mediaplayer': 'sala_de_jantar',
-            'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar',
-          } %}
-          {% set t0ms = (t0 | float * 1000) | int %}
-          {% set ns = namespace(dev='sala', ts=0, flagged=none, fts=0) %}
-          {% for mp, nome in mapa.items() %}
-            {% set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}
-            {% set lc = state_attr(mp, 'last_called') %}
-            {% set fresco = t >= (t0ms - 8000) %}
-            {% if (lc is true or lc == true) and fresco and t >= ns.fts %}
-              {% set ns.flagged = nome %}
-              {% set ns.fts = t %}
-            {% endif %}
-            {% if t > ns.ts %}
-              {% set ns.ts = t %}
-              {% set ns.dev = nome %}
-            {% endif %}
-          {% endfor %}
-          {{ ns.flagged if ns.flagged is not none else ns.dev }}
-        {% endif %}
-      echo_nome: >-
-        {% set n = state_attr('sensor.alexa_devices_last_called', 'echo_nome') %}
-        {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-        {% if n and amig == echo_mp %}
-          {{ n }}
-        {% else %}
-          {% set nomes = {
-            'sala': 'Echo da Sala de TV',
-            'cozinha': 'Echo da Cozinha',
-            'brinquedoteca': 'Echo da Brinquedoteca',
-            'escritorio': 'Echo do Escritório',
-            'oficina': 'Echo da Oficina',
-            'suite': 'Echo da Suíte',
-            'banheiro_suite': 'Echo do Banheiro da Suíte',
-            'banheiro_social': 'Echo do Banheiro Social',
-            'quarto_cecilia': 'Echo do Quarto da Cecília',
-            'sala_de_jantar': 'Echo da Sala de Jantar',
-          } %}
-          {{ nomes.get(echo_mp, echo_mp) }}
-        {% endif %}
-      fonte: >-
-        {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel') %}
-        {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds') %}
-        {{ 'alexa_devices' if (amig and age is not none and (age | int) < 90) else 'alexa_media' }}
+      echo_mp: "{% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel')
+        %} {% set age = state_attr('sensor.alexa_devices_last_called', 'age_seconds')
+        %} {% if amig and age is not none and (age | int) < 90 %}\n  {{ amig }}\n{%
+        else %}\n  {% set mapa = {\n    'media_player.sala_de_tv_echo_mediaplayer':
+        'sala',\n    'media_player.cozinha_echo_mediaplayer': 'cozinha',\n    'media_player.brinquedoteca_echo_mediaplayer':
+        'brinquedoteca',\n    'media_player.escritorio_echo_mediaplayer': 'escritorio',\n
+        \   'media_player.oficina_echo_mediaplayer': 'oficina',\n    'media_player.suite_echo_mediaplayer':
+        'suite',\n    'media_player.banheiro_suite_echo_mediaplayer': 'banheiro_suite',\n
+        \   'media_player.banheiro_social_echo_mediaplayer': 'banheiro_social',\n
+        \   'media_player.quarto_cecilia_echo_mediaplayer': 'quarto_cecilia',\n    'media_player.sala_de_jantar_echo_mediaplayer':
+        'sala_de_jantar',\n    'media_player.sala_de_jantar_echo_devices': 'sala_de_jantar',\n
+        \ } %}\n  {% set t0ms = (t0 | float * 1000) | int %}\n  {% set ns = namespace(dev='sala',
+        ts=0, flagged=none, fts=0) %}\n  {% for mp, nome in mapa.items() %}\n    {%
+        set t = (state_attr(mp, 'last_called_timestamp') or 0) | int %}\n    {% set
+        lc = state_attr(mp, 'last_called') %}\n    {% set fresco = t >= (t0ms - 8000)
+        %}\n    {% if (lc is true or lc == true) and fresco and t >= ns.fts %}\n      {%
+        set ns.flagged = nome %}\n      {% set ns.fts = t %}\n    {% endif %}\n    {%
+        if t > ns.ts %}\n      {% set ns.ts = t %}\n      {% set ns.dev = nome %}\n
+        \   {% endif %}\n  {% endfor %}\n  {{ ns.flagged if ns.flagged is not none
+        else ns.dev }}\n{% endif %}"
+      echo_nome: "{% set n = state_attr('sensor.alexa_devices_last_called', 'echo_nome')
+        %} {% set amig = state_attr('sensor.alexa_devices_last_called', 'echo_amigavel')
+        %} {% if n and amig == echo_mp %}\n  {{ n }}\n{% else %}\n  {% set nomes =
+        {\n    'sala': 'Echo da Sala de TV',\n    'cozinha': 'Echo da Cozinha',\n
+        \   'brinquedoteca': 'Echo da Brinquedoteca',\n    'escritorio': 'Echo do
+        Escritório',\n    'oficina': 'Echo da Oficina',\n    'suite': 'Echo da Suíte',\n
+        \   'banheiro_suite': 'Echo do Banheiro da Suíte',\n    'banheiro_social':
+        'Echo do Banheiro Social',\n    'quarto_cecilia': 'Echo do Quarto da Cecília',\n
+        \   'sala_de_jantar': 'Echo da Sala de Jantar',\n  } %}\n  {{ nomes.get(echo_mp,
+        echo_mp) }}\n{% endif %}"
+      fonte: '{% set amig = state_attr(''sensor.alexa_devices_last_called'', ''echo_amigavel'')
+        %} {% set age = state_attr(''sensor.alexa_devices_last_called'', ''age_seconds'')
+        %} {{ ''alexa_devices'' if (amig and age is not none and (age | int) < 90)
+        else ''alexa_media'' }}'
   - action: script.enviar_notificacao_alexa
     data:
-      dispositivos: "{{ echo_mp }}"
-      mensagem: "Teste Last Alexa via {{ fonte }}. Você falou comigo no {{ echo_nome }}."
+      dispositivos: '{{ echo_mp }}'
+      mensagem: Teste Last Alexa via {{ fonte }}. Você falou comigo no {{ echo_nome
+        }}.
       tipo: tts
 sistema_docker_atualizar:
   alias: Docker — atualizar um container
-  description: 'Pede ao host Docker (ops.sh) para atualizar o container da entidade WUD.
-    Só apps cadastradas em apps.conf. Enquanto corre, bloqueia outros pedidos.'
+  description: Pede ao host Docker (ops.sh) para atualizar o container da entidade
+    WUD. Só apps cadastradas em apps.conf. Enquanto corre, bloqueia outros pedidos.
   icon: mdi:docker
   mode: single
   fields:
@@ -2462,81 +2423,55 @@ sistema_docker_atualizar:
         text:
   sequence:
   - variables:
-      eid: "{{ entity_id if entity_id is string else (entity_id[0] if entity_id else '') }}"
-      app_ops: >-
-        {% set given = app | default('') | string | trim %}
-        {% if given %}{{ given }}
-        {% else %}
-          {% set m = {
-            'update.sistema_docker_adguard': 'adguard',
-            'update.wud_container_local_adguardhome': 'adguard',
-            'update.sistema_docker_cadvisor': 'cadvisor',
-            'update.wud_container_local_cadvisor': 'cadvisor',
-            'update.sistema_docker_cloudflare': 'cloudflare',
-            'update.wud_container_local_cloudflared': 'cloudflare',
-            'update.sistema_docker_dozzle': 'dozzle',
-            'update.wud_container_local_dozzle': 'dozzle',
-            'update.sistema_docker_duplicati': 'duplicati',
-            'update.wud_container_local_duplicati': 'duplicati',
-            'update.sistema_docker_filebrowser': 'filebrowser',
-            'update.wud_container_local_filebrowser': 'filebrowser',
-            'update.sistema_docker_firefly': 'firefly',
-            'update.wud_container_local_firefly_iii': 'firefly',
-            'update.sistema_docker_grafana': 'grafana',
-            'update.wud_container_local_grafana': 'grafana',
-            'update.sistema_docker_hermes': 'hermes',
-            'update.wud_container_local_hermes_agent': 'hermes',
-            'update.sistema_docker_homepage': 'homepage',
-            'update.wud_container_local_homepage': 'homepage',
-            'update.sistema_docker_immich': 'immich',
-            'update.wud_container_local_immich_server': 'immich',
-            'update.sistema_docker_immich_ml': 'immich-ml',
-            'update.wud_container_local_immich_machine_learning': 'immich-ml',
-            'update.sistema_docker_influx': 'influx',
-            'update.wud_container_local_influxdb': 'influx',
-            'update.sistema_docker_jellyfin': 'jellyfin',
-            'update.wud_container_local_jellyfin': 'jellyfin',
-            'update.sistema_docker_mealie': 'mealie',
-            'update.wud_container_local_mealie': 'mealie',
-            'update.sistema_docker_npm': 'npm',
-            'update.wud_container_local_nginx_proxy_manager': 'npm',
-            'update.sistema_docker_node_exporter': 'node-exporter',
-            'update.wud_container_local_node_exporter': 'node-exporter',
-            'update.sistema_docker_prometheus': 'prometheus',
-            'update.wud_container_local_prometheus': 'prometheus',
-            'update.sistema_docker_uptime_kuma': 'uptime-kuma',
-            'update.wud_container_local_uptime_kuma': 'uptime-kuma',
-            'update.sistema_docker_vaultwarden': 'vaultwarden',
-            'update.wud_container_local_vaultwarden': 'vaultwarden',
-            'update.sistema_docker_wud': 'wud',
-            'update.wud_container_local_wud': 'wud',
-            'update.sistema_docker_ping_exporter': 'ping-exporter',
-            'update.wud_container_local_ping_exporter': 'ping-exporter',
-            'update.sistema_docker_blackbox_exporter': 'blackbox-exporter',
-            'update.wud_container_local_blackbox_exporter': 'blackbox-exporter',
-            'update.sistema_docker_speedtest_exporter': 'speedtest-exporter',
-            'update.wud_container_local_speedtest_exporter': 'speedtest-exporter',
-            'update.sistema_docker_unifi_mcp': 'unifi-mcp',
-            'update.wud_container_local_unifi_network_mcp': 'unifi-mcp'
-          } %}
-          {{ m.get(eid, '') }}
-        {% endif %}
-      nome: "{{ state_attr(eid, 'friendly_name') or app_ops or eid }}"
+      eid: '{{ entity_id if entity_id is string else (entity_id[0] if entity_id else
+        '''') }}'
+      app_ops: "{% set given = app | default('') | string | trim %} {% if given %}{{
+        given }} {% else %}\n  {% set m = {\n    'update.sistema_docker_adguard':
+        'adguard',\n    'update.wud_container_local_adguardhome': 'adguard',\n    'update.sistema_docker_cadvisor':
+        'cadvisor',\n    'update.wud_container_local_cadvisor': 'cadvisor',\n    'update.sistema_docker_cloudflare':
+        'cloudflare',\n    'update.wud_container_local_cloudflared': 'cloudflare',\n
+        \   'update.sistema_docker_dozzle': 'dozzle',\n    'update.wud_container_local_dozzle':
+        'dozzle',\n    'update.sistema_docker_duplicati': 'duplicati',\n    'update.wud_container_local_duplicati':
+        'duplicati',\n    'update.sistema_docker_filebrowser': 'filebrowser',\n    'update.wud_container_local_filebrowser':
+        'filebrowser',\n    'update.sistema_docker_firefly': 'firefly',\n    'update.wud_container_local_firefly_iii':
+        'firefly',\n    'update.sistema_docker_grafana': 'grafana',\n    'update.wud_container_local_grafana':
+        'grafana',\n    'update.sistema_docker_hermes': 'hermes',\n    'update.wud_container_local_hermes_agent':
+        'hermes',\n    'update.sistema_docker_homepage': 'homepage',\n    'update.wud_container_local_homepage':
+        'homepage',\n    'update.sistema_docker_immich': 'immich',\n    'update.wud_container_local_immich_server':
+        'immich',\n    'update.sistema_docker_immich_ml': 'immich-ml',\n    'update.wud_container_local_immich_machine_learning':
+        'immich-ml',\n    'update.sistema_docker_influx': 'influx',\n    'update.wud_container_local_influxdb':
+        'influx',\n    'update.sistema_docker_jellyfin': 'jellyfin',\n    'update.wud_container_local_jellyfin':
+        'jellyfin',\n    'update.sistema_docker_mealie': 'mealie',\n    'update.wud_container_local_mealie':
+        'mealie',\n    'update.sistema_docker_npm': 'npm',\n    'update.wud_container_local_nginx_proxy_manager':
+        'npm',\n    'update.sistema_docker_node_exporter': 'node-exporter',\n    'update.wud_container_local_node_exporter':
+        'node-exporter',\n    'update.sistema_docker_prometheus': 'prometheus',\n
+        \   'update.wud_container_local_prometheus': 'prometheus',\n    'update.sistema_docker_uptime_kuma':
+        'uptime-kuma',\n    'update.wud_container_local_uptime_kuma': 'uptime-kuma',\n
+        \   'update.sistema_docker_vaultwarden': 'vaultwarden',\n    'update.wud_container_local_vaultwarden':
+        'vaultwarden',\n    'update.sistema_docker_wud': 'wud',\n    'update.wud_container_local_wud':
+        'wud',\n    'update.sistema_docker_ping_exporter': 'ping-exporter',\n    'update.wud_container_local_ping_exporter':
+        'ping-exporter',\n    'update.sistema_docker_blackbox_exporter': 'blackbox-exporter',\n
+        \   'update.wud_container_local_blackbox_exporter': 'blackbox-exporter',\n
+        \   'update.sistema_docker_speedtest_exporter': 'speedtest-exporter',\n    'update.wud_container_local_speedtest_exporter':
+        'speedtest-exporter',\n    'update.sistema_docker_unifi_mcp': 'unifi-mcp',\n
+        \   'update.wud_container_local_unifi_network_mcp': 'unifi-mcp'\n  } %}\n
+        \ {{ m.get(eid, '') }}\n{% endif %}"
+      nome: '{{ state_attr(eid, ''friendly_name'') or app_ops or eid }}'
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ app_ops | trim == '' }}"
+        value_template: '{{ app_ops | trim == '''' }}'
       sequence:
       - action: persistent_notification.create
         data:
           title: Docker — atualização
-          message: "{{ nome }} não está no ops.sh (Portainer e Glances ficam de fora)."
+          message: '{{ nome }} não está no ops.sh (Portainer e Glances ficam de fora).'
           notification_id: docker_ops_update
       - stop: app não cadastrada
     - conditions:
       - condition: state
         entity_id: input_boolean.sistema_docker_atualizacao_em_curso
-        state: "on"
+        state: 'on'
       sequence:
       - action: persistent_notification.create
         data:
@@ -2550,16 +2485,17 @@ sistema_docker_atualizar:
   - action: persistent_notification.create
     data:
       title: Docker — atualização
-      message: "A atualizar {{ nome }}…"
+      message: A atualizar {{ nome }}…
       notification_id: docker_ops_update
   - action: shell_command.docker_ops_update
     continue_on_error: true
     response_variable: docker_ops
     data:
-      app: "{{ app_ops }}"
+      app: '{{ app_ops }}'
   - if:
     - condition: template
-      value_template: "{{ docker_ops is not defined or docker_ops['returncode'] | default(1) | int != 0 }}"
+      value_template: '{{ docker_ops is not defined or docker_ops[''returncode'']
+        | default(1) | int != 0 }}'
     then:
     - action: input_boolean.turn_off
       target:
@@ -2567,38 +2503,34 @@ sistema_docker_atualizar:
     - action: persistent_notification.create
       data:
         title: Docker — falhou a iniciar
-        message: "O host Docker não aceitou a atualização de {{ nome }}."
+        message: O host Docker não aceitou a atualização de {{ nome }}.
         notification_id: docker_ops_update
     - action: script.enviar_notificacao_telegram
       continue_on_error: true
       data:
         destinatarios: antonio
-        titulo: "🐳 Docker: problema"
-        mensagem: "Não consegui iniciar a atualização de {{ nome }}."
+        titulo: "\U0001F433 Docker: problema"
+        mensagem: Não consegui iniciar a atualização de {{ nome }}.
         parse_mode: html
     - stop: docker ops recusou
   - action: script.enviar_notificacao_telegram
     continue_on_error: true
     data:
       destinatarios: antonio
-      titulo: "🐳 Docker"
-      mensagem: >-
-        {% if app_ops == 'all' %}
-        A atualizar os containers com update pendente. Aviso quando terminar.
-        {% else %}
-        A atualizar o {{ nome }}. Aviso quando terminar.
-        {% endif %}
+      titulo: "\U0001F433 Docker"
+      mensagem: '{% if app_ops == ''all'' %} A atualizar os containers com update
+        pendente. Aviso quando terminar. {% else %} A atualizar o {{ nome }}. Aviso
+        quando terminar. {% endif %}'
       parse_mode: html
 sistema_docker_atualizar_tudo:
-  alias: Docker — atualizar todos
-  description: Corre ops.sh update all no host Docker. Pode demorar bastante.
+  alias: Docker — atualizar pendentes
+  description: Corre ops.sh update all = só containers com update pendente no WUD/HA.
   icon: mdi:update
   mode: single
   sequence:
   - action: script.sistema_docker_atualizar
     data:
       app: all
-
 sistema_homelab_desligar_seguro:
   alias: Homelab — desligar com segurança
   description: Desliga HA (VM 101), Docker (VM 100) e o host Proxmox, por ordem.
@@ -2614,7 +2546,7 @@ sistema_homelab_desligar_seguro:
     continue_on_error: true
     data:
       destinatarios: antonio
-      titulo: "⏻ Homelab"
+      titulo: ⏻ Homelab
       mensagem: A desligar com segurança — Home Assistant, Docker e Proxmox.
       parse_mode: html
   - action: shell_command.docker_ops_shutdown
@@ -2622,7 +2554,8 @@ sistema_homelab_desligar_seguro:
     response_variable: shutdown_ops
   - if:
     - condition: template
-      value_template: "{{ shutdown_ops is not defined or shutdown_ops['returncode'] | default(1) | int != 0 }}"
+      value_template: '{{ shutdown_ops is not defined or shutdown_ops[''returncode'']
+        | default(1) | int != 0 }}'
     then:
     - action: persistent_notification.create
       data:
@@ -2633,7 +2566,7 @@ sistema_homelab_desligar_seguro:
       continue_on_error: true
       data:
         destinatarios: antonio
-        titulo: "⏻ Homelab: problema"
+        titulo: '⏻ Homelab: problema'
         mensagem: Não consegui iniciar o desligamento seguro.
         parse_mode: html
     - stop: shutdown recusado
@@ -2642,11 +2575,10 @@ sistema_homelab_desligar_seguro:
       title: Homelab — desligamento aceite
       message: Sequência aceite. Este Home Assistant vai desligar em breve.
       notification_id: homelab_safe_shutdown
-
 sistema_proxmox_reserva_desligar_seguro:
   alias: Proxmox Reserva — desligar com segurança
-  description: Desliga o host Proxmox reserva (.30) com shutdown graceful e corta a
-    tomada Tasmota. Não corre backup.
+  description: Desliga o host Proxmox reserva (.30) com shutdown graceful e corta
+    a tomada Tasmota. Não corre backup.
   icon: mdi:power
   mode: single
   sequence:
@@ -2670,7 +2602,8 @@ sistema_proxmox_reserva_desligar_seguro:
     continue_on_error: true
   - if:
     - condition: template
-      value_template: "{{ reserva_shutdown is defined and reserva_shutdown['returncode'] | default(1) | int != 0 }}"
+      value_template: '{{ reserva_shutdown is defined and reserva_shutdown[''returncode'']
+        | default(1) | int != 0 }}'
     then:
     - action: persistent_notification.create
       data:
@@ -2684,10 +2617,10 @@ sistema_proxmox_reserva_desligar_seguro:
         title: Proxmox Reserva — desligada
         message: Shutdown pedido e tomada OFF.
         notification_id: proxmox_reserva_shutdown
-
 reiniciar_zigbee_core_z2m:
   alias: Reiniciar Zigbee → Core → Z2M
-  description: Reinicia o rádio Zigbee do SLZB, depois o core do SLZB, depois o bridge Zigbee2MQTT, em sequência.
+  description: Reinicia o rádio Zigbee do SLZB, depois o core do SLZB, depois o bridge
+    Zigbee2MQTT, em sequência.
   icon: mdi:restart
   mode: single
   sequence:
@@ -2707,172 +2640,27 @@ reiniciar_zigbee_core_z2m:
     target:
       entity_id: button.zigbee2mqtt_bridge_restart
     continue_on_error: true
-
-
-
 calib_termo_guardar:
   alias: Calib — Guardar amostra
-  description: Grava no CSV (/share/calibracao) as leituras dos termohigrómetros com checkbox Em uso.
+  description: Grava no CSV (/share/calibracao) as leituras dos termohigrómetros com
+    checkbox Em uso.
   icon: mdi:content-save
   mode: single
   sequence:
-  - variables:
-      calib_payload: >
-        {% set ns = namespace(devices=[]) %}
-        {% if is_state('input_boolean.calib_banheiro_social_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'banheiro_social',
-            'name': 'Banheiro social',
-            'entity_temp': 'sensor.banheiro_social_termo_temperatura',
-            'temp': states('sensor.banheiro_social_termo_temperatura'),
-            'entity_rh': 'sensor.banheiro_social_termo_umidade',
-            'rh': states('sensor.banheiro_social_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_banheiro_suite_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'banheiro_suite',
-            'name': 'Banheiro suíte',
-            'entity_temp': 'sensor.banheiro_suite_termo_temperatura',
-            'temp': states('sensor.banheiro_suite_termo_temperatura'),
-            'entity_rh': 'sensor.banheiro_suite_termo_umidade',
-            'rh': states('sensor.banheiro_suite_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_brinquedoteca_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'brinquedoteca',
-            'name': 'Brinquedoteca',
-            'entity_temp': 'sensor.brinquedoteca_termo_temperatura',
-            'temp': states('sensor.brinquedoteca_termo_temperatura'),
-            'entity_rh': 'sensor.brinquedoteca_termo_umidade',
-            'rh': states('sensor.brinquedoteca_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_cozinha_externa_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'cozinha_externa',
-            'name': 'Cozinha externa',
-            'entity_temp': 'sensor.cozinha_externa_termo_temperatura',
-            'temp': states('sensor.cozinha_externa_termo_temperatura'),
-            'entity_rh': 'sensor.cozinha_externa_termo_umidade',
-            'rh': states('sensor.cozinha_externa_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_geladeira_z2m_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'geladeira_z2m',
-            'name': 'Geladeira Z2M (interno)',
-            'entity_temp': 'sensor.cozinha_termo_higrometro_geladeira_z2m_temperature',
-            'temp': states('sensor.cozinha_termo_higrometro_geladeira_z2m_temperature'),
-            'entity_rh': 'sensor.cozinha_termo_higrometro_geladeira_z2m_humidity',
-            'rh': states('sensor.cozinha_termo_higrometro_geladeira_z2m_humidity')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_geladeira_z2m_external_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'geladeira_z2m_external',
-            'name': 'Geladeira Z2M (sonda externa)',
-            'entity_temp': 'sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature',
-            'temp': states('sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature'),
-            'entity_rh': '',
-            'rh': none
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_escritorio_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'escritorio',
-            'name': 'Escritório',
-            'entity_temp': 'sensor.escritorio_termo_temperatura',
-            'temp': states('sensor.escritorio_termo_temperatura'),
-            'entity_rh': 'sensor.escritorio_termo_umidade',
-            'rh': states('sensor.escritorio_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_oficina_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'oficina',
-            'name': 'Oficina',
-            'entity_temp': 'sensor.oficina_termo_temperatura',
-            'temp': states('sensor.oficina_termo_temperatura'),
-            'entity_rh': 'sensor.oficina_termo_umidade',
-            'rh': states('sensor.oficina_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_quarto_cecilia_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'quarto_cecilia',
-            'name': 'Quarto Cecília',
-            'entity_temp': 'sensor.quarto_cecilia_termo_temperatura',
-            'temp': states('sensor.quarto_cecilia_termo_temperatura'),
-            'entity_rh': 'sensor.quarto_cecilia_termo_umidade',
-            'rh': states('sensor.quarto_cecilia_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_sala_de_jantar_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'sala_de_jantar',
-            'name': 'Sala de jantar',
-            'entity_temp': 'sensor.sala_de_jantar_termo_temperatura',
-            'temp': states('sensor.sala_de_jantar_termo_temperatura'),
-            'entity_rh': 'sensor.sala_de_jantar_termo_umidade',
-            'rh': states('sensor.sala_de_jantar_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_sala_de_tv_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'sala_de_tv',
-            'name': 'Sala de TV',
-            'entity_temp': 'sensor.sala_de_tv_termo_temperatura',
-            'temp': states('sensor.sala_de_tv_termo_temperatura'),
-            'entity_rh': 'sensor.sala_de_tv_termo_umidade',
-            'rh': states('sensor.sala_de_tv_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_suite_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'suite',
-            'name': 'Suíte',
-            'entity_temp': 'sensor.suite_termo_temperatura',
-            'temp': states('sensor.suite_termo_temperatura'),
-            'entity_rh': 'sensor.suite_termo_umidade',
-            'rh': states('sensor.suite_termo_umidade')
-          }] %}
-        {% endif %}
-        {% if is_state('input_boolean.calib_suite_relogio_tuya_em_uso', 'on') %}
-          {% set ns.devices = ns.devices + [{
-            'id': 'suite_relogio_tuya',
-            'name': 'Relógio suíte (Tuya)',
-            'entity_temp': 'sensor.suite_relogio_tuya_temperatura',
-            'temp': states('sensor.suite_relogio_tuya_temperatura'),
-            'entity_rh': 'sensor.suite_relogio_tuya_umidade',
-            'rh': states('sensor.suite_relogio_tuya_umidade')
-          }] %}
-        {% endif %}
-        {{ {"ref_temp": states("input_number.calib_referencia_temperatura"), "ref_rh": states("input_number.calib_referencia_umidade"), "devices": ns.devices} | tojson }}
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: "{{ (calib_payload | fromjson).devices | count > 0 }}"
-      sequence:
-      - action: shell_command.calib_termo_guardar
-        data:
-          payload: "{{ calib_payload }}"
-      - action: persistent_notification.create
-        data:
-          notification_id: calib_termo_guardar
-          title: Calibração termohigrómetros
-          message: "Amostra pedida → /share/calibracao/termo_higro_amostras.csv"
-    default:
-    - action: persistent_notification.create
-      data:
-        notification_id: calib_termo_guardar
-        title: Calibração termohigrómetros
-        message: "Nada guardado — marca pelo menos um Em uso e preenche a referência °C."
+  - action: shell_command.calib_termo_guardar
+  - delay:
+      seconds: 1
+  - action: persistent_notification.create
+    data:
+      notification_id: calib_termo_guardar
+      title: Calibração termohigrómetros
+      message: Amostra pedida. Confirma em /share/calibracao/termo_higro_amostras.csv
+        (Samba share).
 limpar_historico_dispositivos_offline:
   alias: Offline — Limpar histórico Influx
-  description: Apaga no Influx (bucket home_energy) só a medição device_availability — limpa o
-    ruído dos gráficos offline no Grafana. Não mexe noutras métricas nem no sensor ao vivo do HA.
+  description: Apaga no Influx (bucket home_energy) só a medição device_availability
+    — limpa o ruído dos gráficos offline no Grafana. Não mexe noutras métricas nem
+    no sensor ao vivo do HA.
   icon: mdi:database-remove-outline
   mode: single
   sequence:
@@ -2881,5 +2669,34 @@ limpar_historico_dispositivos_offline:
     data:
       notification_id: limpar_historico_dispositivos_offline
       title: Histórico offline limpo
-      message: Medição device_availability apagada no Influx. Os gráficos Grafana voltam a
-        encher a partir do próximo minuto (export automático).
+      message: Medição device_availability apagada no Influx. Os gráficos Grafana
+        voltam a encher a partir do próximo minuto (export automático).
+
+suite_relogio_mostrar_brilho_noite:
+  alias: "Suíte — Relógio brilho temporário (noite)"
+  description: Acende o brilho do relógio em 1 por 30 s (só entre 22:00 e 06:00), depois volta a 0.
+  mode: restart
+  sequence:
+  - condition: or
+    conditions:
+    - condition: time
+      after: '22:00:00'
+    - condition: time
+      before: '06:00:00'
+  - action: number.set_value
+    target:
+      entity_id: number.suite_relogio_brilho_tela_localtuya
+    data:
+      value: 1
+  - delay: '00:00:30'
+  - condition: or
+    conditions:
+    - condition: time
+      after: '22:00:00'
+    - condition: time
+      before: '06:00:00'
+  - action: number.set_value
+    target:
+      entity_id: number.suite_relogio_brilho_tela_localtuya
+    data:
+      value: 0

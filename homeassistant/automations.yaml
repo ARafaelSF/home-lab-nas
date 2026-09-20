@@ -122,6 +122,10 @@
           - 255
           - 255
           - 0
+      button_one_double_press:
+      - action: script.suite_relogio_mostrar_brilho_noite
+        metadata: {}
+        data: {}
       button_two_short_press:
       - action: light.toggle
         metadata: {}
@@ -327,6 +331,10 @@
           - 255
           - 255
           - 0
+      button_two_double_press:
+      - action: script.suite_relogio_mostrar_brilho_noite
+        metadata: {}
+        data: {}
       button_three_short_press:
       - action: light.toggle
         metadata: {}
@@ -6370,12 +6378,16 @@
 
 - id: proxmox_reserva_mqtt_sync
   alias: "💾 Homelab: Sync MQTT Proxmox Reserva"
-  description: Quando o script publica estado no MQTT, atualiza helpers, desliga a tomada e avisa no Telegram se erro.
+  description: Quando o script publica estado no MQTT (mensagem nova, não retained),
+    atualiza helpers, desliga a tomada e avisa no Telegram só se erro/aviso.
   mode: queued
   max: 5
   triggers:
   - trigger: mqtt
     topic: homelab/proxmox_reserva/estado
+  conditions:
+  - condition: template
+    value_template: "{{ not (trigger.retain | default(false)) }}"
   actions:
   - variables:
       status_opt: "{{ trigger.payload | default('unknown') }}"
@@ -6385,34 +6397,47 @@
       entity_id: input_text.sistema_proxmox_reserva_estado
     data:
       value: "{{ status_opt if status_opt in ['success','warning','error','unknown','none'] else 'unknown' }}"
-  - condition: template
-    value_template: "{{ backup_time not in ['unknown','unavailable',''] }}"
-  - action: input_datetime.set_datetime
-    target:
-      entity_id: input_datetime.sistema_proxmox_reserva_ultimo
-    data:
-      datetime: "{{ backup_time }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ backup_time not in ['unknown','unavailable',''] }}"
+      sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.sistema_proxmox_reserva_ultimo
+        data:
+          datetime: "{{ backup_time }}"
   - action: input_boolean.turn_off
     target:
       entity_id: input_boolean.sistema_proxmox_reserva_em_curso
   - action: switch.turn_off
     target:
       entity_id: switch.escritorio_servidor_minipc_tasmota
-  - action: persistent_notification.create
-    data:
-      title: "Proxmox Reserva — {{ status_opt }}"
-      message: "Atualizado via MQTT em {{ backup_time }}"
-      notification_id: proxmox_reserva_backup
-  - condition: template
-    value_template: "{{ status_opt in ['error','warning'] }}"
-  - action: script.enviar_notificacao_telegram
-    data:
-      destinatarios: antonio
-      titulo: "💾 Homelab — Proxmox Reserva"
-      mensagem: "Estado: {{ status_opt }} (MQTT)
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ status_opt in ['error','warning'] }}"
+      sequence:
+      - action: persistent_notification.create
+        data:
+          title: "Proxmox Reserva — {{ status_opt }}"
+          message: "Atualizado via MQTT em {{ backup_time }}"
+          notification_id: proxmox_reserva_backup
+      - action: script.enviar_notificacao_telegram
+        data:
+          destinatarios: antonio
+          titulo: "💾 Homelab — Proxmox Reserva"
+          mensagem: "Estado: {{ status_opt }} (MQTT)
 
-        Verifique o painel Backups no Servidor."
-      parse_mode: MarkdownV2
+            Verifique o painel Backups no Servidor."
+          parse_mode: MarkdownV2
+    - conditions:
+      - condition: template
+        value_template: "{{ status_opt == 'success' }}"
+      sequence:
+      - action: persistent_notification.dismiss
+        data:
+          notification_id: proxmox_reserva_backup
 
 - id: pirata_cecilia_restaurar_apos_queda
   alias: "🏴‍☠️ Pirata Cecília — Restaurar após queda/restart"
@@ -6455,3 +6480,54 @@
       notification_id: pirata_cecilia_restaurado
       title: Pirata — sessão restaurada
       message: "Timer retomado com {{ rem }} restantes."
+
+- id: '1789904745166'
+  alias: Suíte — Relógio brilho noite/dia
+  description: Às 22:00 põe brilho 0; às 06:00 restaura brilho 3. No arranque do HA,
+    se for noite, força brilho 0.
+  triggers:
+  - id: noite
+    trigger: time
+    at: '22:00:00'
+  - id: dia
+    trigger: time
+    at: '06:00:00'
+  - id: arranque
+    trigger: homeassistant
+    event: start
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: noite
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.suite_relogio_brilho_tela_localtuya
+        data:
+          value: 0
+    - conditions:
+      - condition: trigger
+        id: dia
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.suite_relogio_brilho_tela_localtuya
+        data:
+          value: 3
+    - conditions:
+      - condition: trigger
+        id: arranque
+      - condition: or
+        conditions:
+        - condition: time
+          after: '22:00:00'
+        - condition: time
+          before: '06:00:00'
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.suite_relogio_brilho_tela_localtuya
+        data:
+          value: 0
+  mode: single

@@ -3,11 +3,23 @@
 Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 **Servidor:** VM Docker `192.168.3.21`  
-**Atualizado:** 2026-09-15 (nomenclatura 9/63; gráficos BTHome nos cards internos; parar por hoje)
+**Atualizado:** 2026-09-20 (Hangar Wi‑Fi; purge presença escritório; limpeza recorder na lista)
 
 ---
 
-## 0. HA — revisão de nomenclatura e vínculos por integração
+## 0. Recorder HA — limpeza do banco (MariaDB)
+
+**Prioridade:** alta  
+**Contexto (2026-09-20):** O sensor de presença do escritório (`escritorio_presenca_z2m_*` / legado `ld2410_escritorio_*`) gerou histórico em massa. Foi feita limpeza pontual (MariaDB + SQLite legado) e exclusão do recorder de `illuminance` / `dis_current` desse dispositivo. O banco continua ~1,6 GB com outros sensores ruidosos.
+
+- [ ] Repetir o mesmo tipo de limpeza para **outros sensores** que incham o recorder (começar pelos top: `lavanderia_consumo_lavadoras_4x_*_timestamp_*`, corrente/potência/voltagem da geladeira Midea, `automation.pirata_cecilia_atualizar_tempo_restante`, system_monitor memória/CPU, etc.)
+- [ ] Excluir do recorder (ou reduzir frequência) os que só precisam de valor ao vivo
+- [ ] `recorder.purge` + **repack** MariaDB depois das exclusões
+- [ ] Confirmar que o SQLite legado `home-assistant_v2.db` no share config não é mais usado (já limpo o LD2410 escritório; pode apagar/arquivar o ficheiro se confirmado)
+
+---
+
+## 1. HA — revisão de nomenclatura e vínculos por integração
 
 **Prioridade:** alta (propor → aprovar → aplicar; idioma **PT-BR**)  
 **Progresso:** **9 feitas / 54 faltam** (alta 9/18).  
@@ -27,7 +39,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ---
 
-## 1. Hermes Agent — acesso ao HA (adiado)
+## 2. Hermes Agent — acesso ao HA (adiado)
 
 **Prioridade:** — (adiado por decisão do utilizador, 2026-09-03)
 
@@ -37,7 +49,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ---
 
-## 2. Inkbird IHT-2PB — ligação GATT instável
+## 3. Inkbird IHT-2PB — ligação GATT instável
 
 **Prioridade:** média  
 **Contexto (2026-09-06):** Leituras passivas até vão; comandos/alvos falham (`No backend with an available connection slot` / `non-connectable history`). Proxies ESP esgotam slots GATT. Realtek USB na VM HA ajuda BTHome perto do servidor; o Inkbird (cozinha externa) continua a depender dos ESP.
@@ -47,7 +59,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ---
 
-## 3. Pirata Cecília + Last Alexa (Alexa Devices)
+## 4. Pirata Cecília + Last Alexa (Alexa Devices)
 
 **Prioridade:** alta (validar em uso real)  
 **Contexto (2026-09-07):** Migrámos o Last Called para `sensor.alexa_devices_last_called` (`event.*_voice_event`), com fallback AMP. Snapshot git: `homeassistant/snapshots/pre-alexa-last-called_20260907_104420/`. Commit `72115d3`.
@@ -87,6 +99,12 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 | AdGuard failover DHCP (`.21`+`.22`) + doc em `docs/ADGUARD-DNS-REMOTO.md` | 2026-09-14 |
 | UniFi DNAT porta 53 → AdGuard `.21` (VLANs clientes; exclui `.21`/`.22` desde 2026-09-19) | 2026-09-14 / 2026-09-19 |
 | UniFi minimum rate 2,4 GHz: 284 amostras/48 h analisadas; manter **1 Mbps** devido a IoT fraco | 2026-09-15 |
+| AdGuard VIP keepalived `.23` + DNAT failover (exclui `.20`/`.30`) | 2026-09-19 |
+| Exaustor lavabo: ignore unavailable + watchdog | 2026-09-19 |
+| Relógio suíte: brilho noite 0 / peek / dia 3 | 2026-09-20 |
+| Tiles backup: datas `dd/mm/YYYY HH:MM` (`backup_ultimos_fmt.yaml`) | 2026-09-20 |
+| Hangar Wi‑Fi: senha nova no Pi + UniFi; clientes a migrar | 2026-09-20 |
+| Purge recorder presença escritório + exclude illuminance/dis_current | 2026-09-20 |
 
 ---
 
