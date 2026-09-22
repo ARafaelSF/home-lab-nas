@@ -1,0 +1,13 @@
+# Contador de ventiladores ligados (domínio fan), excluindo fake.
+# Badge + view em lovelace.dashboard_casa → path ventiladores.
+
+sensor:
+  - name: "Sistema Contador Ventilador Ligado"
+    unique_id: sistema_contador_ventilador_ligado
+    icon: mdi:fan
+    state: >
+      {{ states.fan
+           | rejectattr('entity_id', 'search', 'fake')
+           | selectattr('state', 'eq', 'on')
+           | list
+           | count }}

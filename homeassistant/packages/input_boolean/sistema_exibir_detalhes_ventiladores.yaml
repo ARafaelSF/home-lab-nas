@@ -1,0 +1,5 @@
+# UI: expandir lista completa na subview de ventiladores
+sistema_exibir_detalhes_ventiladores:
+  name: sistema_exibir_detalhes_ventiladores
+  icon: mdi:eye
+  initial: false
