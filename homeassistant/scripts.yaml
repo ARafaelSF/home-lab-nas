@@ -720,34 +720,61 @@ alarme_piscar_cabeceira_vermelho:
 contar_garrafa_de_agua_com_gas_e_anunciar:
   alias: "\U0001F37E Contar Garrafa de Gás e Anunciar"
   sequence:
-  - target:
-      entity_id: counter.sistema_garrafas_de_agua_com_gas
-    action: counter.increment
-  - delay:
-      seconds: 5
-  - variables:
-      total_garrafas: '{{ states(''counter.sistema_garrafas_de_agua_com_gas'') | int
-        }}'
-  - data:
-      dispositivos: cozinha
-      mensagem: 'Mais uma garrafa de água com gás. Esse cilindro já fez {{ total_garrafas
-        }} garrafas.
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.cozinha_agua_gas_cilindro_extra
+        state: 'on'
+      sequence:
+      - variables:
+          total_garrafas: '{{ states(''counter.sistema_garrafas_de_agua_com_gas'') | int(0) }}'
+      - data:
+          dispositivos: cozinha
+          mensagem: 'Cilindro extra. Contador não incrementado. Total continua em {{ total_garrafas }} garrafas.
 
-        '
-      tipo: announce
-    action: script.enviar_notificacao_alexa
-  - data:
-      destinatarios:
-      - antonio
-      parse_mode: MarkdownV2
-      titulo: "\U0001F4A7 Gás de Água"
-      mensagem: 'Mais uma garrafa de água com gás produzida!
+            '
+          tipo: announce
+        action: script.enviar_notificacao_alexa
+      - data:
+          destinatarios:
+          - antonio
+          parse_mode: MarkdownV2
+          titulo: "\U0001F4A7 Gás de Água"
+          mensagem: 'Cilindro extra — contador *não* incrementado.
 
 
-        Total atual: *{{ total_garrafas }}* garrafas.
+            Total atual: *{{ total_garrafas }}* garrafas.
 
-        '
-    action: script.enviar_notificacao_telegram
+            '
+        action: script.enviar_notificacao_telegram
+    default:
+    - target:
+        entity_id: counter.sistema_garrafas_de_agua_com_gas
+      action: counter.increment
+    - delay:
+        seconds: 5
+    - variables:
+        total_garrafas: '{{ states(''counter.sistema_garrafas_de_agua_com_gas'') | int(0) }}'
+    - data:
+        dispositivos: cozinha
+        mensagem: 'Mais uma garrafa de água com gás. Esse cilindro já fez {{ total_garrafas
+          }} garrafas.
+
+          '
+        tipo: announce
+      action: script.enviar_notificacao_alexa
+    - data:
+        destinatarios:
+        - antonio
+        parse_mode: MarkdownV2
+        titulo: "\U0001F4A7 Gás de Água"
+        mensagem: 'Mais uma garrafa de água com gás produzida!
+
+
+          Total atual: *{{ total_garrafas }}* garrafas.
+
+          '
+      action: script.enviar_notificacao_telegram
 armar_alarme:
   alias: "\U0001F6A8 Armar Alarme"
   sequence:

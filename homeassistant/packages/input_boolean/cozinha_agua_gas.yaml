@@ -1,0 +1,4 @@
+# Quando ligado: anuncia a garrafa mas não incrementa o contador (cilindro extra).
+cozinha_agua_gas_cilindro_extra:
+  name: "Cozinha — Cilindro extra (não somar)"
+  icon: mdi:gas-cylinder
