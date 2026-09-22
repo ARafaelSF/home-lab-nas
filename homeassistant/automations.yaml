@@ -4050,17 +4050,16 @@
   alias: "\U0001F501 Z2M — Contar falhas do coordenador"
   description: Conta so erros graves do adaptador no log MQTT (SRSP timeout/execute,
     adapter disconnected, serial). Nao conta NWK_NO_ROUTE nem Failed to ping.
-
   triggers:
   - trigger: mqtt
     topic: zigbee2mqtt/bridge/logging
   conditions:
   - condition: template
-    value_template: "{% set p = trigger.payload | default('') | lower %}{{
-      ('failed to execute srsp' in p) or ('srsp timeout' in p) or ('adapter disconnected' in p)
-      or ('cannot start' in p) or ('error while opening serial' in p) or (('serialport' in p)
-      and ('error' in p)) or (('zh:ember' in p) and ('error' in p)) }}"
-
+    value_template: '{% set p = trigger.payload | default('''') | lower %}{{ (''failed
+      to execute srsp'' in p) or (''srsp timeout'' in p) or (''adapter disconnected''
+      in p) or (''cannot start'' in p) or (''error while opening serial'' in p) or
+      ((''serialport'' in p) and (''error'' in p)) or ((''zh:ember'' in p) and (''error''
+      in p)) }}'
   actions:
   - action: counter.increment
     target:
@@ -4085,10 +4084,10 @@
   mode: single
 - id: '1786476437458'
   alias: Z2M — Recuperar coordenador
-  description: 'Recupera Zigbee so quando o bridge MQTT fica offline 2+ min (ou retry
+  description: Recupera Zigbee so quando o bridge MQTT fica offline 2+ min (ou retry
     no fim do cooldown se ainda offline). Ciclo stop Z2M + SLZB radio/core + start
-    Z2M. Nao usa contador de log (evita reinicio com mesh saudavel). Nao reinicia o
-    HA; se falhar, notifica Telegram.'
+    Z2M. Nao usa contador de log (evita reinicio com mesh saudavel). Nao reinicia
+    o HA; se falhar, notifica Telegram.
   triggers:
   - trigger: state
     entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
@@ -4118,16 +4117,16 @@
         state: 'off'
   actions:
   - variables:
-      motivo: "{% if trigger.id == 'cooldown_fim' %}Cooldown terminou e o bridge continua
-        offline{% else %}Bridge MQTT offline ha 2+ minutos{% endif %}"
+      motivo: '{% if trigger.id == ''cooldown_fim'' %}Cooldown terminou e o bridge
+        continua offline{% else %}Bridge MQTT offline ha 2+ minutos{% endif %}'
       falhas: '{{ states(''counter.z2m_srsp_falhas'') }}'
   - action: script.enviar_notificacao_telegram
     data:
       destinatarios: antonio
       titulo: Zigbee2MQTT recuperando
-      mensagem: 'Atencao: {{ motivo }}. Contador log (info): {{ falhas }}. Ciclo: parar Z2M,
-        reiniciar radio+core SLZB-06, subir Z2M. Nao reinicio o Home Assistant; se
-        falhar aviso no Telegram.'
+      mensagem: 'Atencao: {{ motivo }}. Contador log (info): {{ falhas }}. Ciclo:
+        parar Z2M, reiniciar radio+core SLZB-06, subir Z2M. Nao reinicio o Home Assistant;
+        se falhar aviso no Telegram.'
       parse_mode: MarkdownV2
   - action: persistent_notification.create
     data:
@@ -4988,12 +4987,12 @@
               entity_id: sensor.cozinha_geladeira_midea_temperatura_refrigerador
               below: 10
             - trigger: template
-              value_template: "{% set g = states('sensor.cozinha_geladeira_midea_temperatura_refrigerador')
-                %}{% set s = states('sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature')
-                %}{% set ag = temp_atual | float(0) %}{% set asom = temp_somatropina | float(0)
-                %}{{ (g not in ['unknown', 'unavailable', 'none', ''] and g | float(0)
-                >= ag + 1) or (s not in ['unknown', 'unavailable', 'none', ''] and s
-                | float(0) >= asom + 1) }}"
+              value_template: '{% set g = states(''sensor.cozinha_geladeira_midea_temperatura_refrigerador'')
+                %}{% set s = states(''sensor.cozinha_termo_higrometro_geladeira_z2m_external_temperature'')
+                %}{% set ag = temp_atual | float(0) %}{% set asom = temp_somatropina
+                | float(0) %}{{ (g not in [''unknown'', ''unavailable'', ''none'',
+                ''''] and g | float(0) >= ag + 1) or (s not in [''unknown'', ''unavailable'',
+                ''none'', ''''] and s | float(0) >= asom + 1) }}'
             timeout:
               minutes: 15
             continue_on_timeout: true
@@ -5906,8 +5905,8 @@
       is_on: '{{ trigger.to_state.state == ''on'' }}'
 - id: '1789075957266'
   alias: Lavabo - Exaustor com Luz
-  description: Liga o exaustor só com transição real off→on da luz; após on→off
-    mantém 5 min. Ignora unavailable (Zigbee fraco). Ignora durante manutenção.
+  description: Liga o exaustor só com transição real off→on da luz; após on→off mantém
+    5 min. Ignora unavailable (Zigbee fraco). Ignora durante manutenção.
   triggers:
   - id: luz_on
     trigger: state
@@ -5967,10 +5966,9 @@
   max: 5
 - id: '1789075959278'
   alias: Lavabo - Exaustor Forçar Desligar
-  description: >-
-    Watchdog — se o exaustor ficar ligado 90s sem a luz estar on (fora de
-    manutenção), desliga. Não depende da luz ficar estável (unavailable
-    reiniciava o antigo for 5min30s).
+  description: Watchdog — se o exaustor ficar ligado 90s sem a luz estar on (fora
+    de manutenção), desliga. Não depende da luz ficar estável (unavailable reiniciava
+    o antigo for 5min30s).
   triggers:
   - trigger: state
     entity_id: fan.lavabo_interruptor_z2m_l2_exaustor
@@ -6202,9 +6200,8 @@
     target:
       entity_id: switch.escritorio_monitores_tasmota
   mode: single
-
 - id: proxmox_reserva_registar
-  alias: "💾 Homelab: Registar backup (Proxmox Reserva)"
+  alias: "\U0001F4BE Homelab: Registar backup (Proxmox Reserva)"
   description: Atualiza helpers da cópia semanal Proxmox reserva via webhook.
   mode: queued
   max: 5
@@ -6219,7 +6216,8 @@
   - variables:
       status_raw: '{{ trigger.json.status | default(''unknown'') }}'
       backup_time: '{{ trigger.json.time | default(now().isoformat()) }}'
-      status_opt: '{{ status_raw if status_raw in [''success'', ''warning'', ''error'', ''unknown'', ''none''] else ''unknown'' }}'
+      status_opt: '{{ status_raw if status_raw in [''success'', ''warning'', ''error'',
+        ''unknown'', ''none''] else ''unknown'' }}'
   - action: input_datetime.set_datetime
     target:
       entity_id: input_datetime.sistema_proxmox_reserva_ultimo
@@ -6238,7 +6236,7 @@
       entity_id: switch.escritorio_servidor_minipc_tasmota
   - action: persistent_notification.create
     data:
-      title: 'Proxmox Reserva — {{ status_opt }}'
+      title: Proxmox Reserva — {{ status_opt }}
       message: '{{ trigger.json.message | default('''') }} ({{ backup_time }})'
       notification_id: proxmox_reserva_backup
   - choose:
@@ -6249,7 +6247,7 @@
       - action: script.enviar_notificacao_telegram
         data:
           destinatarios: antonio
-          titulo: "💾 Homelab — Proxmox Reserva"
+          titulo: "\U0001F4BE Homelab — Proxmox Reserva"
           mensagem: 'Estado: {{ status_opt }}
 
 
@@ -6259,7 +6257,7 @@
             Verifique o painel Backups no Servidor.'
           parse_mode: MarkdownV2
 - id: proxmox_reserva_iniciar_apos_onedrive
-  alias: "💾 Homelab: Iniciar Proxmox Reserva (após OneDrive)"
+  alias: "\U0001F4BE Homelab: Iniciar Proxmox Reserva (após OneDrive)"
   description: Após backup OneDrive OK (terça), liga a tomada da reserva, espera o
     Proxmox e dispara a rotina semanal no listener :8787.
   mode: single
@@ -6281,10 +6279,10 @@
       - condition: trigger
         id: onedrive_ok
       - condition: template
-        value_template: "{{ (trigger.json.job_key | default('')) == 'onedrive' or 'onedrive'
-          in (trigger.json.job_name | default('') | lower) }}"
+        value_template: '{{ (trigger.json.job_key | default('''')) == ''onedrive''
+          or ''onedrive'' in (trigger.json.job_name | default('''') | lower) }}'
       - condition: template
-        value_template: "{{ trigger.json.status | default('') == 'success' }}"
+        value_template: '{{ trigger.json.status | default('''') == ''success'' }}'
       - condition: time
         weekday:
         - tue
@@ -6296,11 +6294,11 @@
         weekday:
         - tue
       - condition: template
-        value_template: "{% set raw = states('input_datetime.sistema_proxmox_reserva_ultimo')
-          %}{% set st = states('input_text.sistema_proxmox_reserva_estado') %}{%
-          if st == 'error' %}true{% elif raw in ['unknown','unavailable',''] %}true{%
-          else %}{{ (now().timestamp() - as_timestamp(raw)) > (6 * 86400) }}{% endif
-          %}"
+        value_template: '{% set raw = states(''input_datetime.sistema_proxmox_reserva_ultimo'')
+          %}{% set st = states(''input_text.sistema_proxmox_reserva_estado'') %}{%
+          if st == ''error'' %}true{% elif raw in [''unknown'',''unavailable'','''']
+          %}true{% else %}{{ (now().timestamp() - as_timestamp(raw)) > (6 * 86400)
+          }}{% endif %}'
   - condition: state
     entity_id: input_boolean.sistema_proxmox_reserva_em_curso
     state: 'off'
@@ -6316,14 +6314,14 @@
       title: Proxmox Reserva — a iniciar
       message: Tomada ligada. A aguardar o Proxmox da reserva e a correr a cópia semanal.
       notification_id: proxmox_reserva_backup
-  - delay: '00:05:00'
+  - delay: 00:05:00
   - action: shell_command.proxmox_reserva_rotina
     response_variable: reserva_start
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ reserva_start is not defined or reserva_start['returncode']
-          | default(1) | int != 0 }}"
+        value_template: '{{ reserva_start is not defined or reserva_start[''returncode'']
+          | default(1) | int != 0 }}'
       sequence:
       - action: input_text.set_value
         target:
@@ -6336,12 +6334,12 @@
       - action: script.enviar_notificacao_telegram
         data:
           destinatarios: antonio
-          titulo: "💾 Homelab — Proxmox Reserva"
-          mensagem: "Falha ao disparar a rotina (shell_command). A reserva pode ter
-            ficado ligada — verifique a tomada."
+          titulo: "\U0001F4BE Homelab — Proxmox Reserva"
+          mensagem: Falha ao disparar a rotina (shell_command). A reserva pode ter
+            ficado ligada — verifique a tomada.
           parse_mode: MarkdownV2
 - id: proxmox_reserva_watchdog
-  alias: "💾 Homelab: Watchdog Proxmox Reserva"
+  alias: "\U0001F4BE Homelab: Watchdog Proxmox Reserva"
   description: Se a rotina ficar em curso mais de 12h, marca erro, desliga a tomada
     e avisa no Telegram.
   mode: single
@@ -6370,14 +6368,12 @@
   - action: script.enviar_notificacao_telegram
     data:
       destinatarios: antonio
-      titulo: "💾 Homelab — Proxmox Reserva"
-      mensagem: "Watchdog 12h — a rotina não terminou. Tomada desligada. Verifique logs
-        em /var/log/homelab/ e /opt/container-ops/logs/."
+      titulo: "\U0001F4BE Homelab — Proxmox Reserva"
+      mensagem: Watchdog 12h — a rotina não terminou. Tomada desligada. Verifique
+        logs em /var/log/homelab/ e /opt/container-ops/logs/.
       parse_mode: MarkdownV2
-
-
 - id: proxmox_reserva_mqtt_sync
-  alias: "💾 Homelab: Sync MQTT Proxmox Reserva"
+  alias: "\U0001F4BE Homelab: Sync MQTT Proxmox Reserva"
   description: Quando o script publica estado no MQTT (mensagem nova, não retained),
     atualiza helpers, desliga a tomada e avisa no Telegram só se erro/aviso.
   mode: queued
@@ -6387,26 +6383,28 @@
     topic: homelab/proxmox_reserva/estado
   conditions:
   - condition: template
-    value_template: "{{ not (trigger.retain | default(false)) }}"
+    value_template: '{{ not (trigger.retain | default(false)) }}'
   actions:
   - variables:
-      status_opt: "{{ trigger.payload | default('unknown') }}"
-      backup_time: "{{ states('sensor.sistema_proxmox_reserva_ultimo_mqtt') }}"
+      status_opt: '{{ trigger.payload | default(''unknown'') }}'
+      backup_time: '{{ states(''sensor.sistema_proxmox_reserva_ultimo_mqtt'') }}'
   - action: input_text.set_value
     target:
       entity_id: input_text.sistema_proxmox_reserva_estado
     data:
-      value: "{{ status_opt if status_opt in ['success','warning','error','unknown','none'] else 'unknown' }}"
+      value: '{{ status_opt if status_opt in [''success'',''warning'',''error'',''unknown'',''none'']
+        else ''unknown'' }}'
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ backup_time not in ['unknown','unavailable',''] }}"
+        value_template: '{{ backup_time not in [''unknown'',''unavailable'','''']
+          }}'
       sequence:
       - action: input_datetime.set_datetime
         target:
           entity_id: input_datetime.sistema_proxmox_reserva_ultimo
         data:
-          datetime: "{{ backup_time }}"
+          datetime: '{{ backup_time }}'
   - action: input_boolean.turn_off
     target:
       entity_id: input_boolean.sistema_proxmox_reserva_em_curso
@@ -6416,31 +6414,30 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ status_opt in ['error','warning'] }}"
+        value_template: '{{ status_opt in [''error'',''warning''] }}'
       sequence:
       - action: persistent_notification.create
         data:
-          title: "Proxmox Reserva — {{ status_opt }}"
-          message: "Atualizado via MQTT em {{ backup_time }}"
+          title: Proxmox Reserva — {{ status_opt }}
+          message: Atualizado via MQTT em {{ backup_time }}
           notification_id: proxmox_reserva_backup
       - action: script.enviar_notificacao_telegram
         data:
           destinatarios: antonio
-          titulo: "💾 Homelab — Proxmox Reserva"
-          mensagem: "Estado: {{ status_opt }} (MQTT)
+          titulo: "\U0001F4BE Homelab — Proxmox Reserva"
+          mensagem: 'Estado: {{ status_opt }} (MQTT)
 
-            Verifique o painel Backups no Servidor."
+            Verifique o painel Backups no Servidor.'
           parse_mode: MarkdownV2
     - conditions:
       - condition: template
-        value_template: "{{ status_opt == 'success' }}"
+        value_template: '{{ status_opt == ''success'' }}'
       sequence:
       - action: persistent_notification.dismiss
         data:
           notification_id: proxmox_reserva_backup
-
 - id: pirata_cecilia_restaurar_apos_queda
-  alias: "🏴‍☠️ Pirata Cecília — Restaurar após queda/restart"
+  alias: "\U0001F3F4‍☠️ Pirata Cecília — Restaurar após queda/restart"
   description: Se o HA reiniciar a meio da sessão, o timer fica idle mas o input_text
     ainda tem o tempo. Retoma o timer com essa duração (badge volta a aparecer).
   mode: single
@@ -6462,11 +6459,15 @@
     state: 'off'
   actions:
   - delay:
-      seconds: "{{ 2 if trigger.id == 'manual' else 20 }}"
+      seconds: '{{ 2 if trigger.id == ''manual'' else 20 }}'
   - variables:
-      rem: "{% if trigger.platform == 'webhook' and trigger.json.remaining is defined and (trigger.json.remaining | string | trim) not in ['', 'none'] %}{{ trigger.json.remaining | string | trim }}{% else %}{{ states('input_text.pirata_cecilia_tempo_restante') | string | trim }}{% endif %}"
+      rem: '{% if trigger.platform == ''webhook'' and trigger.json.remaining is defined
+        and (trigger.json.remaining | string | trim) not in ['''', ''none''] %}{{
+        trigger.json.remaining | string | trim }}{% else %}{{ states(''input_text.pirata_cecilia_tempo_restante'')
+        | string | trim }}{% endif %}'
   - condition: template
-    value_template: "{{ rem not in ['', '—', 'unknown', 'unavailable', '0:00:00'] and ':' in rem }}"
+    value_template: '{{ rem not in ['''', ''—'', ''unknown'', ''unavailable'', ''0:00:00'']
+      and '':'' in rem }}'
   - condition: state
     entity_id: timer.pirata_cecilia_sessao
     state: idle
@@ -6479,8 +6480,7 @@
     data:
       notification_id: pirata_cecilia_restaurado
       title: Pirata — sessão restaurada
-      message: "Timer retomado com {{ rem }} restantes."
-
+      message: Timer retomado com {{ rem }} restantes.
 - id: '1789904745166'
   alias: Suíte — Relógio brilho noite/dia
   description: Às 22:00 põe brilho 0; às 06:00 restaura brilho 3. No arranque do HA,
@@ -6492,7 +6492,7 @@
     at: '22:00:00'
   - id: dia
     trigger: time
-    at: '06:00:00'
+    at: 06:00:00
   - id: arranque
     trigger: homeassistant
     event: start
@@ -6524,7 +6524,7 @@
         - condition: time
           after: '22:00:00'
         - condition: time
-          before: '06:00:00'
+          before: 06:00:00
       sequence:
       - action: number.set_value
         target:

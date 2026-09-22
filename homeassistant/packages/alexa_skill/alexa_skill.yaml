@@ -92,6 +92,8 @@ smart_home:
       - light.banheiro_suite_interruptor_banheiro_suite_z2m_l3_espelho_suite  # Espelho Suíte
       - light.banheiro_suite_interruptor_banheiro_suite_z2m_l4_pia_suite  # Pia Suíte
       - light.banheiro_suite_led_banheiro_suite                           # Banheiro Suíte - LED
+      - sensor.banheiro_suite_termo_temperatura                        # Temperatura
+      - sensor.banheiro_suite_termo_umidade                            # Umidade
 
       # -----------------------------------------------------------------------
       # Lavanderia
@@ -121,6 +123,8 @@ smart_home:
       # -----------------------------------------------------------------------
       - light.banheiro_social_espelho_sonoff                              # Espelho Banheiro Social
       - light.banheiro_social_luz_sonoff                                  # Luz Banheiro Social
+      - sensor.banheiro_social_termo_temperatura                       # Temperatura
+      - sensor.banheiro_social_termo_umidade                           # Umidade
 
       # -----------------------------------------------------------------------
       # Cozinha
@@ -165,8 +169,8 @@ smart_home:
       - light.cozinha_externa_pendentes_z2m                               # Cozinha Externa - Pendentes
       - light.cozinha_externa_interruptor_cozinha_externa_z2m_l2_cozinha_externa  # Cozinha Externa
       - light.cozinha_externa_led_z2m                                     # Cozinha Externa - LED
-      - sensor.cozinha_externa_termo_higrometro_z2m_temperature           # Temperatura
-      - sensor.cozinha_externa_termo_higrometro_z2m_humidity            # Umidade
+      - sensor.cozinha_externa_termo_temperatura           # Temperatura
+      - sensor.cozinha_externa_termo_umidade            # Umidade
 
       # -----------------------------------------------------------------------
       # Terreiro / exterior (interruptores Z2M com área terreiro_*)
@@ -367,6 +371,14 @@ smart_home:
       description: "Luz da pia"
     light.banheiro_suite_led_banheiro_suite:
       name: "Led Banheiro Suíte"
+    sensor.banheiro_suite_termo_temperatura:
+      name: "Temperatura Banheiro Suíte"
+      description: "Temperatura ambiente do banheiro da suíte"
+      display_categories: TEMPERATURE_SENSOR
+    sensor.banheiro_suite_termo_umidade:
+      name: "Umidade Banheiro Suíte"
+      description: "Umidade do ar no banheiro da suíte"
+      display_categories: HUMIDITY_SENSOR
       description: "Luz led do armario"
 
     # --- Lavanderia ---
@@ -428,6 +440,14 @@ smart_home:
       description: "Luz do espelho"
     light.banheiro_social_luz_sonoff:
       name: "Luz Banheiro Social"
+    sensor.banheiro_social_termo_temperatura:
+      name: "Temperatura Banheiro Social"
+      description: "Temperatura ambiente do banheiro social"
+      display_categories: TEMPERATURE_SENSOR
+    sensor.banheiro_social_termo_umidade:
+      name: "Umidade Banheiro Social"
+      description: "Umidade do ar no banheiro social"
+      display_categories: HUMIDITY_SENSOR
       description: "Iluminação geral do banheiro social"
 
     # --- Cozinha ---
@@ -535,11 +555,11 @@ smart_home:
     light.cozinha_externa_led_z2m:
       name: "Bancada Cozinha Externa"
       description: "Fita ou LED decorativo"
-    sensor.cozinha_externa_termo_higrometro_z2m_temperature:
+    sensor.cozinha_externa_termo_temperatura:
       name: "Temperatura Cozinha Externa"
       description: "Temperatura ambiente da cozinha externa"
       display_categories: TEMPERATURE_SENSOR
-    sensor.cozinha_externa_termo_higrometro_z2m_humidity:
+    sensor.cozinha_externa_termo_umidade:
       name: "Umidade Cozinha Externa"
       description: "Umidade do ar na cozinha externa"
       display_categories: HUMIDITY_SENSOR

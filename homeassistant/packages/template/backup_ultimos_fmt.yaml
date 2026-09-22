@@ -2,18 +2,21 @@
 sensor:
   - name: "Backup SSD Último fmt"
     unique_id: sistema_docker_backup_ssd_ultimo_fmt
+    default_entity_id: sensor.backup_ssd_ultimo_fmt
     icon: mdi:clock-outline
     state: >-
       {% set raw = states('input_datetime.sistema_docker_backup_ssd_ultimo') %}
       {% if raw in ['unknown', 'unavailable', 'none', ''] %}—{% else %}{{ as_timestamp(raw) | timestamp_custom('%d/%m/%Y %H:%M', true) }}{% endif %}
   - name: "Backup OneDrive Último fmt"
     unique_id: sistema_docker_backup_onedrive_ultimo_fmt
+    default_entity_id: sensor.backup_onedrive_ultimo_fmt
     icon: mdi:clock-outline
     state: >-
       {% set raw = states('input_datetime.sistema_docker_backup_onedrive_ultimo') %}
       {% if raw in ['unknown', 'unavailable', 'none', ''] %}—{% else %}{{ as_timestamp(raw) | timestamp_custom('%d/%m/%Y %H:%M', true) }}{% endif %}
   - name: "Backup Reserva Último fmt"
     unique_id: sistema_proxmox_reserva_ultimo_fmt
+    default_entity_id: sensor.backup_reserva_ultimo_fmt
     icon: mdi:clock-outline
     state: >-
       {% set raw = states('sensor.sistema_proxmox_reserva_ultimo_mqtt') %}

@@ -3,7 +3,6 @@
 sensor:
   - name: "Temperatura CPU MiniPC"
     unique_id: sistema_temperatura_cpu_minipc
-    object_id: sistema_temperatura_cpu_minipc
     default_entity_id: sensor.sistema_temperatura_cpu_minipc
     state_topic: "homelab/minipc/cpu_temp"
     unit_of_measurement: "°C"
