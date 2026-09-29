@@ -1,0 +1,196 @@
+{
+  "uid": "homelab-inicio",
+  "title": "Início — Homelab & Casa",
+  "description": "Mapa dos dashboards Grafana do Homelab: o que cada um mostra e quando abrir.",
+  "tags": [
+    "homelab",
+    "casa",
+    "inicio",
+    "overview"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "Como usar este Grafana",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Há **duas pastas**:\n\n| Pasta | Conteúdo |\n|-------|----------|\n| **Homelab** | Servidor Docker (NAS `192.168.3.21`): host, contentores, internet |\n| **Casa** | Dados do Home Assistant via Influx: energia e dispositivos offline |\n\nURL: `http://192.168.3.21:3005`.\n\nAtualizações de contentores (Grafana, Prometheus, exporters) saem pelo card **Docker** no Home Assistant."
+      }
+    },
+    {
+      "type": "text",
+      "title": "Homelab — infraestrutura",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### [Servidor — Node Exporter](/d/rYdddlPWk)\nCPU, RAM, disco e rede do **host**. Use se o NAS estiver lento ou o disco a encher.\n\n### [Docker — Contentores (cAdvisor)](/d/pMEd7m0Mz)\nRecursos **por contentor**. Use para achar qual stack come CPU/RAM.\n\n### [Internet — Qualidade e Velocidade](/d/internet-quality)\nLatência, perda, DNS, HTTP e speedtest. Use em problemas de internet/DNS."
+      }
+    },
+    {
+      "type": "text",
+      "title": "Casa — Home Assistant",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### [Energia da Casa](/d/energia-da-casa)\nRede, solar, fases e aparelhos. Dados Influx vindos do HA.\n\n### [Dispositivos offline](/d/dispositivos-offline)\nQuem ficou offline e por quanto tempo (Zigbee etc.), com filtro de queda em massa.\n\n### [Geladeira Midea — Sonoff vs Z2M](/d/geladeira-midea-comparativo)\nCompara os dois medidores da geladeira (Sonoff e Zigbee).\n\nEste Grafana é o do stack Docker `monitoring` (porta 3005), não o add-on do HA."
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Exporters UP",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(up == 1)",
+          "legendFormat": "up",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Contentores (cAdvisor)",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(container_last_seen{name!=\"\"})",
+          "legendFormat": "containers",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Probes blackbox OK",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(probe_success == 1)",
+          "legendFormat": "ok",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    }
+  ]
+}

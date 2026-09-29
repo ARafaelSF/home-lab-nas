@@ -2481,7 +2481,9 @@ sistema_docker_atualizar:
         \   'update.wud_container_local_blackbox_exporter': 'blackbox-exporter',\n
         \   'update.sistema_docker_speedtest_exporter': 'speedtest-exporter',\n    'update.wud_container_local_speedtest_exporter':
         'speedtest-exporter',\n    'update.sistema_docker_unifi_mcp': 'unifi-mcp',\n
-        \   'update.wud_container_local_unifi_network_mcp': 'unifi-mcp'\n  } %}\n
+        \   'update.wud_container_local_unifi_network_mcp': 'unifi-mcp',\n    'update.sistema_docker_glances':
+        'glances',\n    'update.wud_container_local_glances': 'glances',\n    'update.sistema_docker_portainer':
+        'portainer',\n    'update.wud_container_local_portainer': 'portainer'\n  } %}\n
         \ {{ m.get(eid, '') }}\n{% endif %}"
       nome: '{{ state_attr(eid, ''friendly_name'') or app_ops or eid }}'
   - choose:
@@ -2492,7 +2494,7 @@ sistema_docker_atualizar:
       - action: persistent_notification.create
         data:
           title: Docker — atualização
-          message: '{{ nome }} não está no ops.sh (Portainer e Glances ficam de fora).'
+          message: '{{ nome }} não está cadastrado no ops.sh.'
           notification_id: docker_ops_update
       - stop: app não cadastrada
     - conditions:

@@ -3,4 +3,43 @@ sensor:
   - name: "sistema_proxmox_reserva_linha"
     unique_id: sistema_proxmox_reserva_linha
     icon: mdi:server-network
-    state: "{% set st = states('sensor.sistema_proxmox_reserva_estado_mqtt') %}{% if st in ['unknown','unavailable',''] %}{% set st = states('input_text.sistema_proxmox_reserva_estado') %}{% endif %}{% set raw = states('sensor.sistema_proxmox_reserva_ultimo_mqtt') %}{% if raw in ['unknown','unavailable',''] %}{% set raw = states('input_datetime.sistema_proxmox_reserva_ultimo') %}{% endif %}{% set lim = 9 * 24 * 3600 %}{% if raw in ['unknown','unavailable',''] %}sem registo — {% if st == 'success' %}OK{% elif st == 'warning' %}Warning{% elif st == 'error' %}Erro{% elif st == 'none' %}—{% else %}Desconhecido{% endif %}{% else %}{% set diff = (now().timestamp() - as_timestamp(raw)) | int %}{% if diff < 3600 %}há {{ (diff / 60) | int }} min{% elif diff < 86400 %}há {{ (diff / 3600) | int }}h{% else %}há {{ (diff / 86400) | int }} dias{% endif %} — {% if st == 'error' %}Erro{% elif st == 'warning' %}Warning{% elif st == 'success' %}{% if diff > lim %}Atrasado{% else %}OK{% endif %}{% elif st == 'none' %}—{% else %}Desconhecido{% endif %}{% endif %}"
+    state: >-
+      {% if is_state('input_boolean.sistema_proxmox_reserva_em_curso', 'on') %}
+      {% set pct = states('sensor.sistema_proxmox_reserva_progresso_mqtt') | int(0) %}
+      {% set f = states('sensor.sistema_proxmox_reserva_fase_mqtt') %}
+      {% set fl = {
+        'backup': 'Backup PBS',
+        'restore_101': 'Restore HA (101)',
+        'restore_100': 'Restore Docker (100)',
+        'aguardar_reserva': 'A aguardar reserva',
+        'inicio': 'A iniciar',
+        'concluido': 'A concluir'
+      } %}
+      Em curso — {{ fl.get(f, f) }} · {{ pct }}%
+      {% else %}
+      {% set st = states('sensor.sistema_proxmox_reserva_estado_mqtt') %}
+      {% if st in ['unknown','unavailable',''] %}
+      {% set st = states('input_text.sistema_proxmox_reserva_estado') %}
+      {% endif %}
+      {% set raw = states('sensor.sistema_proxmox_reserva_ultimo_mqtt') %}
+      {% if raw in ['unknown','unavailable',''] %}
+      {% set raw = states('input_datetime.sistema_proxmox_reserva_ultimo') %}
+      {% endif %}
+      {% set lim = 9 * 24 * 3600 %}
+      {% if raw in ['unknown','unavailable',''] %}
+      sem registo — {% if st == 'success' %}OK{% elif st == 'warning' %}Warning{% elif st == 'error' %}Erro{% elif st == 'none' %}—{% else %}Desconhecido{% endif %}
+      {% else %}
+      {% set diff = (now().timestamp() - as_timestamp(raw)) | int %}
+      {% if diff < 3600 %}há {{ (diff / 60) | int }} min{% elif diff < 86400 %}há {{ (diff / 3600) | int }}h{% else %}há {{ (diff / 86400) | int }} dias{% endif %} — {% if st == 'error' %}Erro{% elif st == 'warning' %}Warning{% elif st == 'success' %}{% if diff > lim %}Atrasado{% else %}OK{% endif %}{% elif st == 'none' %}—{% else %}Desconhecido{% endif %}
+      {% endif %}
+      {% endif %}
+  - name: "sistema_proxmox_reserva_progresso_linha"
+    unique_id: sistema_proxmox_reserva_progresso_linha
+    icon: mdi:progress-clock
+    unit_of_measurement: "%"
+    state: >-
+      {% if is_state('input_boolean.sistema_proxmox_reserva_em_curso', 'on') %}
+      {{ states('sensor.sistema_proxmox_reserva_progresso_mqtt') | int(0) }}
+      {% else %}
+      {{ none }}
+      {% endif %}

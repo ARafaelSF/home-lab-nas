@@ -6258,8 +6258,9 @@
           parse_mode: MarkdownV2
 - id: proxmox_reserva_iniciar_apos_onedrive
   alias: "\U0001F4BE Homelab: Iniciar Proxmox Reserva (após OneDrive)"
-  description: Após backup OneDrive OK (terça), liga a tomada da reserva, espera o
-    Proxmox e dispara a rotina semanal no listener :8787.
+  description: Só após backup OneDrive OK (terça), liga a tomada da reserva, espera
+    o Proxmox e dispara a rotina semanal no listener :8787. Sem fallback horário
+    (evita ligar a reserva antes do OneDrive).
   mode: single
   triggers:
   - trigger: webhook
@@ -6268,37 +6269,15 @@
     - POST
     local_only: true
     id: onedrive_ok
-  - platform: time
-    at: 07:00:00
-    id: fallback_terca
   conditions:
-  - condition: or
-    conditions:
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: onedrive_ok
-      - condition: template
-        value_template: '{{ (trigger.json.job_key | default('''')) == ''onedrive''
-          or ''onedrive'' in (trigger.json.job_name | default('''') | lower) }}'
-      - condition: template
-        value_template: '{{ trigger.json.status | default('''') == ''success'' }}'
-      - condition: time
-        weekday:
-        - tue
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: fallback_terca
-      - condition: time
-        weekday:
-        - tue
-      - condition: template
-        value_template: '{% set raw = states(''input_datetime.sistema_proxmox_reserva_ultimo'')
-          %}{% set st = states(''input_text.sistema_proxmox_reserva_estado'') %}{%
-          if st == ''error'' %}true{% elif raw in [''unknown'',''unavailable'','''']
-          %}true{% else %}{{ (now().timestamp() - as_timestamp(raw)) > (6 * 86400)
-          }}{% endif %}'
+  - condition: template
+    value_template: '{{ (trigger.json.job_key | default('''')) == ''onedrive''
+      or ''onedrive'' in (trigger.json.job_name | default('''') | lower) }}'
+  - condition: template
+    value_template: '{{ trigger.json.status | default('''') == ''success'' }}'
+  - condition: time
+    weekday:
+    - tue
   - condition: state
     entity_id: input_boolean.sistema_proxmox_reserva_em_curso
     state: 'off'
@@ -6532,3 +6511,64 @@
         data:
           value: 0
   mode: single
+
+- id: suite_relogio_calibrar_pelo_bthome
+  alias: Suíte — Calibrar relógio Tuya pelo BTHome
+  description: A cada 1 minuto calcula o offset para o relógio LocalTuya coincidir
+    com o termo BTHome da suíte, aplica na calibração do dispositivo e guarda o valor
+    nos input_number de histórico.
+  mode: single
+  triggers:
+  - trigger: time_pattern
+    minutes: /1
+  conditions:
+  - condition: template
+    value_template: "{% set ids = ['sensor.suite_termo_temperatura', 'sensor.suite_termo_umidade',
+      'sensor.suite_relogio_temperatura_localtuya', 'sensor.suite_relogio_umidade_localtuya',
+      'number.suite_relogio_calibracao_temperatura_localtuya', 'number.suite_relogio_calibracao_umidade_localtuya']
+      %}{{ ids | map('states') | reject('in', ['unknown', 'unavailable', 'none', ''])
+      | list | count == 6 }}"
+  actions:
+  - variables:
+      bt_t: '{{ states(''sensor.suite_termo_temperatura'') | float(0) }}'
+      ty_t: '{{ states(''sensor.suite_relogio_temperatura_localtuya'') | float(0) }}'
+      cur_ct: '{{ states(''number.suite_relogio_calibracao_temperatura_localtuya'') | float(0)
+        }}'
+      new_ct: '{{ [[(((cur_ct | float(0)) + ((bt_t | float(0)) - (ty_t | float(0)))) *
+        10) | round(0) / 10, -4] | max, 4] | min }}'
+      bt_h: '{{ states(''sensor.suite_termo_umidade'') | float(0) }}'
+      ty_h: '{{ states(''sensor.suite_relogio_umidade_localtuya'') | float(0) }}'
+      cur_ch: '{{ states(''number.suite_relogio_calibracao_umidade_localtuya'') | float(0)
+        }}'
+      new_ch: '{{ [[(((cur_ch | float(0)) + ((bt_h | float(0)) - (ty_h | float(0)))) |
+        round(0)), -20] | max, 20] | min }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (new_ct | float(0) - cur_ct | float(0)) | abs >= 0.05 }}'
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.suite_relogio_calibracao_temperatura_localtuya
+        data:
+          value: '{{ new_ct | float(0) }}'
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.calibracao_temp_relogio_suite
+    data:
+      value: '{{ new_ct | float(0) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ (new_ch | float(0) - cur_ch | float(0)) | abs >= 0.5 }}'
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.suite_relogio_calibracao_umidade_localtuya
+        data:
+          value: '{{ new_ch | float(0) }}'
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.calibracao_umidade_relogio_suite
+    data:
+      value: '{{ new_ch | float(0) }}'

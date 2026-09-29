@@ -24,3 +24,28 @@ sensor:
       name: "Proxmox Reserva"
       manufacturer: "Homelab"
       model: "PBS semanal"
+  - name: "Proxmox Reserva Progresso MQTT"
+    unique_id: sistema_proxmox_reserva_progresso_mqtt
+    default_entity_id: sensor.sistema_proxmox_reserva_progresso_mqtt
+    state_topic: "homelab/proxmox_reserva/progresso"
+    unit_of_measurement: "%"
+    icon: mdi:progress-clock
+    expire_after: 86400
+    device:
+      identifiers:
+        - "proxmox_reserva_backup"
+      name: "Proxmox Reserva"
+      manufacturer: "Homelab"
+      model: "PBS semanal"
+  - name: "Proxmox Reserva Fase MQTT"
+    unique_id: sistema_proxmox_reserva_fase_mqtt
+    default_entity_id: sensor.sistema_proxmox_reserva_fase_mqtt
+    state_topic: "homelab/proxmox_reserva/fase"
+    icon: mdi:state-machine
+    expire_after: 86400
+    device:
+      identifiers:
+        - "proxmox_reserva_backup"
+      name: "Proxmox Reserva"
+      manufacturer: "Homelab"
+      model: "PBS semanal"

@@ -121,6 +121,7 @@ APP_LABELS = {
     "speedtest-exporter": "Speedtest Exporter",
     "unifi-mcp": "UniFi Network MCP",
     "portainer": "Portainer",
+    "glances": "Glances",
 }
 
 
@@ -338,7 +339,24 @@ def run_reserva() -> None:
             )
         text = log_path.read_text(errors="replace")
         ok = proc.returncode == 0
-        if not ok:
+        # Restore pode ter concluído e o bash falhar depois (ex.: .sh editado a meio).
+        if (
+            not ok
+            and "restore OK" in text
+            and "rotina semanal OK" not in text
+            and "unexpected EOF" in text
+        ):
+            log(
+                "reserva: exit!=0 mas restore OK + EOF de edição — a tratar como sucesso"
+            )
+            notify_reserva(
+                True,
+                "Backup PBS + restore na reserva OK "
+                "(aviso: o script saiu com erro de sintaxe depois do restore; "
+                "verifique se a tomada desligou).",
+            )
+            ok = True
+        elif not ok:
             # Se o script falhou antes do webhook interno
             notify_reserva(
                 False,

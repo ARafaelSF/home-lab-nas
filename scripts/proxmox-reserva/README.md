@@ -25,6 +25,11 @@ O SSD Duplicati (`scsi2`) continua fora da cópia (`backup=0` no principal).
 
 Agendamento e tomada Tasmota: ver passo 6 em `docs/PROXMOX-RESERVA-PASSO-A-PASSO.md`.
 
+**Disparo no HA:** só webhook Duplicati OneDrive **success** (terça). Não há fallback às 07:00.
+
+**Progresso no painel:** MQTT `homelab/proxmox_reserva/progresso` + `fase`; sensores
+`sensor.sistema_proxmox_reserva_progresso_linha` na secção Mini backup.
+
 ## Home Assistant (passo 6)
 
 - Disparo: `shell_command.proxmox_reserva_rotina` → `http://192.168.3.21:8787/proxmox-reserva`

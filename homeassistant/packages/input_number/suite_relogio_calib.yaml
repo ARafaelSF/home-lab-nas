@@ -1,0 +1,21 @@
+# Histórico dos offsets de calibração do relógio LocalTuya (Suíte),
+# alinhados automaticamente ao BTHome.
+# Limites = o que o firmware do relógio aceita e reporta de volta
+# (temp DP104 raw ±40 @ scale 0.1 → ±4.0 °C; umidade DP105 ±20 %).
+calibracao_temp_relogio_suite:
+  name: "Suíte — Offset calibração temp. relógio"
+  icon: mdi:thermometer-lines
+  min: -4
+  max: 4
+  step: 0.1
+  unit_of_measurement: "°C"
+  mode: box
+
+calibracao_umidade_relogio_suite:
+  name: "Suíte — Offset calibração umidade relógio"
+  icon: mdi:water-percent
+  min: -20
+  max: 20
+  step: 1
+  unit_of_measurement: "%"
+  mode: box

@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   glances:
-    image: nicolargo/glances:latest-full
+    image: nicolargo/glances:${GLANCES_TAG:-latest-full}
     container_name: glances
     labels:
       - wud.display.name=Glances

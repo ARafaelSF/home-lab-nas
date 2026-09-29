@@ -12,6 +12,19 @@
 #
 set -euo pipefail
 
+# Evita "unexpected EOF" se alguém editar este ficheiro enquanto a rotina corre:
+# o bash relê o .sh do disco; executar a partir de uma cópia fixa em /tmp.
+if [[ "${PBS_ROTINA_SELF_COPY:-}" != "1" ]]; then
+  _real_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  _copy="$(mktemp /tmp/rotina-semanal.XXXXXX.sh)"
+  cp -a -- "$0" "$_copy"
+  chmod 700 "$_copy"
+  # parse-progress.py e afins ficam no repo; a cópia em /tmp só é o bash.
+  export PBS_ROTINA_SELF_COPY=1
+  export PBS_ROTINA_SCRIPT_DIR="$_real_dir"
+  exec bash "$_copy" "$@"
+fi
+
 PRIMARY_SSH="${PRIMARY_SSH:-proxmox}"
 RESERVA_SSH="${RESERVA_SSH:-proxmox-reserva}"
 RESERVA_IP="${RESERVA_IP:-192.168.3.30}"
@@ -53,6 +66,69 @@ done
 
 ts() { date -Is; }
 log() { printf '%s %s\n' "$(ts)" "$*"; }
+
+SCRIPT_DIR="${PBS_ROTINA_SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+PROGRESS_ACTIVE="${STATUS_LOCAL_DIR}/pbs-rotina-progress.active"
+PROGRESS_PID=""
+
+mqtt_auth_args() {
+  local mqtt_host mqtt_port mqtt_user mqtt_pass
+  mqtt_host="${MQTT_HOST:-192.168.3.10}"
+  mqtt_port="${MQTT_PORT:-1883}"
+  mqtt_user="${MQTT_USER:-}"
+  mqtt_pass="${MQTT_PASSWORD:-}"
+  if [[ -f /opt/container-ops/minipc-temp.env ]]; then
+    # shellcheck disable=SC1091
+    source /opt/container-ops/minipc-temp.env
+    mqtt_host="${MQTT_HOST:-$mqtt_host}"
+    mqtt_port="${MQTT_PORT:-$mqtt_port}"
+    mqtt_user="${MQTT_USER:-$mqtt_user}"
+    mqtt_pass="${MQTT_PASSWORD:-$mqtt_pass}"
+  fi
+  MQTT_HOST="$mqtt_host"
+  MQTT_PORT="$mqtt_port"
+  MQTT_AUTH=()
+  [[ -n "$mqtt_user" ]] && MQTT_AUTH+=(-u "$mqtt_user" -P "$mqtt_pass")
+}
+
+mqtt_pub() {
+  local topic="$1" message="$2"
+  command -v mosquitto_pub >/dev/null 2>&1 || return 0
+  mqtt_auth_args
+  mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" "${MQTT_AUTH[@]}" -t "$topic" -m "$message" || true
+}
+
+publish_progress_from_log() {
+  local line phase phase_pct overall
+  line="$(python3 "${SCRIPT_DIR}/parse-progress.py" "$LOG_LOCAL" 2>/dev/null || echo 'inicio|0|0')"
+  IFS='|' read -r phase phase_pct overall <<<"$line"
+  mqtt_pub homelab/proxmox_reserva/fase "$phase"
+  mqtt_pub homelab/proxmox_reserva/progresso "$overall"
+}
+
+progress_loop() {
+  while [[ -f "$PROGRESS_ACTIVE" ]]; do
+    publish_progress_from_log
+    sleep 45
+  done
+}
+
+start_progress_loop() {
+  : >"$PROGRESS_ACTIVE"
+  publish_progress_from_log
+  progress_loop &
+  PROGRESS_PID=$!
+}
+
+stop_progress_loop() {
+  rm -f "$PROGRESS_ACTIVE"
+  if [[ -n "$PROGRESS_PID" ]]; then
+    kill "$PROGRESS_PID" 2>/dev/null || true
+    wait "$PROGRESS_PID" 2>/dev/null || true
+    PROGRESS_PID=""
+  fi
+  publish_progress_from_log
+}
 
 mkdir -p "$STATUS_LOCAL_DIR"
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -104,26 +180,13 @@ notify_ha() {
   time_now="$(date '+%Y-%m-%d %H:%M:%S')"
 
   # MQTT (fiável para o painel / badge)
-  if command -v mosquitto_pub >/dev/null 2>&1; then
-    local mqtt_host mqtt_port mqtt_user mqtt_pass
-    mqtt_host="${MQTT_HOST:-192.168.3.10}"
-    mqtt_port="${MQTT_PORT:-1883}"
-    mqtt_user="${MQTT_USER:-}"
-    mqtt_pass="${MQTT_PASSWORD:-}"
-    if [[ -f /opt/container-ops/minipc-temp.env ]]; then
-      # shellcheck disable=SC1091
-      source /opt/container-ops/minipc-temp.env
-      mqtt_host="${MQTT_HOST:-$mqtt_host}"
-      mqtt_port="${MQTT_PORT:-$mqtt_port}"
-      mqtt_user="${MQTT_USER:-$mqtt_user}"
-      mqtt_pass="${MQTT_PASSWORD:-$mqtt_pass}"
-    fi
-    local auth=()
-    [[ -n "$mqtt_user" ]] && auth+=(-u "$mqtt_user" -P "$mqtt_pass")
-    mosquitto_pub -h "$mqtt_host" -p "$mqtt_port" "${auth[@]}" -t homelab/proxmox_reserva/estado -m "$status" -r || true
-    mosquitto_pub -h "$mqtt_host" -p "$mqtt_port" "${auth[@]}" -t homelab/proxmox_reserva/ultimo -m "$time_now" -r || true
-    log "MQTT estado=$status ultimo=$time_now"
+  mqtt_pub homelab/proxmox_reserva/estado "$status"
+  mqtt_pub homelab/proxmox_reserva/ultimo "$time_now"
+  if [[ "$status" == "success" ]]; then
+    mqtt_pub homelab/proxmox_reserva/progresso "100"
+    mqtt_pub homelab/proxmox_reserva/fase "concluido"
   fi
+  log "MQTT estado=$status ultimo=$time_now"
 
   python3 - "$HA_WEBHOOK_URL" "$HA_WEBHOOK_RESERVA_URL" "$status" "$message" "$time_now" <<'PY' || log "AVISO: webhook HA falhou"
 import json, sys, urllib.request
@@ -154,6 +217,8 @@ PY
 die() {
   ERROR_MSG="$*"
   log "ERRO: $ERROR_MSG"
+  stop_progress_loop
+  mqtt_pub homelab/proxmox_reserva/fase "erro"
   write_status 0
   notify_ha 0
   exit 1
@@ -286,8 +351,11 @@ shutdown_reserva() {
   log "AVISO: reserva ainda responde ao ping após shutdown"
 }
 
+trap 'stop_progress_loop' EXIT
+
 # --- main ---
 log "rotina semanal início"
+start_progress_loop
 
 if [[ "$SHUTDOWN_ONLY" -eq 1 ]]; then
   if ! ping -c1 -W2 "$RESERVA_IP" >/dev/null 2>&1; then
@@ -315,6 +383,7 @@ ssh_p "pvesm status | grep -q '${PBS_STORAGE_PRIMARY}.*active'" \
 [[ "$DO_RESTORE" -eq 1 ]] && run_restore
 
 RESULT_OK=1
+stop_progress_loop
 write_status 1
 notify_ha 1
 log "rotina semanal OK"

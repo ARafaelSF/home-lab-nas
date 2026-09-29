@@ -334,6 +334,7 @@ default_update_tag() {
     immich|immich-ml) echo "release" ;;
     uptime-kuma) echo "2" ;;
     influx) echo "2.7" ;;
+    glances) echo "latest-full" ;;
     *) echo "latest" ;;
   esac
 }

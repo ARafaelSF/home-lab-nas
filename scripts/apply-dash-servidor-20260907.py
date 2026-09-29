@@ -13,6 +13,25 @@ HA_URL = os.environ.get("HA_URL", "http://192.168.3.10:8123")
 TOKEN = os.environ.get("HA_TOKEN", "")
 URL_PATH = "dashboard-casa"
 
+PROGRESS_CARD = {
+    "type": "custom:mushroom-template-card",
+    "primary": "Backup reserva · {{ states('sensor.sistema_proxmox_reserva_progresso_mqtt') | int(0) }}%",
+    "secondary": "{{ states('sensor.sistema_proxmox_reserva_linha') }}",
+    "icon": "mdi:progress-clock",
+    "icon_color": "blue",
+    "multiline_secondary": True,
+    "grid_options": {"columns": 12, "rows": 2},
+    "tap_action": {"action": "none"},
+    "hold_action": {"action": "none"},
+    "visibility": [
+        {
+            "condition": "state",
+            "entity": "input_boolean.sistema_proxmox_reserva_em_curso",
+            "state": "on",
+        }
+    ],
+}
+
 BACKUP_SECTION = {
     "type": "grid",
     "visibility": [
@@ -51,8 +70,9 @@ BACKUP_SECTION = {
                     "color": "amber",
                 },
             ],
-            "grid_options": {"columns": 12, "rows": 1},
+            "grid_options": {"columns": 12},
         },
+        PROGRESS_CARD,
     ],
 }
 
@@ -188,17 +208,74 @@ def patch_temp_section(section: dict[str, Any]) -> bool:
     return True
 
 
+def _backup_heading(card: dict[str, Any]) -> bool:
+    h = (card.get("heading") or "").lower()
+    return h.startswith("mini backup")
+
+
+def _is_progress_entity(entity: str | None) -> bool:
+    return entity in {
+        "sensor.sistema_proxmox_reserva_progresso_linha",
+        "sensor.sistema_proxmox_reserva_linha",
+        "sensor.sistema_proxmox_reserva_progresso_mqtt",
+    }
+
+
+def patch_backup_section(section: dict[str, Any]) -> bool:
+    cards = section.get("cards") or []
+    if not cards or not _backup_heading(cards[0]):
+        return False
+    section["visibility"] = BACKUP_SECTION["visibility"]
+
+    new_cards: list[dict[str, Any]] = []
+    progress_inserted = False
+    for card in cards:
+        if card.get("type") == "custom:mushroom-template-card" and "progress-clock" in (
+            card.get("icon") or ""
+        ):
+            continue
+        if _is_progress_entity(card.get("entity")):
+            continue
+
+        if card.get("type") == "grid":
+            inner = []
+            for c in card.get("cards") or []:
+                if _is_progress_entity(c.get("entity")):
+                    continue
+                # Evitar tile duplicado da tomada se já há mushroom
+                if (
+                    c.get("type") == "tile"
+                    and c.get("entity") == "switch.escritorio_servidor_minipc_tasmota"
+                ):
+                    continue
+                inner.append(c)
+            card = dict(card)
+            card["cards"] = inner
+            card["columns"] = 2
+            card["grid_options"] = {"columns": 12}
+            new_cards.append(card)
+            if not progress_inserted:
+                new_cards.append(dict(PROGRESS_CARD))
+                progress_inserted = True
+            continue
+
+        new_cards.append(card)
+
+    if not progress_inserted:
+        new_cards.append(dict(PROGRESS_CARD))
+    section["cards"] = new_cards
+    return True
+
+
 def ensure_backup_section(view: dict[str, Any]) -> None:
     sections = view.get("sections") or []
     already = any(
-        (sec.get("cards") or [{}])[0].get("heading") == "Mini backup (Tasmota)"
+        _backup_heading((sec.get("cards") or [{}])[0])
         for sec in sections
     )
     if already:
         for sec in sections:
-            cards = sec.get("cards") or []
-            if cards and cards[0].get("heading") == "Mini backup (Tasmota)":
-                sec["visibility"] = BACKUP_SECTION["visibility"]
+            patch_backup_section(sec)
         return
     insert_at = None
     for i, sec in enumerate(sections):
@@ -238,10 +315,11 @@ def main() -> int:
             return 1
         config = loaded["result"]
         view = find_view(config)
-        patched_server = patched_temp = False
+        patched_server = patched_temp = patched_backup = False
         for sec in view.get("sections") or []:
             patched_server = patch_server_section(sec) or patched_server
             patched_temp = patch_temp_section(sec) or patched_temp
+            patched_backup = patch_backup_section(sec) or patched_backup
         if not patched_server:
             print("falhou a ajustar a secção Servidor", file=sys.stderr)
             return 1

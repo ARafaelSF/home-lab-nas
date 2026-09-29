@@ -18,7 +18,7 @@ Serve para **atualizar um container** com segurança: faz backup dos volumes (qu
 2. Você diz: **“atualiza o mealie para a versão X”**.
 3. O script faz backup (se houver volume) → pull → restart → testa → limpa backups velhos → refresh no HA.
 
-**Não mexa** em stacks que não estão na lista (Portainer, Glances). Firefly e Influx (só 2.7) já estão cadastrados.
+O **Glances** e o **Portainer** também estão no `ops.sh` (atualizam pelo HA). Firefly e Influx (só 2.7) já estavam cadastrados.
 
 ---
 
@@ -63,6 +63,8 @@ Troque `mealie` pelo nome da app (coluna da esquerda no `list`).
 | `wud` | Updates Docker | `latest` ou `8.3.0` |
 | `hermes` | Agente Telegram | `latest` |
 | `dozzle` | Logs Docker | `latest` |
+| `glances` | Monitor do host (só o contentor Glances; a ponte HA não mexe) | `latest-full` |
+| `portainer` | UI Docker | `latest` |
 | `prometheus` | Métricas | `latest` |
 | `grafana` | Dashboards | `latest` |
 | `node-exporter` | Métricas do host | `latest` |

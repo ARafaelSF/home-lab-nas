@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -7,144 +9,293 @@
   "links": [],
   "panels": [
     {
+      "type": "text",
+      "title": "Sobre este dashboard",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**O quê:** qualidade da internet vista do NAS (latência, perda, DNS, HTTP, speedtest e uso do `eth0`).\n\n**Quando usar:** internet lenta, DNS falhando, ou comparar horário do speedtest com reclamações.\n\n**Nota:** painéis `bb …` vêm do blackbox; os outros do ping-exporter. Speedtest não é contínuo."
+      }
+    },
+    {
       "title": "Latência ICMP (ms)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 3
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "ping_rtt_mean_seconds * 1000",
           "legendFormat": "{{target}}",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         },
         {
           "expr": "avg by (instance) (probe_duration_seconds{job=\"blackbox-icmp\"}) * 1000",
           "legendFormat": "bb {{instance}}",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "ms", "decimals": 1 }
+        "defaults": {
+          "unit": "ms",
+          "decimals": 1
+        }
       }
     },
     {
       "title": "Perda de pacotes (%)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 3
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "ping_loss_ratio * 100",
           "legendFormat": "{{target}}",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         },
         {
           "expr": "(1 - avg by (instance) (probe_success{job=\"blackbox-icmp\"})) * 100",
           "legendFormat": "bb {{instance}}",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100 }
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100
+        }
       }
     },
     {
       "title": "Jitter ICMP (ms)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "ping_rtt_std_deviation_seconds * 1000",
           "legendFormat": "{{target}}",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "ms", "decimals": 1 }
+        "defaults": {
+          "unit": "ms",
+          "decimals": 1
+        }
       }
     },
     {
       "title": "HTTP externo (ms)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "probe_duration_seconds{job=\"blackbox-http\"} * 1000",
           "legendFormat": "{{instance}}",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "ms", "decimals": 0 }
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0
+        }
       }
     },
     {
       "title": "DNS lookup (ms)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "probe_dns_lookup_time_seconds{job=~\"blackbox-dns.*\"} * 1000",
           "legendFormat": "{{job}} {{instance}}",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "ms", "decimals": 1 }
+        "defaults": {
+          "unit": "ms",
+          "decimals": 1
+        }
       }
     },
     {
       "title": "Velocidade (Mbps) — teste a cada 6h",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "speedtest_download_bits_per_second / 1e6",
           "legendFormat": "download",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         },
         {
           "expr": "speedtest_upload_bits_per_second / 1e6",
           "legendFormat": "upload",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "Mbits", "decimals": 1 }
+        "defaults": {
+          "unit": "Mbits",
+          "decimals": 1
+        }
       }
     },
     {
       "title": "Uso do link eth0 (Mbps)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
-      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "targets": [
         {
           "expr": "rate(node_network_receive_bytes_total{device=\"eth0\"}[5m]) * 8 / 1e6",
           "legendFormat": "download",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         },
         {
           "expr": "rate(node_network_transmit_bytes_total{device=\"eth0\"}[5m]) * 8 / 1e6",
           "legendFormat": "upload",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          }
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "Mbits", "decimals": 1 }
+        "defaults": {
+          "unit": "Mbits",
+          "decimals": 1
+        }
       }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["internet", "homelab"],
-  "templating": { "list": [] },
-  "time": { "from": "now-24h", "to": "now" },
-  "title": "Qualidade Internet",
+  "tags": [
+    "homelab",
+    "internet",
+    "prometheus",
+    "blackbox",
+    "ping"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "title": "Internet — Qualidade e Velocidade",
   "uid": "internet-quality",
-  "version": 1
+  "version": 1,
+  "description": "Latência ICMP, perda, DNS, HTTP externo e speedtest do link do Homelab. Fontes: ping-exporter, blackbox-exporter e speedtest-exporter → Prometheus. O speedtest corre a cada ~6 h — o gráfico de Mbps fica em degraus."
 }

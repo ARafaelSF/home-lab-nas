@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Tempo offline por dispositivo. Filtra quedas em massa (reinício coordenador/HA) e totais curtos (≤ N minutos). As consultas processam apenas amostras offline para evitar timeout no Grafana.",
+  "description": "Tempo offline por dispositivo Zigbee/Wi‑Fi etc., alinhado ao sensor Dispositivos offline do Home Assistant. Filtra quedas em massa (reinício HA/coordenador) e totais curtos. Fonte: Influx Flux `device_availability`.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -18,10 +18,10 @@
       },
       "id": 1,
       "options": {
-        "content": "**Fonte:** métrica `device_availability` no Influx, mesma regra do *Dispositivos offline* no HA.\n\n**Ruído filtrado:**\n- **Queda em massa** — minutos com ≥ N dispositivos offline (reinício do HA/coordenador/Z2M) não entram no tempo.\n- **Mín. minutos** — totais ≤ esse valor contam como zero e saem do ranking.\n\nAjusta os filtros no topo. A linha do tempo continua a mostrar o sinal bruto.",
+        "content": "**O quê:** quanto tempo cada dispositivo ficou offline (mesma regra do card no HA).\n\n**Filtros:**\n- **Queda em massa** — minutos com ≥ N dispositivos offline (reinício HA/Z2M) não entram no total.\n- **Mín. minutos** — totais ≤ esse valor somem do ranking.\n\n**Fonte:** medição Influx `device_availability` (Flux no datasource HomeAssistant). No HA: subview Offline → Limpar histórico offline se precisar zerar ruído.",
         "mode": "markdown"
       },
-      "title": "Dispositivos offline — guia",
+      "title": "Sobre este dashboard",
       "type": "text"
     },
     {
@@ -378,7 +378,9 @@
     "casa",
     "offline",
     "homeassistant",
-    "disponibilidade"
+    "disponibilidade",
+    "zigbee",
+    "influxdb"
   ],
   "templating": {
     "list": [
