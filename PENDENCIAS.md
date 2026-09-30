@@ -130,3 +130,43 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 | `docs/UNIFI-RF.md` | Canais Wi-Fi × Zigbee, o que não mexer, estudo min. rate |
 | `homeassistant/REVISAO-INTEGRACOES-NOMENCLATURA.md` | Checklist nomenclatura/vínculos por integração |
 | `homeassistant/integracoes-revisao-nomenclatura.json` | Inventário bruto (2026-09-13) |
+
+## Pendências — 2026-09-30
+
+### Segurança / credenciais
+
+- Rotacionar credenciais que já ficaram expostas em histórico/diffs anteriores antes de qualquer push remoto:
+  - Grafana Basic auth/admin;
+  - usuário/senha UniFi CursorIA;
+  - senha MariaDB do Home Assistant.
+- Revisar histórico Git antes de push. Os commits locais removeram os segredos do conteúdo atual, mas os valores antigos ainda aparecem no lado removido dos diffs e devem ser tratados como expostos.
+- Avaliar permissões do `/mnt/ha-samba/secrets.yaml`: o arquivo continua efetivamente `0755` porque o mount CIFS usa `file_mode=0755,dir_mode=0755`. Correção futura exige revisar as opções de mount, sem quebrar acesso de scripts/HA.
+
+### Home Assistant
+
+- Commits locais já criados:
+  - `f0ff67b Organiza configuration.yaml em packages de sistema`
+  - `304b15b Dispara rotina Proxmox após sucesso do OneDrive`
+- Não fazer push desses commits antes da rotação das credenciais expostas.
+- Quando possível, executar validação oficial do Home Assistant `check_config` em ambiente adequado. Até agora foi feita validação YAML estática, porque o módulo Python do Home Assistant não está disponível no host.
+- Observar no próximo ciclo se o fluxo OneDrive -> webhook -> Proxmox reserva funciona sem a condição fixa de terça-feira.
+
+### Tailscale / firewall
+
+- Restam arquivos não versionados para revisar separadamente:
+  - `compose/tailscale/tailscale-subnet-firewall.service`
+  - `compose/tailscale/tailscale-subnet-firewall.sh`
+- Revisar se esses arquivos representam a solução permanente correta para o subnet router Tailscale antes de commitar.
+- Manter Tailscale/firewall em commit separado dos commits de Home Assistant.
+
+### Git
+
+- Estado esperado após os dois commits locais: apenas os arquivos Tailscale/firewall devem aparecer como untracked.
+- Não misturar no mesmo commit:
+  - organização do `configuration.yaml`;
+  - automação OneDrive/Proxmox;
+  - Tailscale/firewall.
+- Antes de push, revisar novamente:
+  - `git status --short`
+  - `git log --oneline -5`
+  - presença de segredos em diffs/histórico.
