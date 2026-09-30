@@ -6275,9 +6275,6 @@
       or ''onedrive'' in (trigger.json.job_name | default('''') | lower) }}'
   - condition: template
     value_template: '{{ trigger.json.status | default('''') == ''success'' }}'
-  - condition: time
-    weekday:
-    - tue
   - condition: state
     entity_id: input_boolean.sistema_proxmox_reserva_em_curso
     state: 'off'
