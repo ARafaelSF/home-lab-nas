@@ -1,0 +1,57 @@
+shell_command:
+  # Extrai 1 frame no tempo 1,0 s do clipe MP4 e salva como JPG
+  frame_from_clip: >-
+    ffmpeg -y -hide_banner -loglevel error
+    -ss 00:00:01 -i "{{ src }}" -frames:v 1 "{{ dst }}"
+  grafana_render_panel: >-
+    curl -sS -f {{ '--insecure' if insecure|default(false) else '' }}
+    -H "Authorization: Bearer {{ api_key }}"
+    "{{ url }}"
+    -o "{{ filename }}"
+  grafana_import_geladeira_comparativo: !secret grafana_import_geladeira_comparativo_curl
+  grafana_import_dispositivos_offline: !secret grafana_import_dispositivos_offline_curl
+  influx_repair_geladeira_z2m: python3 /config/www/repair_influx_geladeira_z2m.py
+  debug_influx_entry: python3 /config/www/debug_influx_entry.py > /config/www/debug_influx_entry.log 2>&1
+  cameras_internas_wan_allow: !secret cameras_internas_wan_allow_curl
+  cameras_internas_wan_block: !secret cameras_internas_wan_block_curl
+  docker_ops_update: !secret docker_ops_update_curl
+  docker_ops_shutdown: !secret docker_ops_shutdown_curl
+  proxmox_reserva_rotina: !secret proxmox_reserva_rotina_curl
+  proxmox_reserva_shutdown: !secret proxmox_reserva_shutdown_curl
+
+# Replica a protecção no AdGuard backup (Pi). O interruptor nativo só fala com .21.
+
+
+# Replica a protecção no AdGuard backup (Pi). O interruptor nativo só fala com .21.
+rest_command:
+  adguard_backup_protection:
+    url: http://192.168.3.22/control/protection
+    method: POST
+    username: !secret adguard_username
+    password: !secret adguard_password
+    content_type: application/json
+    verify_ssl: false
+    timeout: 8
+    payload: '{"enabled": {{ iif(is_on | bool, "true", "false") }} }'
+
+  influx_write_device_availability:
+    url: http://192.168.3.21:8086/api/v2/write?org=homelab&bucket=home_energy&precision=s
+    method: POST
+    headers:
+      Authorization: !secret influxdb_ha_write_token
+      Content-Type: text/plain; charset=utf-8
+    payload: "{{ payload }}"
+    verify_ssl: false
+    timeout: 30
+
+  # Apaga só a medição device_availability (histórico offline / Grafana).
+  influx_delete_device_availability:
+    url: http://192.168.3.21:8086/api/v2/delete?org=homelab&bucket=home_energy
+    method: POST
+    headers:
+      Authorization: !secret influxdb_ha_write_token
+      Content-Type: application/json
+    payload: >-
+      {"start":"1970-01-01T00:00:00Z","stop":"{{ utcnow().strftime('%Y-%m-%dT%H:%M:%SZ') }}","predicate":"_measurement=\"device_availability\""}
+    verify_ssl: false
+    timeout: 60
