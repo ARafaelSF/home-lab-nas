@@ -151,21 +151,10 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ### Tailscale / firewall
 
-- Restam arquivos não versionados para revisar separadamente:
-  - `compose/tailscale/tailscale-subnet-firewall.service`
-  - `compose/tailscale/tailscale-subnet-firewall.sh`
-- Revisar se esses arquivos representam a solução permanente correta para o subnet router Tailscale antes de commitar.
-- Manter Tailscale/firewall em commit separado dos commits de Home Assistant.
+- [x] Arquivos `compose/tailscale/tailscale-subnet-firewall.service` e `.sh` auditados e versionados em commit separado em 2026-10-01; sintaxe shell e unit validadas, três subnets contempladas e regras idempotentes em execuções sequenciais.
+- Validar persistência em um próximo reboot programado. Nenhum serviço foi reiniciado e nenhuma regra foi aplicada nesta auditoria. A unit já estava habilitada; a restrição nova de MASQUERADE à saída `eth0` ainda não foi aplicada ao firewall ativo.
 
 ### Git
 
-- Revisar os quatro commits locais do homelab antes de publicar; a configuração oficial do HA já foi publicada separadamente.
-- Manter os arquivos Tailscale/firewall não versionados até a revisão separada.
-- Não misturar no mesmo commit:
-  - organização do `configuration.yaml`;
-  - automação OneDrive/Proxmox;
-  - Tailscale/firewall.
-- Antes de push, revisar novamente:
-  - `git status --short`
-  - `git log --oneline -5`
-  - presença de segredos em diffs/histórico.
+- [x] Revisados os cinco commits locais preexistentes e mantida a separação entre alterações do HA e Tailscale/firewall.
+- [x] Duplicatas de configuração HA removidas do homelab; configuração oficial permanece em `home-assistant-casa` e referência de restauração revisada.
