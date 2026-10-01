@@ -145,7 +145,7 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 ### Home Assistant
 
 - [x] Configuração oficial do HA no repositório `home-assistant-casa`, sincronizada e publicada em `d9811fa` (`chore: sync Home Assistant active configuration`), incluindo as alterações de `f0ff67b` e `304b15b`.
-- Revisar `homeassistant/RESTORE.md`: as referências a `automations.yaml` e `configuration.yaml.reference` ficaram desatualizadas com a limpeza; obter a configuração oficial em `home-assistant-casa`.
+- [x] Revisado `homeassistant/RESTORE.md`: removidas as instruções de restauração dos arquivos excluídos; configuração oficial em `home-assistant-casa`, com arquivos auxiliares dependentes do homelab mantidos aqui.
 - Quando possível, executar validação oficial do Home Assistant `check_config` em ambiente adequado. Até agora foi feita validação YAML estática, porque o módulo Python do Home Assistant não está disponível no host.
 - Observar no próximo ciclo se o fluxo OneDrive -> webhook -> Proxmox reserva funciona sem a condição fixa de terça-feira.
 

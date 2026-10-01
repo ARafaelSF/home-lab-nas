@@ -1,14 +1,14 @@
-# Home Assistant — espelho de segurança
+# Home Assistant — restauração e arquivos auxiliares
 
-Cópia de referência dos YAML críticos (sem `secrets.yaml`).
+A configuração oficial do Home Assistant é mantida no repositório separado `home-assistant-casa`. `/root/homelab` não é mais o espelho da configuração principal do HA.
 
 ## Restaurar no HA (`/config`)
 
-1. Copiar `automations.yaml`, `scripts.yaml` e `blueprints/automation/Antonio/*` para `/config`.
-2. `configuration.yaml.reference` é **sanitizado** (senhas removidas) — usar só como guia; o vivo tem `secrets` e passwords reais.
+1. Obter a configuração oficial no repositório `home-assistant-casa` e seguir as instruções de restauração de lá para `/config`.
+2. Restaurar as credenciais a partir do backup seguro correspondente (`secrets.yaml` não é mantido aqui).
 3. Garantir pastas: `themes/`, `packages/`.
 4. Em Developer Tools → YAML → Check configuration → Reiniciar.
 
 ## Porque isto existe
 
-Edições via Samba/CIFS a partir do Cursor podem apagar ficheiros no save. Este espelho no GitHub `home-lab-nas` serve para recuperar.
+Arquivos auxiliares do HA que tenham dependência real do homelab podem continuar neste repositório; a restauração da configuração principal deve usar `home-assistant-casa`.
