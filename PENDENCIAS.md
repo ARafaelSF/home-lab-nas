@@ -144,10 +144,8 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ### Home Assistant
 
-- Commits locais já criados:
-  - `f0ff67b Organiza configuration.yaml em packages de sistema`
-  - `304b15b Dispara rotina Proxmox após sucesso do OneDrive`
-- Não fazer push desses commits antes da rotação das credenciais expostas.
+- [x] Configuração oficial do HA no repositório `home-assistant-casa`, sincronizada e publicada em `d9811fa` (`chore: sync Home Assistant active configuration`), incluindo as alterações de `f0ff67b` e `304b15b`.
+- Revisar `homeassistant/RESTORE.md`: as referências a `automations.yaml` e `configuration.yaml.reference` ficaram desatualizadas com a limpeza; obter a configuração oficial em `home-assistant-casa`.
 - Quando possível, executar validação oficial do Home Assistant `check_config` em ambiente adequado. Até agora foi feita validação YAML estática, porque o módulo Python do Home Assistant não está disponível no host.
 - Observar no próximo ciclo se o fluxo OneDrive -> webhook -> Proxmox reserva funciona sem a condição fixa de terça-feira.
 
@@ -161,7 +159,8 @@ Só o que **ainda falta**. Quando concluir, apague o item ou marque `[x]`.
 
 ### Git
 
-- Estado esperado após os dois commits locais: apenas os arquivos Tailscale/firewall devem aparecer como untracked.
+- Revisar os quatro commits locais do homelab antes de publicar; a configuração oficial do HA já foi publicada separadamente.
+- Manter os arquivos Tailscale/firewall não versionados até a revisão separada.
 - Não misturar no mesmo commit:
   - organização do `configuration.yaml`;
   - automação OneDrive/Proxmox;

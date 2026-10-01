@@ -1,3 +1,0 @@
-shell_command:
-  grafana_import_geladeira_comparativo: !secret grafana_import_geladeira_comparativo_curl
-  grafana_import_dispositivos_offline: !secret grafana_import_dispositivos_offline_curl
