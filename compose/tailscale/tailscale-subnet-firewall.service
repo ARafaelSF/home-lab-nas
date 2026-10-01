@@ -1,0 +1,12 @@
+[Unit]
+Description=Persistent Tailscale subnet-router firewall rules
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/root/homelab/compose/tailscale/tailscale-subnet-firewall.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
