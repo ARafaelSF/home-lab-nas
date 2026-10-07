@@ -131,6 +131,12 @@ stop_progress_loop() {
 }
 
 mkdir -p "$STATUS_LOCAL_DIR"
+LOCK_FILE="/run/lock/homelab-pbs-rotina-semanal.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "ERRO: já existe uma rotina semanal em execução (lock: $LOCK_FILE)" >&2
+  exit 75
+fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
 STATUS_JSON="${STATUS_LOCAL_DIR}/pbs-rotina-semanal-status.json"
 LOG_LOCAL="${STATUS_LOCAL_DIR}/pbs-rotina-semanal-${STAMP}.log"
@@ -309,6 +315,43 @@ LOG=${LOG_DIR_REMOTE}/pbs-rotina-restore-${STAMP}.log
 ln -sfn "\$LOG" ${LOG_DIR_REMOTE}/pbs-rotina-restore-latest.log
 echo "=== restore start \$(date -Is) ===" | tee -a "\$LOG"
 
+precheck_vm() {
+  local vmid="\$1" cfg
+  if qm status "\$vmid" >/dev/null 2>&1; then
+    cfg="\$(qm config "\$vmid" 2>/dev/null || true)"
+    if grep -q '^lock:' <<<"\$cfg"; then
+      echo "ERRO precheck VM \$vmid: lock existente (\$(grep '^lock:' <<<"\$cfg"))" | tee -a "\$LOG"
+      return 75
+    fi
+  fi
+  if pgrep -af "(qmrestore|pbs-restore|vma|qemu-img).*\b\$vmid\b" >/dev/null 2>&1; then
+    echo "ERRO precheck VM \$vmid: processo de restauração já ativo" | tee -a "\$LOG"
+    return 75
+  fi
+}
+
+restore_vm() {
+  local vmid="\$1" source="\$2" rc cfg state
+  precheck_vm "\$vmid"
+  echo "START restore vmid=\$vmid source=\$source" | tee -a "\$LOG"
+  set +e
+  qmrestore "\$source" "\$vmid" --storage local-lvm --force 1 --start 0 2>&1 | tee -a "\$LOG"
+  rc=\${PIPESTATUS[0]}
+  set -e
+  if [[ "\$rc" -ne 0 ]]; then
+    echo "ERROR restore vmid=\$vmid exit_code=\$rc" | tee -a "\$LOG"
+    return "\$rc"
+  fi
+  cfg=\$(qm config "\$vmid")
+  state=\$(qm status "\$vmid" | awk '{print \$2}')
+  if grep -q '^lock:' <<<"\$cfg" || [[ "\$state" != "stopped" ]] || ! grep -Eq '^(scsi|sata|virtio|ide|efidisk)[0-9]*:' <<<"\$cfg"; then
+    echo "ERROR validate vmid=\$vmid state=\$state lock=\$(grep '^lock:' <<<"\$cfg" || true) disks=\$(grep -Ec '^(scsi|sata|virtio|ide|efidisk)[0-9]*:' <<<"\$cfg")" | tee -a "\$LOG"
+    return 1
+  fi
+  echo "VALIDATE vmid=\$vmid state=stopped lock=none disks=present" | tee -a "\$LOG"
+  echo "END restore vmid=\$vmid exit_code=0" | tee -a "\$LOG"
+}
+
 for vmid in 101 100; do
   if qm status "\$vmid" >/dev/null 2>&1; then
     state=\$(qm status "\$vmid" | awk '{print \$2}')
@@ -319,13 +362,20 @@ for vmid in 101 100; do
   fi
 done
 
-echo "=== restore 101 from ${v101} ===" | tee -a "\$LOG"
-qmrestore "${v101}" 101 --storage local-lvm --force 1 --start 0 2>&1 | tee -a "\$LOG"
-echo "=== restore 100 from ${v100} ===" | tee -a "\$LOG"
-qmrestore "${v100}" 100 --storage local-lvm --force 1 --start 0 2>&1 | tee -a "\$LOG"
+restore_vm 101 "${v101}"
+restore_vm 100 "${v100}"
 
 for vmid in 100 101; do
   qm set "\$vmid" --onboot 0
+  cfg=\$(qm config "\$vmid")
+  if grep -q '^lock:' <<<"\$cfg"; then
+    echo "VM \$vmid ainda possui lock após restore" | tee -a "\$LOG"
+    exit 1
+  fi
+  grep -Eq '^(scsi|sata|virtio|ide|efidisk)[0-9]*:' <<<"\$cfg" || {
+    echo "VM \$vmid sem disco configurado após restore" | tee -a "\$LOG"
+    exit 1
+  }
   state=\$(qm status "\$vmid" | awk '{print \$2}')
   echo "VM \$vmid state=\$state onboot=\$(qm config \$vmid | awk -F': ' '/^onboot/{print \$2}')" | tee -a "\$LOG"
   [[ "\$state" == "stopped" ]] || { echo "VM \$vmid não está stopped" >&2; exit 1; }
