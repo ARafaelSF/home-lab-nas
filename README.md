@@ -112,6 +112,10 @@ Guia completo em português: [`scripts/container-ops/GUIA.md`](scripts/container
 | **Acesso público** | Cloudflare Tunnel + NPM (HTTPS) |
 | **Tailscale** | Subnet router `192.168.3.0/24`, `192.168.68.0/24`, `192.168.2.0/24` |
 
+### Acesso administrativo via Codex/Windows
+
+O acesso SSH administrativo a este HomeLab a partir da estação Codex/Windows depende do Tailscale estar ativo na estação administrativa. O alias SSH utilizado é `LAB-NAS`, apontando para `192.168.3.21:22` com o usuário configurado localmente. Esta dependência é necessária para o acesso remoto; não inclui credenciais ou chaves no repositório.
+
 **Tarefas pendentes:** [`PENDENCIAS.md`](PENDENCIAS.md) — na raiz do servidor: `/root/homelab-pendencias.md` (symlink).
 
 **Guia completo (replicar tudo):** [`docs/SERVIDOR-HOMELAB.md`](docs/SERVIDOR-HOMELAB.md) — VM Proxmox, stacks, NPM, Cloudflare, AdGuard split DNS, Duplicati, HA.

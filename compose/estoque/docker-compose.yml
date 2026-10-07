@@ -72,6 +72,7 @@ services:
         homelab: /root/homelab/compose/estoque
       args:
         VITE_API_URL: /
+        BUILD_ID: ${BUILD_ID:-}
     image: homelab/estoque-web:local
     container_name: estoque-web
     labels:
