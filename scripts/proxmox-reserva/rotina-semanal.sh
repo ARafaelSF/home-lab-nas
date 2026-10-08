@@ -248,6 +248,16 @@ wait_reserva_up() {
   die "reserva não ficou online a tempo (ping/PBS/SSH)"
 }
 
+assert_reserva_safe_for_restore() {
+  log "preflight obrigatório antes do restore"
+  if [[ ! -x "${SCRIPT_DIR}/prepare-reserva.sh" ]]; then
+    die "preflight ausente ou sem permissão de execução: ${SCRIPT_DIR}/prepare-reserva.sh"
+  fi
+  PRIMARY_SSH="$PRIMARY_SSH" RESERVA_SSH="$RESERVA_SSH" ALLOW_REBUILD=1 \
+    PBS_PRIMARY="$PBS_STORAGE_PRIMARY" PBS_RESERVA="$PBS_STORAGE_RESERVA" \
+    "${SCRIPT_DIR}/prepare-reserva.sh" || die "preflight da reserva falhou; restore bloqueado"
+}
+
 check_only() {
   log "=== check ==="
   ssh_p 'hostname; qm list; pvesm status | grep -E "pbs-reserva|Name"'
@@ -328,6 +338,11 @@ precheck_vm() {
     echo "ERRO precheck VM \$vmid: processo de restauração já ativo" | tee -a "\$LOG"
     return 75
   fi
+    if [[ "\$(qm status \"\$vmid\" | awk '{print \$2}')" != "stopped" ]]; then
+    echo "ERRO precheck VM \$vmid: VM não está stopped" | tee -a "\$LOG"
+    return 75
+    fi
+  fi
 }
 
 restore_vm() {
@@ -335,7 +350,7 @@ restore_vm() {
   precheck_vm "\$vmid"
   echo "START restore vmid=\$vmid source=\$source" | tee -a "\$LOG"
   set +e
-  qmrestore "\$source" "\$vmid" --storage local-lvm --force 1 --start 0 2>&1 | tee -a "\$LOG"
+  qmrestore "\$source" "\$vmid" --storage local-lvm --start 0 2>&1 | tee -a "\$LOG"
   rc=\${PIPESTATUS[0]}
   set -e
   if [[ "\$rc" -ne 0 ]]; then
@@ -348,19 +363,13 @@ restore_vm() {
     echo "ERROR validate vmid=\$vmid state=\$state lock=\$(grep '^lock:' <<<"\$cfg" || true) disks=\$(grep -Ec '^(scsi|sata|virtio|ide|efidisk)[0-9]*:' <<<"\$cfg")" | tee -a "\$LOG"
     return 1
   fi
+  if ! grep -Eq '^net[0-9]+:' <<<"\$cfg" || grep -E '^net[0-9]+:' <<<"\$cfg" | grep -v ',link_down=1' >/dev/null; then
+    echo "ERROR validate vmid=\$vmid rede não está isolada com link_down=1 após qmrestore" | tee -a "\$LOG"
+    return 1
+  fi
   echo "VALIDATE vmid=\$vmid state=stopped lock=none disks=present" | tee -a "\$LOG"
   echo "END restore vmid=\$vmid exit_code=0" | tee -a "\$LOG"
 }
-
-for vmid in 101 100; do
-  if qm status "\$vmid" >/dev/null 2>&1; then
-    state=\$(qm status "\$vmid" | awk '{print \$2}')
-    if [[ "\$state" != "stopped" ]]; then
-      echo "a parar VM \$vmid (\$state)" | tee -a "\$LOG"
-      qm stop "\$vmid" --timeout 120 || qm stop "\$vmid" --skiplock || true
-    fi
-  fi
-done
 
 restore_vm 101 "${v101}"
 restore_vm 100 "${v100}"
@@ -392,13 +401,16 @@ shutdown_reserva() {
   ssh_r 'shutdown -h now' || true
   local i
   for i in $(seq 1 36); do
-    if ! ping -c1 -W2 "$RESERVA_IP" >/dev/null 2>&1; then
-      log "reserva offline (pode cortar a tomada)"
+    if ! ping -c1 -W2 "$RESERVA_IP" >/dev/null 2>&1 \
+      && ! ssh_r 'true' >/dev/null 2>&1 \
+      && ! curl -sk --connect-timeout 2 -o /dev/null "https://${RESERVA_IP}:8006/"; then
+      log "reserva sem ping, SSH e API HTTPS; desligamento de host confirmado por múltiplos sinais"
       return 0
     fi
     sleep 5
   done
-  log "AVISO: reserva ainda responde ao ping após shutdown"
+  log "AVISO: não houve confirmação multi-sinal do desligamento do host; não cortar energia"
+  return 1
 }
 
 trap 'stop_progress_loop' EXIT
@@ -430,7 +442,10 @@ ssh_p "pvesm status | grep -q '${PBS_STORAGE_PRIMARY}.*active'" \
   || die "storage ${PBS_STORAGE_PRIMARY} inativo no principal"
 
 [[ "$DO_BACKUP" -eq 1 ]] && run_backup
-[[ "$DO_RESTORE" -eq 1 ]] && run_restore
+if [[ "$DO_RESTORE" -eq 1 ]]; then
+  assert_reserva_safe_for_restore
+  run_restore
+fi
 
 RESULT_OK=1
 stop_progress_loop
