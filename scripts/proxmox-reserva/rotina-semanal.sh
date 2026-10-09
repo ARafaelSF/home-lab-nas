@@ -405,14 +405,37 @@ try:
     node = subprocess.check_output(["hostname"], text=True).strip()
     tasks = json.loads(subprocess.check_output(["pvesh", "get", f"/nodes/{node}/tasks", "--output-format", "json"], text=True))
     critical = {"qmrestore", "vzdump", "vma", "pbs-restore"}
-    if any(t.get("type") in critical and t.get("status") not in {"OK", "ERROR", "STOPPED", "stopped"} for t in tasks):
-        raise SystemExit("critical_task_active")
-    vms = json.loads(subprocess.check_output(["qm", "list", "--output-format", "json"], text=True))
-    states = {int(vm["vmid"]): vm.get("status") for vm in vms}
+    terminal = {"OK", "ERROR", "STOPPED", "stopped", "failed"}
+    active = []
+    for task in tasks:
+        if task.get("type") not in critical:
+            continue
+        status = str(task.get("status") or "").strip()
+        # The task endpoint includes historical tasks. An endtime is the
+        # authoritative indication that the task is no longer active.
+        if task.get("endtime") or status in terminal:
+            continue
+        active.append({"type": task.get("type"), "upid": task.get("upid"), "status": status or "unknown"})
+    if active:
+        print("critical_task_active " + json.dumps(active, sort_keys=True), file=sys.stderr)
+        raise SystemExit(1)
+    states = {}
+    for vmid in (100, 101):
+        output = subprocess.check_output(["qm", "status", str(vmid)], text=True).strip()
+        if not output.startswith("status:"):
+            raise SystemExit(f"vm_status_unknown:{vmid}:{output}")
+        states[vmid] = output.split(":", 1)[1].strip()
     if any(states.get(vmid) != "stopped" for vmid in (100, 101)):
-        raise SystemExit("vm_not_stopped")
-    if subprocess.run(["pgrep", "-af", "(qmrestore|vzdump|pbs-restore|vma)"], capture_output=True, text=True).stdout.strip():
-        raise SystemExit("critical_process_active")
+        print("vm_not_stopped " + json.dumps(states, sort_keys=True), file=sys.stderr)
+        raise SystemExit(1)
+    processes = []
+    for proc in ("qmrestore", "vzdump", "pbs-restore", "vma"):
+        result = subprocess.run(["pgrep", "-x", proc], capture_output=True, text=True)
+        if result.returncode == 0:
+            processes.append(proc)
+    if processes:
+        print("critical_process_active " + json.dumps(processes), file=sys.stderr)
+        raise SystemExit(1)
     # Shutdown-only may drain a stopped VM with a historical lock.
     # Backup/restore preflights retain their stricter lock policy elsewhere.
 except Exception as exc:

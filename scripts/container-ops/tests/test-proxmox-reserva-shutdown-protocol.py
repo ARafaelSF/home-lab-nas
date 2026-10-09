@@ -79,6 +79,19 @@ class ShutdownProtocolTests(unittest.TestCase):
         self.assertIn('"error": "busy"', self.listener)
         self.assertIn('"reserva_shutdown_pending": _reserva_shutdown_pending', self.listener)
 
+    def test_preflight_uses_endtime_and_qm_status_without_json_qm_list(self):
+        self.assertIn('task.get("endtime")', self.routine)
+        self.assertIn('["qm", "status", str(vmid)]', self.routine)
+        self.assertNotIn('["qm", "list", "--output-format", "json"]', self.routine)
+
+    def test_preflight_logs_blocking_task_identity(self):
+        self.assertIn('"type": task.get("type")', self.routine)
+        self.assertIn('"upid": task.get("upid")', self.routine)
+        self.assertIn('"status": status or "unknown"', self.routine)
+
+    def test_process_check_avoids_self_matching_pgrep(self):
+        self.assertIn('subprocess.run(["pgrep", "-x", proc]', self.routine)
+
     def test_supplied_uuid_is_reused_without_changes(self):
         module = load_listener_module()
         request_id = str(uuid.uuid4())
