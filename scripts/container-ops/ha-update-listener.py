@@ -409,6 +409,76 @@ def run_reserva_shutdown(request_id: str) -> None:
         log("reserva shutdown: livre")
 
 
+def notify_reserva_shutdown_result(request_id: str, status: str, message: str) -> None:
+    """Send a correlated terminal result without authorizing a power cut."""
+    if not HA_RESERVA_SHUTDOWN_WEBHOOK:
+        log(f"backup-only request_id={request_id} status={status} webhook shutdown ausente")
+        return
+    data = json.dumps(
+        {
+            "source": "homelab-proxmox-reserva",
+            "request_id": request_id,
+            "started_at": __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds"),
+            "observed_at": __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds"),
+            "status": status,
+            "message": message[:1500],
+        }
+    ).encode()
+    req = urllib.request.Request(
+        HA_RESERVA_SHUTDOWN_WEBHOOK,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            log(f"backup-only request_id={request_id} terminal_event={status} webhook_http={response.status}")
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        log(f"backup-only request_id={request_id} webhook falhou: {exc}")
+
+
+def run_reserva_backup_only(request_id: str) -> None:
+    """Run backup-only, then reuse the validated shutdown path."""
+    global _reserva_pending, _reserva_shutdown_pending
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOG_DIR / "ha-proxmox-reserva-backup-only-last.log"
+    cmd = [RESERVA_SH, "--backup-only"]
+    env = os.environ.copy()
+    env["NOTIFY_HA"] = "1"
+    log(f"a correr backup-only request_id={request_id}: {' '.join(cmd)}")
+    try:
+        with log_path.open("w") as fh:
+            proc = subprocess.run(
+                cmd, stdout=fh, stderr=subprocess.STDOUT, text=True,
+                timeout=43200, check=False, env=env,
+            )
+        text = log_path.read_text(errors="replace")
+        if proc.returncode != 0 or "rotina semanal OK" not in text or "=== backup end" not in text:
+            message = f"Backup-only falhou (código {proc.returncode})."
+            log(f"backup-only request_id={request_id} status=failed code={proc.returncode}")
+            notify_reserva(False, message + "\n" + text[-1500:])
+            notify_reserva_shutdown_result(request_id, "failed", message)
+            return
+        log(f"backup-only request_id={request_id} status=success; iniciando shutdown seguro")
+        with _lock:
+            _reserva_shutdown_pending = True
+        run_reserva_shutdown(request_id)
+    except subprocess.TimeoutExpired:
+        message = "Backup-only excedeu 12 horas; shutdown não iniciado."
+        log(f"backup-only request_id={request_id} status=failed timeout")
+        notify_reserva(False, message)
+        notify_reserva_shutdown_result(request_id, "failed", message)
+    except OSError as exc:
+        message = f"Falha ao iniciar backup-only: {exc}"
+        log(f"backup-only request_id={request_id} status=failed start_error")
+        notify_reserva(False, message)
+        notify_reserva_shutdown_result(request_id, "failed", message)
+    finally:
+        with _lock:
+            _reserva_pending = False
+        log("backup-only: livre")
+
+
 def resolve_shutdown_request_id(payload: dict) -> str:
     """Return the caller's UUID or generate one for backward compatibility."""
     if "request_id" not in payload:
@@ -539,6 +609,7 @@ class Handler(BaseHTTPRequestHandler):
             "/update",
             "/shutdown",
             "/proxmox-reserva",
+            "/proxmox-reserva-backup-only",
             "/proxmox-reserva-shutdown",
         }:
             json_bytes({"error": "not found"}, 404, self)
@@ -589,6 +660,46 @@ class Handler(BaseHTTPRequestHandler):
             threading.Thread(target=run_reserva_shutdown, args=(request_id,), daemon=True).start()
             json_bytes(
                 {"accepted": True, "action": "proxmox-reserva-shutdown", "request_id": request_id}, 202, self
+            )
+            return
+
+        if path == "/proxmox-reserva-backup-only":
+            confirm = str(payload.get("confirm") or "").strip()
+            if confirm != SHUTDOWN_CONFIRM:
+                json_bytes({"error": "confirmacao invalida"}, 400, self)
+                return
+            try:
+                request_id = resolve_shutdown_request_id(payload)
+            except ValueError as exc:
+                json_bytes({"error": str(exc)}, 400, self)
+                return
+            with _lock:
+                if _reserva_pending or _reserva_shutdown_pending:
+                    json_bytes(
+                        {
+                            "error": "busy",
+                            "reserva_pending": _reserva_pending,
+                            "reserva_shutdown_pending": _reserva_shutdown_pending,
+                        },
+                        409,
+                        self,
+                    )
+                    return
+                _reserva_pending = True
+            threading.Thread(
+                target=run_reserva_backup_only,
+                args=(request_id,),
+                daemon=True,
+            ).start()
+            json_bytes(
+                {
+                    "accepted": True,
+                    "action": "proxmox-reserva-backup-only",
+                    "request_id": request_id,
+                    "completion": "shutdown_unreachable_stable",
+                },
+                202,
+                self,
             )
             return
 

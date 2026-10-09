@@ -102,6 +102,25 @@ class ShutdownProtocolTests(unittest.TestCase):
         shutdown_section = self.routine.split("shutdown_reserva()", 1)[1]
         self.assertIn("ssh_r", shutdown_section)
 
+    def test_backup_only_endpoint_and_command_never_use_restore(self):
+        self.assertIn('"/proxmox-reserva-backup-only"', self.listener)
+        self.assertIn('cmd = [RESERVA_SH, "--backup-only"]', self.listener)
+        backup_section = self.listener.split("def run_reserva_backup_only", 1)[1]
+        self.assertNotIn('"--shutdown-reserva"', backup_section.split("def resolve_shutdown_request_id", 1)[0])
+        self.assertNotIn("qmrestore", backup_section.split("def resolve_shutdown_request_id", 1)[0])
+
+    def test_backup_only_requires_confirmation_uuid_and_busy_lock(self):
+        section = self.listener.split('if path == "/proxmox-reserva-backup-only":', 1)[1]
+        section = section.split('if path == "/proxmox-reserva":', 1)[0]
+        self.assertIn('confirm != SHUTDOWN_CONFIRM', section)
+        self.assertIn('resolve_shutdown_request_id(payload)', section)
+        self.assertIn('if _reserva_pending or _reserva_shutdown_pending:', section)
+        self.assertIn('"completion": "shutdown_unreachable_stable"', section)
+
+    def test_backup_only_failure_emits_terminal_failed_event(self):
+        self.assertIn('notify_reserva_shutdown_result(request_id, "failed"', self.listener)
+        self.assertIn('shutdown seguro', self.listener)
+
     def test_supplied_uuid_is_reused_without_changes(self):
         module = load_listener_module()
         request_id = str(uuid.uuid4())
