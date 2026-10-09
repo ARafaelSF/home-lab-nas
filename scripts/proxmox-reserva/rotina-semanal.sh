@@ -399,9 +399,14 @@ EOS
 }
 
 validate_shutdown_preflight() {
-  ssh_r 'python3 - <<'"'"'PY'"'"'
+  ssh_r 'python3 - '"$RESERVA_IP"' <<'"'"'PY'"'"'
 import json, subprocess, sys
 try:
+    expected_ip = sys.argv[1]
+    hostname = subprocess.check_output(["hostname"], text=True).strip()
+    addresses = subprocess.check_output(["hostname", "-I"], text=True).split()
+    if hostname != "proxmox-backup" or expected_ip not in addresses:
+        raise SystemExit(f"reservation_identity_mismatch:hostname={hostname}:addresses={addresses}")
     node = subprocess.check_output(["hostname"], text=True).strip()
     tasks = json.loads(subprocess.check_output(["pvesh", "get", f"/nodes/{node}/tasks", "--output-format", "json"], text=True))
     critical = {"qmrestore", "vzdump", "vma", "pbs-restore"}

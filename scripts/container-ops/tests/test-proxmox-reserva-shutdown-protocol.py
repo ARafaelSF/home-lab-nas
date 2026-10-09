@@ -92,6 +92,16 @@ class ShutdownProtocolTests(unittest.TestCase):
     def test_process_check_avoids_self_matching_pgrep(self):
         self.assertIn('subprocess.run(["pgrep", "-x", proc]', self.routine)
 
+    def test_shutdown_preflight_verifies_reservation_identity(self):
+        self.assertIn('hostname != "proxmox-backup"', self.routine)
+        self.assertIn('reservation_identity_mismatch', self.routine)
+        self.assertIn('expected_ip not in addresses', self.routine)
+
+    def test_shutdown_uses_reservation_ssh_alias(self):
+        self.assertIn('RESERVA_SSH="${RESERVA_SSH:-proxmox-reserva}"', self.routine)
+        shutdown_section = self.routine.split("shutdown_reserva()", 1)[1]
+        self.assertIn("ssh_r", shutdown_section)
+
     def test_supplied_uuid_is_reused_without_changes(self):
         module = load_listener_module()
         request_id = str(uuid.uuid4())
