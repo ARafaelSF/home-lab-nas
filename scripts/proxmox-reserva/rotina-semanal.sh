@@ -37,6 +37,8 @@ STATUS_LOCAL_DIR="${STATUS_LOCAL_DIR:-/var/log/homelab}"
 NOTES_TEMPLATE='semanal-{{guestname}}-{{vmid}}'
 HA_WEBHOOK_URL="${HA_WEBHOOK_URL:-http://192.168.3.10:8123/api/webhook/duplicati_backup_result}"
 NOTIFY_HA="${NOTIFY_HA:-1}"
+HA_SHUTDOWN_RESERVA_URL="${HA_SHUTDOWN_RESERVA_URL:-}"
+SHUTDOWN_REQUEST_ID="${SHUTDOWN_REQUEST_ID:-}"
 # Também notifica o webhook dedicado (Telegram / tomada) se distinto
 HA_WEBHOOK_RESERVA_URL="${HA_WEBHOOK_RESERVA_URL:-http://192.168.3.10:8123/api/webhook/proxmox_reserva_backup_result}"
 
@@ -52,7 +54,7 @@ for arg in "$@"; do
     --backup-only) DO_RESTORE=0 ;;
     --restore-only) DO_BACKUP=0 ;;
     --shutdown-reserva) DO_SHUTDOWN=1 ;;
-    --shutdown-only) SHUTDOWN_ONLY=1; DO_BACKUP=0; DO_RESTORE=0; DO_CHECK=0; DO_SHUTDOWN=1; NOTIFY_HA=0 ;;
+    --shutdown-only) SHUTDOWN_ONLY=1; DO_BACKUP=0; DO_RESTORE=0; DO_CHECK=0; DO_SHUTDOWN=1 ;;
     -h|--help)
       sed -n '2,15p' "$0"
       exit 0
@@ -396,21 +398,81 @@ EOS
   log "restore OK — VMs 100/101 paradas, onboot=0"
 }
 
+validate_shutdown_preflight() {
+  ssh_r 'python3 - <<'"'"'PY'"'"'
+import json, subprocess, sys
+try:
+    node = subprocess.check_output(["hostname"], text=True).strip()
+    tasks = json.loads(subprocess.check_output(["pvesh", "get", f"/nodes/{node}/tasks", "--output-format", "json"], text=True))
+    critical = {"qmrestore", "vzdump", "vma", "pbs-restore"}
+    if any(t.get("type") in critical and t.get("status") not in {"OK", "ERROR", "STOPPED", "stopped"} for t in tasks):
+        raise SystemExit("critical_task_active")
+    vms = json.loads(subprocess.check_output(["qm", "list", "--output-format", "json"], text=True))
+    states = {int(vm["vmid"]): vm.get("status") for vm in vms}
+    if any(states.get(vmid) != "stopped" for vmid in (100, 101)):
+        raise SystemExit("vm_not_stopped")
+    if subprocess.run(["pgrep", "-af", "(qmrestore|vzdump|pbs-restore|vma)"], capture_output=True, text=True).stdout.strip():
+        raise SystemExit("critical_process_active")
+    # Shutdown-only may drain a stopped VM with a historical lock.
+    # Backup/restore preflights retain their stricter lock policy elsewhere.
+except Exception as exc:
+    print(str(exc), file=sys.stderr)
+    raise SystemExit(1)
+PY'
+}
+
 shutdown_reserva() {
-  log "a desligar a reserva (shutdown -h now)…"
-  ssh_r 'shutdown -h now' || true
+  local request_id="${SHUTDOWN_REQUEST_ID:-manual-$(date +%s)}"
+  if ! validate_shutdown_preflight; then
+    log "shutdown request_id=$request_id status=failed reason=preflight"
+    notify_shutdown_event "$request_id" "failed" "Preflight bloqueou o shutdown."
+    return 1
+  fi
+  log "shutdown request_id=$request_id status=shutdown_requested"
+  if ! ssh_r 'shutdown -h now'; then
+    notify_shutdown_event "$request_id" "failed" "O comando de shutdown gracioso não foi aceito pelo host."
+    return 1
+  fi
+  notify_shutdown_event "$request_id" "shutdown_requested" "Shutdown gracioso aceito; encerramento ainda não confirmado."
   local i
   for i in $(seq 1 36); do
     if ! ping -c1 -W2 "$RESERVA_IP" >/dev/null 2>&1 \
       && ! ssh_r 'true' >/dev/null 2>&1 \
       && ! curl -sk --connect-timeout 2 -o /dev/null "https://${RESERVA_IP}:8006/"; then
-      log "reserva sem ping, SSH e API HTTPS; desligamento de host confirmado por múltiplos sinais"
+      log "shutdown request_id=$request_id status=shutdown_unreachable_first"
+      notify_shutdown_event "$request_id" "shutdown_unreachable_first" "O host ficou inacessível; aguardando 120 segundos para confirmar a indisponibilidade."
+      sleep 120
+      if ping -c1 -W2 "$RESERVA_IP" >/dev/null 2>&1 \
+        || ssh_r 'true' >/dev/null 2>&1 \
+        || curl -sk --connect-timeout 2 -o /dev/null "https://${RESERVA_IP}:8006/"; then
+        log "shutdown request_id=$request_id status=unknown host voltou a responder"
+        notify_shutdown_event "$request_id" "unknown" "O host voltou a responder durante a janela de confirmação; corte não autorizado."
+        return 1
+      fi
+      log "shutdown request_id=$request_id status=shutdown_unreachable_stable"
+      notify_shutdown_event "$request_id" "shutdown_unreachable_stable" "O host permaneceu inacessível após a janela adicional de 120 segundos; confirmação operacional de indisponibilidade."
       return 0
     fi
     sleep 5
   done
-  log "AVISO: não houve confirmação multi-sinal do desligamento do host; não cortar energia"
+  log "shutdown request_id=$request_id status=unknown host_ainda_acessivel"
+  notify_shutdown_event "$request_id" "unknown" "O host não ficou inacessível dentro da janela; não há confirmação de encerramento."
   return 1
+}
+
+notify_shutdown_event() {
+  local request_id="$1" status="$2" message="$3" now
+  now="$(date -Is)"
+  log "shutdown_event request_id=$request_id observed_at=$now status=$status"
+  [[ -z "$HA_SHUTDOWN_RESERVA_URL" ]] && return 0
+  python3 - "$HA_SHUTDOWN_RESERVA_URL" "$request_id" "${STARTED_AT:-$now}" "$now" "$status" "$message" <<'PY' || log "AVISO: webhook shutdown reserva falhou"
+import json, sys, urllib.request
+url, request_id, started, observed, status, message = sys.argv[1:]
+payload = {"source": "homelab-proxmox-reserva", "request_id": request_id, "started_at": started, "observed_at": observed, "status": status, "message": message[:1500]}
+req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}, method="POST")
+with urllib.request.urlopen(req, timeout=20) as response:
+    print(f"shutdown webhook HTTP {response.status}")
+PY
 }
 
 trap 'stop_progress_loop' EXIT

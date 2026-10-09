@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import threading
+import uuid
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -31,6 +32,7 @@ HA_RESERVA_WEBHOOK = os.environ.get(
     "HA_RESERVA_WEBHOOK_URL",
     "http://192.168.3.10:8123/api/webhook/proxmox_reserva_backup_result",
 )
+HA_RESERVA_SHUTDOWN_WEBHOOK = os.environ.get("HA_RESERVA_SHUTDOWN_WEBHOOK_URL", "")
 RESERVA_SH = os.environ.get(
     "PROXMOX_RESERVA_SH",
     "/root/homelab/scripts/proxmox-reserva/rotina-semanal.sh",
@@ -317,7 +319,7 @@ def notify_reserva(ok: bool, message: str, status: str | None = None) -> None:
         log(f"webhook reserva HA falhou: {exc}")
 
 
-def run_reserva() -> None:
+def run_reserva(request_id: str) -> None:
     global _reserva_pending
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_path = LOG_DIR / "ha-proxmox-reserva-last.log"
@@ -325,6 +327,7 @@ def run_reserva() -> None:
     # O script já notifica o HA; o listener só garante aviso se o processo rebentar.
     env = os.environ.copy()
     env["NOTIFY_HA"] = "1"
+    env["SHUTDOWN_REQUEST_ID"] = request_id
     log(f"a correr: {' '.join(cmd)}")
     try:
         with log_path.open("w") as fh:
@@ -373,14 +376,16 @@ def run_reserva() -> None:
         log("reserva: livre")
 
 
-def run_reserva_shutdown() -> None:
+def run_reserva_shutdown(request_id: str) -> None:
     """Desliga só o host Proxmox reserva (sem backup/restore)."""
     global _reserva_shutdown_pending
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_path = LOG_DIR / "ha-proxmox-reserva-shutdown-last.log"
     cmd = [RESERVA_SH, "--shutdown-only"]
     env = os.environ.copy()
-    env["NOTIFY_HA"] = "0"
+    env["NOTIFY_HA"] = "1"
+    env["SHUTDOWN_REQUEST_ID"] = request_id
+    env["HA_SHUTDOWN_RESERVA_URL"] = HA_RESERVA_SHUTDOWN_WEBHOOK
     log(f"a correr: {' '.join(cmd)}")
     try:
         with log_path.open("w") as fh:
@@ -393,15 +398,29 @@ def run_reserva_shutdown() -> None:
                 check=False,
                 env=env,
             )
-        log(f"reserva shutdown terminou code={proc.returncode}")
+        log(f"reserva shutdown request_id={request_id} terminou code={proc.returncode}")
     except subprocess.TimeoutExpired:
-        log("reserva shutdown: timeout 5 min")
+        log(f"reserva shutdown request_id={request_id}: timeout 5 min")
     except OSError as exc:
-        log(f"reserva shutdown: falha ao iniciar: {exc}")
+        log(f"reserva shutdown request_id={request_id}: falha ao iniciar: {exc}")
     finally:
         with _lock:
             _reserva_shutdown_pending = False
         log("reserva shutdown: livre")
+
+
+def resolve_shutdown_request_id(payload: dict) -> str:
+    """Return the caller's UUID or generate one for backward compatibility."""
+    if "request_id" not in payload:
+        return str(uuid.uuid4())
+    request_id = payload.get("request_id")
+    if not isinstance(request_id, str) or not request_id or request_id != request_id.strip():
+        raise ValueError("request_id must be a non-empty UUID string")
+    try:
+        uuid.UUID(request_id)
+    except (ValueError, AttributeError, TypeError) as exc:
+        raise ValueError("request_id must be a valid UUID") from exc
+    return request_id
 
 
 def notify_shutdown(ok: bool, message: str) -> None:
@@ -549,6 +568,11 @@ class Handler(BaseHTTPRequestHandler):
                     self,
                 )
                 return
+            try:
+                request_id = resolve_shutdown_request_id(payload)
+            except ValueError as exc:
+                json_bytes({"error": str(exc)}, 400, self)
+                return
             with _lock:
                 if _reserva_shutdown_pending or _reserva_pending:
                     json_bytes(
@@ -562,9 +586,9 @@ class Handler(BaseHTTPRequestHandler):
                     )
                     return
                 _reserva_shutdown_pending = True
-            threading.Thread(target=run_reserva_shutdown, daemon=True).start()
+            threading.Thread(target=run_reserva_shutdown, args=(request_id,), daemon=True).start()
             json_bytes(
-                {"accepted": True, "action": "proxmox-reserva-shutdown"}, 202, self
+                {"accepted": True, "action": "proxmox-reserva-shutdown", "request_id": request_id}, 202, self
             )
             return
 
@@ -574,8 +598,9 @@ class Handler(BaseHTTPRequestHandler):
                     json_bytes({"error": "busy", "reserva_pending": True}, 409, self)
                     return
                 _reserva_pending = True
-            threading.Thread(target=run_reserva, daemon=True).start()
-            json_bytes({"accepted": True, "action": "proxmox-reserva"}, 202, self)
+            request_id = str(uuid.uuid4())
+            threading.Thread(target=run_reserva, args=(request_id,), daemon=True).start()
+            json_bytes({"accepted": True, "action": "proxmox-reserva", "request_id": request_id}, 202, self)
             return
 
         if path == "/shutdown":
