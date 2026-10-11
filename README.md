@@ -100,6 +100,8 @@ Também podes atualizar **a partir do Home Assistant**: dash Casa → **Docker**
 
 Guia completo em português: [`scripts/container-ops/GUIA.md`](scripts/container-ops/GUIA.md)
 
+Padrão operacional para cadastro de receitas no Mealie: [`docs/MEALIE-RECEITAS.md`](docs/MEALIE-RECEITAS.md).
+
 ---
 
 | Item | Valor |
