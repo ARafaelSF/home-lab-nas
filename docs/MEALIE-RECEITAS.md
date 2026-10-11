@@ -17,6 +17,11 @@ Este documento é a referência operacional para agentes que cadastram receitas 
 ## Título, descrição e metadados
 
 - Use um título claro e fiel à receita.
+- Acrescente ao final do título emojis relacionados à própria receita, normalmente 1 ou 2, para facilitar a identificação visual e tornar a biblioteca mais agradável.
+- Escolha emojis diretamente relacionados ao ingrediente principal, tipo de prato, método ou característica marcante da receita.
+- Mantenha o nome textual claro e completo; não substitua palavras importantes por emojis e evite excesso de emojis.
+- Preserve emojis existentes quando forem adequados. A IA pode escolher emojis apropriados ao cadastrar uma receita nova.
+- Exemplo: `Xarope de Gengibre 🫚🔥`.
 - Escreva uma descrição curta e útil em português, preservando origem, contexto ou características relevantes. A descrição não substitui o modo de preparo.
 - Preencha porções/rendimento, tempos de preparo, cozimento e total somente quando estiverem explícitos na fonte ou forem objetivamente conhecidos. Não estime nem invente; deixe em branco quando houver dúvida.
 - Informe a URL original quando a receita vier de fonte externa. Para receitas próprias, de família ou sem fonte conhecida, a URL pode ficar vazia; nunca invente uma fonte.
