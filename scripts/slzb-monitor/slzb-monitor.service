@@ -1,0 +1,22 @@
+[Unit]
+Description=Passive SLZB-06 diagnostic monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=-/root/homelab/compose/wud/.env
+Environment=SLZB_MONITOR_STATE=/var/lib/slzb-monitor
+StateDirectory=slzb-monitor
+ExecStart=/usr/bin/python3 /root/homelab/scripts/slzb-monitor/slzb_monitor.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/slzb-monitor
+
+[Install]
+WantedBy=multi-user.target
